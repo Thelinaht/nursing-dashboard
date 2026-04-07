@@ -1,0 +1,69 @@
+const pool = require("../db");
+
+// GET all
+exports.getAllNurses = async () => {
+    const [rows] = await pool.query("SELECT * FROM nursing_staff");
+    return rows;
+};
+
+// GET one
+exports.getNurseById = async (id) => {
+    const [rows] = await pool.query(
+        "SELECT * FROM nursing_staff WHERE nurse_id = ?",
+        [id]
+    );
+    return rows[0];
+};
+
+// CREATE
+exports.createNurse = async (data) => {
+    const {
+        user_id,
+        full_name,
+        unit,
+        job_title,
+        qualification,
+        license_number,
+        status,
+        hire_date
+    } = data;
+
+    const [result] = await pool.query(
+        `INSERT INTO nursing_staff 
+        (user_id, full_name, unit, job_title, qualification, license_number, status, hire_date) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [user_id, full_name, unit, job_title, qualification, license_number, status, hire_date]
+    );
+
+    return result;
+};
+// UPDATE
+exports.updateNurse = async (id, data) => {
+    const {
+        full_name,
+        unit,
+        job_title,
+        qualification,
+        license_number,
+        status
+    } = data;
+
+    const [result] = await pool.query(
+        `UPDATE nursing_staff 
+         SET full_name=?, unit=?, job_title=?, qualification=?, license_number=?, status=? 
+         WHERE nurse_id=?`,
+        [full_name, unit, job_title, qualification, license_number, status, id]
+    );
+
+    return result;
+};
+
+// DELETE
+exports.deleteNurse = async (id) => {
+    const [result] = await pool.query(
+        "DELETE FROM nursing_staff WHERE nurse_id=?",
+        [id]
+    );
+
+    return result;
+};
