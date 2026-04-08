@@ -77,9 +77,13 @@ export default function NurseProfile() {
 
                     <div>
                         <label>Hospital ID number</label>
-                        <input value={nurse.track_care_number || ""} readOnly />
+                        <input value={nurse.hospital_id_number || ""} readOnly />
                     </div>
 
+                    <div>
+                        <label>Track Care number</label>
+                        <input value={nurse.track_care_number || ""} readOnly />
+                    </div>
                     <div>
                         <label>Payroll Number</label>
                         <input value={nurse.payroll_number || ""} readOnly />
@@ -92,8 +96,13 @@ export default function NurseProfile() {
 
 
                     <div>
-                        <label>contract date </label>
+                        <label>contract date gregorian</label>
                         <input value={nurse.contract_date_gregorian || ""} readOnly />
+                    </div>
+
+                    <div>
+                        <label>contract date hijri </label>
+                        <input value={nurse.contract_date_hijri || ""} readOnly />
                     </div>
 
 
