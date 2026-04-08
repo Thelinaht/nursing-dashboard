@@ -6,7 +6,6 @@ const requestsRoutes = require("./routes/requestsRoutes");
 const approvalRoutes = require("./routes/approvalRoutes");
 const authRoutes = require("./routes/authRoutes");
 
-
 const app = express();
 
 app.use(cors());
