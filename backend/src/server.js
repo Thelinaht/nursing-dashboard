@@ -1,5 +1,5 @@
 const express = require("express");
-const cors = require("cors"); // ✅ أضيفي هذا
+const cors = require("cors");
 
 const nursesRoutes = require("./routes/nursesRoutes");
 const requestsRoutes = require("./routes/requestsRoutes");
@@ -9,7 +9,7 @@ const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
-app.use(cors()); // ✅ هنا بالضبط 🔥
+app.use(cors());
 app.use(express.json());
 
 // test

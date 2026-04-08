@@ -1,0 +1,43 @@
+.details-container {
+    background: #9fb3cc;
+    padding: 40px;
+    border-radius: 25px;
+    margin-top: 20px;
+}
+
+.nurse-title {
+    text-align: center;
+    font-size: 36px;
+    color: #2f3e55;
+    margin-bottom: 40px;
+}
+
+/* grid */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+/* card */
+.detail-card {
+    background: #dce6f2;
+    padding: 40px 20px;
+    border-radius: 20px;
+    text-align: center;
+
+    font-size: 18px;
+    font-weight: 500;
+    color: #2f3e55;
+
+    cursor: pointer;
+    transition: 0.25s;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* hover */
+.detail-card:hover {
+    transform: translateY(-5px);
+    background: #cfdced;
+}
