@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
-import "../styles/NurseProfile.css";
+import "../styles/StaffProfile.css";
 
-export default function NurseProfile() {
+export default function StaffProfile() {
 
     const { id } = useParams();
     const [nurse, setNurse] = useState(null);
@@ -33,6 +33,12 @@ export default function NurseProfile() {
                         <label>Full Name</label>
                         <input value={nurse.full_name || ""} readOnly />
                     </div>
+
+                    <div>
+                        <label>First Name</label>
+                        <input value={nurse.first_name || ""} readOnly />
+                    </div>
+
                     <div>
                         <label>Middle Name</label>
                         <input value={nurse.middle_name || ""} readOnly />
@@ -81,10 +87,6 @@ export default function NurseProfile() {
                     </div>
 
                     <div>
-                        <label>Track Care number</label>
-                        <input value={nurse.track_care_number || ""} readOnly />
-                    </div>
-                    <div>
                         <label>Payroll Number</label>
                         <input value={nurse.payroll_number || ""} readOnly />
                     </div>
@@ -93,6 +95,18 @@ export default function NurseProfile() {
                         <label>Job Status</label>
                         <input value={nurse.status || ""} readOnly />
                     </div>
+
+                    <div>
+                        <label>Contract Type</label>
+                        <input value={nurse.contract_type || ""} readOnly />
+                    </div>
+
+                    <div>
+                        <label>Track Care number</label>
+                        <input value={nurse.track_care_number || ""} readOnly />
+                    </div>
+
+
 
 
                     <div>

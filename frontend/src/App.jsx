@@ -5,8 +5,8 @@ import Login from "./pages/Login";
 import NurseDashboard from "./pages/NurseDashboard";
 import SecretaryDashboard from "./pages/SecretaryDashboard";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
-import NurseDetails from "./pages/NurseDetails";
-import NurseProfile from "./pages/NurseProfile";
+import StaffDetails from "./pages/StaffDetails";
+import StaffProfile from "./pages/StaffProfile";
 
 
 function App() {
@@ -17,8 +17,8 @@ function App() {
         <Route path="/nurse-dashboard" element={<NurseDashboard />} />
         <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
         <Route path="/supervisor-dashboard" element={<SupervisorDashboard />} />
-        <Route path="/nurse/:id" element={<NurseDetails />} />
-        <Route path="/nurse/:id/profile" element={<NurseProfile />} />
+        <Route path="/nurse/:id" element={<StaffDetails />} />
+        <Route path="/nurse/:id/profile" element={<StaffProfile />} />
       </Routes>
     </Router>
   );

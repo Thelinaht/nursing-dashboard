@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
-import "../styles/NurseDetails.css";
+import "../styles/StaffDetails.css";
 
-export default function NurseDetails() {
+export default function SatffDetails() {
 
     const { id } = useParams();
     const navigate = useNavigate();

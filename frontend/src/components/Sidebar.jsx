@@ -29,7 +29,7 @@ const menuConfig = {
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   secretary: [
-    { label: "Staff Directory", path: "/secretary-dashboard", icon: I.staff },
+    { label: "Dashboard", path: "/secretary-dashboard", icon: I.staff },
     { label: "Add Nurse", path: "/add-nurse", icon: I.addNurse },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],

@@ -92,6 +92,7 @@ export default function SecretaryDashboard() {
             <div className="main">
 
                 <h2>Staff Directory</h2>
+
                 {/* 🔥 Cards */}
                 <div className="cards">
                     <div className="card big">
