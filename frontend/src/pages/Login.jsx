@@ -22,6 +22,7 @@ export default function Login() {
 
             if (res.ok) {
                 const user = data.user;
+                console.log("USER FROM API:", user);
 
                 // 🔥 حفظ بيانات المستخدم
                 localStorage.setItem("user", JSON.stringify(user));

@@ -33,7 +33,8 @@ exports.login = async (req, res) => {
             user: {
                 user_id: user.user_id,
                 email: user.email,
-                role_id: user.role_id // ✅ الآن موجود
+                role_id: user.role_id, // ✅ الآن موجود
+                nurse_id: user.nurse_id
             }
         });
 
