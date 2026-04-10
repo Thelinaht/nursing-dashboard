@@ -30,7 +30,7 @@ export default function NurseDashboard() {
     }, []);
 
     if (!nurse) return <div style={{ padding: 40 }}>Loading...</div>;
-    
+
     if (nurse.error) return (
         <div style={{ padding: 40, color: 'red', textAlign: 'center', fontSize: '20px' }}>
             <h2>❌ خطأ في الباك إند</h2>
