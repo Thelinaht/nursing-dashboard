@@ -5,6 +5,8 @@ const nursesRoutes = require("./routes/nursesRoutes");
 const requestsRoutes = require("./routes/requestsRoutes");
 const approvalRoutes = require("./routes/approvalRoutes");
 const authRoutes = require("./routes/authRoutes");
+const trainingRoutes = require("./routes/trainingRoutes");
+
 
 const app = express();
 
@@ -28,8 +30,14 @@ app.use("/api/approvals", approvalRoutes);
 // auth API
 app.use("/api/auth", authRoutes);
 
+//training API
+app.use("/api/training", trainingRoutes);
+
 const PORT = 4000;
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
+
+

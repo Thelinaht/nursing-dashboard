@@ -1,0 +1,95 @@
+.qual-container {
+    background: #9fb3cc;
+    padding: 30px;
+    border-radius: 25px;
+}
+
+.qual-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.qual-table {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.qual-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.qual-row input,
+.qual-row select {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #e6eef7;
+}
+
+.qual-row input.editing {
+    background: white;
+    border: 1px solid #5a6f87;
+}
+
+.header {
+    font-weight: bold;
+}
+
+/* header layout */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* back button */
+.back-btn {
+    background: #dce6f2;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.back-btn:hover {
+    background: #5a6f87;
+    color: white;
+}
+
+/* edit button */
+.edit-btn {
+    background: #5a6f87;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.edit-btn:hover {
+    transform: translateY(-2px);
+    background: #3e536b;
+}
+
+/* save button */
+.save-btn {
+    background: #5a6f87;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.save-btn:hover {
+    transform: scale(1.05);
+    background: #3e536b;
+}

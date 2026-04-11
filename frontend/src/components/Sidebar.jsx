@@ -86,8 +86,7 @@ export default function Sidebar({ role = "nurse", onLogout, logoSrc }) {
         {/* Logo */}
         <div style={styles.logoArea}>
           {logoSrc ? (
-            <img src={logoSrc} alt="Logo" style={styles.logoImg} />
-          ) : (
+            <img src={logoSrc} alt="Logo" style={{ width: 170 }} />) : (
             <div style={styles.logoFallback}>
               <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" width="20" height="28">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />

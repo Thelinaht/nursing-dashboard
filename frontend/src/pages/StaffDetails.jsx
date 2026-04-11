@@ -23,6 +23,12 @@ export default function SatffDetails() {
     return (
         <Layout role="secretary" logoSrc="/logo.png" username="Secretary">
 
+
+            {/* back button*/}
+            <button className="back-btn" onClick={() => navigate(-1)}>
+                ← Back
+            </button>
+
             <div className="details-container">
 
                 <h1 className="nurse-title">
@@ -30,6 +36,7 @@ export default function SatffDetails() {
                 </h1>
 
                 <div className="cards-grid">
+
 
                     <div className="detail-card" onClick={() => navigate(`/nurse/${id}/profile`)}>
                         Staff Profile

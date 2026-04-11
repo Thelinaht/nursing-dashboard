@@ -7,6 +7,8 @@ import SecretaryDashboard from "./pages/SecretaryDashboard";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import StaffDetails from "./pages/StaffDetails";
 import StaffProfile from "./pages/StaffProfile";
+import StaffQualification from "./pages/StaffQualification";
+
 
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
         <Route path="/supervisor-dashboard" element={<SupervisorDashboard />} />
         <Route path="/nurse/:id" element={<StaffDetails />} />
         <Route path="/nurse/:id/profile" element={<StaffProfile />} />
+        <Route path="/nurse/:id/qualification" element={<StaffQualification />} />
+
       </Routes>
     </Router>
   );

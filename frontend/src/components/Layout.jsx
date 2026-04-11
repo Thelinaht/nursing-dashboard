@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import logo from "../assets/logo.png";
 
-export default function Layout({ children, role = "nurse", logoSrc, username = "User" }) {
+export default function Layout({ children, role = "nurse", logoSrc = logo, username = "User" }) {
+  console.log("LOGO:", logoSrc);
   const navigate = useNavigate();
 
   const handleLogout = () => {
