@@ -6,7 +6,8 @@ const requestsRoutes = require("./routes/requestsRoutes");
 const approvalRoutes = require("./routes/approvalRoutes");
 const authRoutes = require("./routes/authRoutes");
 const trainingRoutes = require("./routes/trainingRoutes");
-
+const assignmentRoutes = require("./routes/assignmentRoutes");
+const assignmentController = require("./controllers/assignmentController");
 
 const app = express();
 
@@ -19,7 +20,11 @@ app.get("/", (req, res) => {
 });
 
 // nurses API
+app.get("/api/nurses/available", assignmentController.getAvailableNurses);
 app.use("/api/nurses", nursesRoutes);
+
+// assignments API
+app.use("/api/assignments", assignmentRoutes);
 
 // requests API
 app.use("/api/requests", requestsRoutes);

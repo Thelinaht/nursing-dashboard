@@ -34,7 +34,8 @@ exports.login = async (req, res) => {
                 user_id: user.user_id,
                 email: user.email,
                 role_id: user.role_id,
-                nurse_id: user.nurse_id
+                nurse_id: user.nurse_id,
+                full_name: user.full_name
             }
         });
 
