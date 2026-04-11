@@ -53,3 +53,64 @@
     border-radius: 10px;
     cursor: pointer;
 }
+
+/*  Edit + Save buttons */
+.edit-btn,
+.save-btn {
+    background: #5a6f87;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+/*  Hover effect */
+.edit-btn:hover,
+.save-btn:hover {
+    background: #44596f;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/*  Click effect */
+.edit-btn:active,
+.save-btn:active {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+
+.profile-grid input.editing {
+    background: #ffffff;
+    border: 2px solid #5a6f87;
+    box-shadow: 0 0 5px rgba(90, 111, 135, 0.4);
+    transition: 0.2s;
+}
+
+.profile-grid input.editing:focus {
+    outline: none;
+    border-color: #3f556d;
+    box-shadow: 0 0 8px rgba(63, 85, 109, 0.6);
+}
+
+.profile-grid input {
+    background: #dce6f2;
+    transition: 0.2s;
+}
+
+.back-btn {
+    background: transparent;
+    border: none;
+    color: #2f3e55;
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: 0.2s;
+}
+
+.back-btn:hover {
+    color: #5a6f87;
+    transform: translateX(-3px);
+}

@@ -23,10 +23,10 @@ export default function Login() {
             if (res.ok) {
                 const user = data.user;
 
-                // 🔥 حفظ بيانات المستخدم
+                //  حفظ بيانات المستخدم
                 localStorage.setItem("user", JSON.stringify(user));
 
-                // 🔥 توجيه حسب الرول
+                //  توجيه حسب الرول
                 if (user.role_id === 1) {
                     window.location.href = "/nurse-dashboard";
                 } else if (user.role_id === 2) {

@@ -39,20 +39,9 @@ exports.createNurse = async (data) => {
 };
 // UPDATE
 exports.updateNurse = async (id, data) => {
-    const {
-        full_name,
-        unit,
-        job_title,
-        qualification,
-        license_number,
-        status
-    } = data;
-
     const [result] = await pool.query(
-        `UPDATE Nursing_staff 
-         SET full_name=?, unit=?, job_title=?, qualification=?, license_number=?, status=? 
-         WHERE nurse_id=?`,
-        [full_name, unit, job_title, qualification, license_number, status, id]
+        `UPDATE Nursing_staff SET ? WHERE nurse_id = ?`,
+        [data, id]
     );
 
     return result;

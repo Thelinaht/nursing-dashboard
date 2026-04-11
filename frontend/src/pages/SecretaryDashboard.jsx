@@ -12,10 +12,10 @@ export default function SecretaryDashboard() {
 
     const [nurses, setNurses] = useState([]);
 
-    // 🔥 search
+    //  search
     const [search, setSearch] = useState("");
 
-    // 🔥 filters
+    //  filters
     const [filters, setFilters] = useState({
         job_title: "",
         position_title: "",
@@ -23,7 +23,7 @@ export default function SecretaryDashboard() {
         status: ""
     });
 
-    // 🔥 fetch data
+    //  fetch data
     useEffect(() => {
         fetch("http://localhost:4000/api/nurses")
             .then(res => res.json())
@@ -31,13 +31,13 @@ export default function SecretaryDashboard() {
             .catch(err => console.error(err));
     }, []);
 
-    // 🔥 dynamic filter options
+    //  dynamic filter options
     const jobTitles = [...new Set(nurses.map(n => n.job_title).filter(Boolean))];
     const positions = [...new Set(nurses.map(n => n.position_title).filter(Boolean))];
     const units = [...new Set(nurses.map(n => n.unit).filter(Boolean))];
     const statuses = [...new Set(nurses.map(n => n.status).filter(Boolean))];
 
-    // 🔥 filtering logic
+    //  filtering logic
     const filteredNurses = nurses.filter(n =>
         (!filters.job_title || n.job_title === filters.job_title) &&
         (!filters.position_title || n.position_title === filters.position_title) &&
@@ -49,11 +49,11 @@ export default function SecretaryDashboard() {
         )
     );
 
-    // 🔥 stats
+    //  stats
     const totalNurses = filteredNurses.length;
     const expired = filteredNurses.filter(n => n.status === "EOC").length;
 
-    // 🔥 filter change
+    //  filter change
     const handleFilterChange = (type, value) => {
         setFilters(prev => ({
             ...prev,
@@ -61,7 +61,7 @@ export default function SecretaryDashboard() {
         }));
     };
 
-    // 🔥 PDF
+    //  PDF
     const generatePDF = () => {
         const doc = new jsPDF();
 
@@ -93,7 +93,7 @@ export default function SecretaryDashboard() {
 
                 <h2>Staff Directory</h2>
 
-                {/* 🔥 Cards */}
+                {/*  Cards */}
                 <div className="cards">
                     <div className="card big">
                         <p>Total Number of Nurses</p>
@@ -110,7 +110,7 @@ export default function SecretaryDashboard() {
                     </button>
                 </div>
 
-                {/* 🔥 Filters */}
+                {/*  Filters */}
                 <div className="filter-grid">
 
                     <input
@@ -159,7 +159,7 @@ export default function SecretaryDashboard() {
 
                 </div>
 
-                {/* 🔥 Table */}
+                {/*  Table */}
                 <div className="table-box">
 
                     <h2 className="table-title">Nurses Informations</h2>

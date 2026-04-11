@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import "../styles/StaffProfile.css";
@@ -6,14 +6,75 @@ import "../styles/StaffProfile.css";
 export default function StaffProfile() {
 
     const { id } = useParams();
+    const navigate = useNavigate();
+
     const [nurse, setNurse] = useState(null);
+    const [formData, setFormData] = useState({});
+    const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
         fetch(`http://localhost:4000/api/nurses/${id}`)
             .then(res => res.json())
-            .then(data => setNurse(data))
+            .then(data => {
+                setNurse(data);
+                setFormData(data);
+            })
             .catch(err => console.error(err));
     }, [id]);
+
+    //  convert hijri
+    const convertToHijriISO = (date) => {
+        if (!date) return "";
+
+        const d = new Date(date);
+
+        const formatter = new Intl.DateTimeFormat("en-TN-u-ca-islamic", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
+
+        const parts = formatter.formatToParts(d);
+
+        const day = parts.find(p => p.type === "day")?.value;
+        const month = parts.find(p => p.type === "month")?.value;
+        const year = parts.find(p => p.type === "year")?.value;
+
+        return `${year}-${month}-${day}`;
+    };
+
+    const handleSave = async () => {
+        try {
+
+            const updatedData = {
+                ...formData,
+                birth_date_hijri: convertToHijriISO(formData.birth_date_gregorian),
+                contract_date_hijri: convertToHijriISO(formData.contract_date_gregorian),
+            };
+
+            console.log("Sending:", updatedData);
+
+            await fetch(`http://localhost:4000/api/nurses/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(updatedData)
+            });
+
+            const res = await fetch(`http://localhost:4000/api/nurses/${id}`);
+            const freshData = await res.json();
+
+            setNurse(freshData);
+            setFormData(freshData);
+            setIsEditing(false);
+
+            alert("Updated successfully ");
+
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     if (!nurse) return <p>Loading...</p>;
 
@@ -22,131 +83,133 @@ export default function StaffProfile() {
 
             <div className="profile-container">
 
+                {/* Header */}
                 <div className="profile-header">
+
+                    {/* back button*/}
+                    <button className="back-btn" onClick={() => navigate(-1)}>
+                        ← Back
+                    </button>
+
                     <h1>Staff Profile</h1>
-                    <button className="edit-btn">Edit</button>
+
+                    {!isEditing ? (
+                        <button className="edit-btn" onClick={() => setIsEditing(true)}>
+                            Edit
+                        </button>
+                    ) : (
+                        <button className="save-btn" onClick={handleSave}>
+                            Save
+                        </button>
+                    )}
                 </div>
 
+                {/* Grid */}
                 <div className="profile-grid">
 
+                    {renderInput("Full Name", "full_name")}
+                    {renderInput("First Name", "first_name")}
+                    {renderInput("Middle Name", "middle_name")}
+                    {renderInput("Last Name", "last_name")}
+
+                    {renderInput("National ID", "national_id_iqama")}
+                    {renderInput("Gender", "gender")}
+                    {renderInput("Nationality", "nationality")}
+
+                    {/* Birth */}
                     <div>
-                        <label>Full Name</label>
-                        <input value={nurse.full_name || ""} readOnly />
+                        <label>Birth Date Gregorian</label>
+                        <input
+                            type="date"
+                            value={formData.birth_date_gregorian ? formData.birth_date_gregorian.split("T")[0] : ""}
+                            onChange={(e) =>
+                                setFormData(prev => ({
+                                    ...prev,
+                                    birth_date_gregorian: e.target.value
+                                }))
+                            }
+                            disabled={!isEditing}
+                            className={isEditing ? "editing" : ""}
+                        />
                     </div>
 
                     <div>
-                        <label>First Name</label>
-                        <input value={nurse.first_name || ""} readOnly />
+                        <label>Birth Date Hijri</label>
+                        <input
+                            value={convertToHijriISO(formData.birth_date_gregorian)}
+                            readOnly
+                        />
+                    </div>
+
+                    {renderInput("Job Title", "job_title")}
+                    {renderInput("Unit", "unit")}
+
+                    {renderInput("Hospital ID", "hospital_id_number")}
+                    {renderInput("Payroll Number", "payroll_number")}
+
+                    {renderInput("Status", "status")}
+                    {renderInput("Contract Type", "contract_type")}
+
+                    {renderInput("Track Care Number", "track_care_number")}
+
+                    {/* Contract */}
+                    <div>
+                        <label>Contract Date Gregorian</label>
+                        <input
+                            type="date"
+                            value={formData.contract_date_gregorian ? formData.contract_date_gregorian.split("T")[0] : ""}
+                            onChange={(e) =>
+                                setFormData(prev => ({
+                                    ...prev,
+                                    contract_date_gregorian: e.target.value
+                                }))
+                            }
+                            disabled={!isEditing}
+                            className={isEditing ? "editing" : ""}
+                        />
                     </div>
 
                     <div>
-                        <label>Middle Name</label>
-                        <input value={nurse.middle_name || ""} readOnly />
+                        <label>Contract Date Hijri</label>
+                        <input
+                            value={convertToHijriISO(formData.contract_date_gregorian)}
+                            readOnly
+                        />
                     </div>
 
-                    <div>
-                        <label>Last Name</label>
-                        <input value={nurse.last_name || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>National ID Number - iqama </label>
-                        <input value={nurse.national_id_iqama || ""} readOnly />
-                    </div>
-                    <div>
-                        <label>Gender </label>
-                        <input value={nurse.gender || ""} readOnly />
-                    </div>
-                    <div>
-                        <label>Nationality </label>
-                        <input value={nurse.nationality || ""} readOnly />
-                    </div>
-                    <div>
-                        <label>Birth Date gregorian </label>
-                        <input value={nurse.birth_date_gregorian || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Birth Date hijri </label>
-                        <input value={nurse.birth_date_hijri || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Job Title</label>
-                        <input value={nurse.job_title || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Unit</label>
-                        <input value={nurse.unit || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Hospital ID number</label>
-                        <input value={nurse.hospital_id_number || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Payroll Number</label>
-                        <input value={nurse.payroll_number || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Job Status</label>
-                        <input value={nurse.status || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Contract Type</label>
-                        <input value={nurse.contract_type || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Track Care number</label>
-                        <input value={nurse.track_care_number || ""} readOnly />
-                    </div>
-
-
-
-
-                    <div>
-                        <label>contract date gregorian</label>
-                        <input value={nurse.contract_date_gregorian || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>contract date hijri </label>
-                        <input value={nurse.contract_date_hijri || ""} readOnly />
-                    </div>
-
-
-
-                    <div>
-                        <label>Qualification</label>
-                        <input value={nurse.qualification || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>License Number</label>
-                        <input value={nurse.license_number || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Status</label>
-                        <input value={nurse.status || ""} readOnly />
-                    </div>
-
-                    <div>
-                        <label>Hire Date</label>
-                        <input value={nurse.hire_date || ""} readOnly />
-                    </div>
+                    {renderInput("Qualification", "qualification")}
+                    {renderInput("License Number", "license_number")}
+                    {renderInput("Hire Date", "hire_date", "date")}
 
                 </div>
-
-                <button className="save-btn">Save</button>
 
             </div>
 
         </Layout>
     );
+
+    //  input reusable
+    function renderInput(label, name, type = "text") {
+        return (
+            <div>
+                <label>{label}</label>
+                <input
+                    type={type}
+                    value={
+                        type === "date"
+                            ? (formData[name] ? formData[name].split("T")[0] : "")
+                            : (formData[name] || "")
+                    }
+                    onChange={(e) =>
+                        setFormData(prev => ({
+                            ...prev,
+                            [name]: e.target.value
+                        }))
+                    }
+                    disabled={!isEditing}
+                    className={isEditing ? "editing" : ""}
+                />
+            </div>
+        );
+    }
 }
