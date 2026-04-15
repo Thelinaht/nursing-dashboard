@@ -9,7 +9,7 @@ export default function SupervisorDashboard() {
     const [assignUnitFilters, setAssignUnitFilters] = useState([]);
     const [assignShiftFilter, setAssignShiftFilter] = useState("All Shifts");
     const [showUnitDropdown, setShowUnitDropdown] = useState(false);
-    
+
     // Fetch data from backend
     useEffect(() => {
         fetch("http://localhost:4000/api/nurses")
@@ -38,7 +38,7 @@ export default function SupervisorDashboard() {
     });
 
     const toggleUnitFilter = (u) => {
-        setAssignUnitFilters(prev => 
+        setAssignUnitFilters(prev =>
             prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]
         );
     };
@@ -47,9 +47,9 @@ export default function SupervisorDashboard() {
     const dailyStaffing = units.map(unit => {
         const availableCount = nurses.filter(n => n.unit === unit).length;
         // Mock Required since it is not stored in DB
-        const required = Math.max(availableCount + 3, 10); 
+        const required = Math.max(availableCount + 3, 10);
         const coveragePercentage = Math.round((availableCount / required) * 100);
-        
+
         let status = "safe";
         if (coveragePercentage < 65) status = "critical";
         else if (coveragePercentage < 75) status = "high-risk";
@@ -64,8 +64,8 @@ export default function SupervisorDashboard() {
         };
     });
 
-    const filteredDailyStaffing = staffingFilter === "All Units" 
-        ? dailyStaffing 
+    const filteredDailyStaffing = staffingFilter === "All Units"
+        ? dailyStaffing
         : dailyStaffing.filter(row => row.unit === staffingFilter);
 
     // Ratios (Mocked based on existing units, since patients data doesn't exist)
@@ -79,15 +79,16 @@ export default function SupervisorDashboard() {
             value: exceeds ? 100 : 50
         };
     });
-    
+
     // The top exceeding units to display in warning
     const exceedingUnitsStr = ratios.filter(r => r.status === 'exceeds').map(r => r.unit).join(', ') || 'None';
 
     return (
-        <Layout role="supervisor" logoSrc="/logo.png" username="Supervisor">
+        <Layout role="supervisor" logoSrc="/logo.png" username={JSON.parse(localStorage.getItem("user"))?.full_name || "Supervisor"}>
+
             <div className="main">
                 <div className="supervisor-container">
-                    
+
                     {/* Top Stats Cards */}
                     <div className="cards-row">
                         <div className="wave-card">
@@ -127,16 +128,16 @@ export default function SupervisorDashboard() {
                                         className="search-input"
                                         style={{ flex: 1, minWidth: "120px", padding: "6px 12px", borderRadius: "10px", border: "none", outline: "none", background: "#dce4ed", color: "#2f3e55", fontSize: "12px" }}
                                     />
-                                    
+
                                     <div style={{ position: "relative" }}>
-                                        <div 
-                                            className="filter-select" 
+                                        <div
+                                            className="filter-select"
                                             onClick={() => setShowUnitDropdown(!showUnitDropdown)}
                                             style={{ cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", minWidth: "110px", height: "100%", userSelect: "none" }}
                                         >
                                             <span>
-                                                {assignUnitFilters.length === 0 
-                                                    ? "All Units" 
+                                                {assignUnitFilters.length === 0
+                                                    ? "All Units"
                                                     : `${assignUnitFilters.length} Selected`}
                                             </span>
                                             <span style={{ fontSize: "10px", marginLeft: "8px" }}>▼</span>
@@ -145,10 +146,10 @@ export default function SupervisorDashboard() {
                                             <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "5px", background: "#fff", border: "1px solid #c7d5e5", borderRadius: "10px", padding: "10px", zIndex: 10, display: "flex", flexDirection: "column", gap: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: "150px" }}>
                                                 {units.map(u => (
                                                     <label key={u} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#2f3e55", cursor: "pointer" }}>
-                                                        <input 
-                                                            type="checkbox" 
-                                                            checked={assignUnitFilters.includes(u)} 
-                                                            onChange={() => toggleUnitFilter(u)} 
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={assignUnitFilters.includes(u)}
+                                                            onChange={() => toggleUnitFilter(u)}
                                                         />
                                                         {u}
                                                     </label>
@@ -157,7 +158,7 @@ export default function SupervisorDashboard() {
                                         )}
                                     </div>
 
-                                    <select 
+                                    <select
                                         className="filter-select"
                                         value={assignShiftFilter}
                                         onChange={e => setAssignShiftFilter(e.target.value)}
@@ -169,7 +170,7 @@ export default function SupervisorDashboard() {
                                     </select>
                                 </div>
                             </div>
-                            <div className="custom-table" style={{maxHeight: "300px", overflowY: "auto"}}>
+                            <div className="custom-table" style={{ maxHeight: "300px", overflowY: "auto" }}>
                                 <div className="table-header">
                                     <span>#</span>
                                     <span>Unit</span>
@@ -183,7 +184,7 @@ export default function SupervisorDashboard() {
                                         <span>{staff.name}</span>
                                         <span>{staff.shift}</span>
                                     </div>
-                                )) : <div style={{padding: "10px", color: "#44596f"}}>No matching staff</div>}
+                                )) : <div style={{ padding: "10px", color: "#44596f" }}>No matching staff</div>}
                             </div>
                         </div>
 
@@ -191,7 +192,7 @@ export default function SupervisorDashboard() {
                             <div className="box-header">
                                 <h2 className="table-title">daily Staffing by Unit</h2>
                                 <div className="actions">
-                                    <select 
+                                    <select
                                         className="filter-select"
                                         value={staffingFilter}
                                         onChange={(e) => setStaffingFilter(e.target.value)}
@@ -201,7 +202,7 @@ export default function SupervisorDashboard() {
                                     </select>
                                 </div>
                             </div>
-                            <div className="custom-table" style={{maxHeight: "300px", overflowY: "auto"}}>
+                            <div className="custom-table" style={{ maxHeight: "300px", overflowY: "auto" }}>
                                 <div className="table-header staffing-header">
                                     <span>Unit</span>
                                     <span>Required</span>
@@ -215,7 +216,7 @@ export default function SupervisorDashboard() {
                                         <span>{row.available}</span>
                                         <span className={`badge ${row.status}`}>{row.coverage}</span>
                                     </div>
-                                )) : <div style={{padding: "10px", color: "#44596f"}}>No units data</div>}
+                                )) : <div style={{ padding: "10px", color: "#44596f" }}>No units data</div>}
                             </div>
                             <div className="legend">
                                 <span className="legend-item critical">Critical shortage</span>

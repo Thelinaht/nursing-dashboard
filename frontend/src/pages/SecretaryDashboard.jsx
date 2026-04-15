@@ -9,7 +9,6 @@ import logo from "../assets/logo.png";
 export default function SecretaryDashboard() {
 
     const navigate = useNavigate();
-
     const [nurses, setNurses] = useState([]);
 
     //  search
@@ -52,7 +51,6 @@ export default function SecretaryDashboard() {
     //  stats
     const totalNurses = filteredNurses.length;
     const expired = filteredNurses.filter(n => n.status === "EOC").length;
-
     //  filter change
     const handleFilterChange = (type, value) => {
         setFilters(prev => ({
@@ -87,8 +85,12 @@ export default function SecretaryDashboard() {
     };
 
     return (
-        <Layout role="secretary" logoSrc="/logo.png" username="Secretary">
-
+        //  <Layout role="secretary" logoSrc="/logo.png" username="Secretary">
+        <Layout
+            role="secretary"
+            logoSrc="/logo.png"
+            username={JSON.parse(localStorage.getItem("user"))?.full_name || "Secretary"}
+        >
             <div className="main">
 
                 <h2>Staff Directory</h2>
@@ -105,8 +107,11 @@ export default function SecretaryDashboard() {
                         <h1>{expired}</h1>
                     </div>
 
-                    <button className="add-btn">
-                        Add new Nurse Record +
+                    <button
+                        className="add-nurse-btn"
+                        onClick={() => navigate("/add-nurse")}
+                    >
+                        + Add New Nurse Record
                     </button>
                 </div>
 
@@ -176,9 +181,9 @@ export default function SecretaryDashboard() {
                     <div className="nurses-list">
                         {filteredNurses.map(nurse => (
                             <div
-                                key={nurse.nurse_id}
+                                key={nurse.user_id}
                                 className="nurse-card"
-                                onClick={() => navigate(`/nurse/${nurse.nurse_id}`)}
+                                onClick={() => navigate(`/nurse/${nurse.user_id}`)}
                             >
                                 <div>{nurse.full_name}</div>
                                 <div>{nurse.national_id_iqama}</div>
@@ -186,9 +191,10 @@ export default function SecretaryDashboard() {
                                 <div>{nurse.position_title}</div>
                                 <div>{nurse.unit}</div>
 
-                                <span className={`status ${nurse.status?.toLowerCase()}`}>
+                                <span className={`status ${nurse.status?.toLowerCase().replace(" ", "-")}`}>
                                     {nurse.status}
                                 </span>
+
                             </div>
                         ))}
                     </div>

@@ -1,0 +1,99 @@
+.page-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+}
+
+.add-container {
+    background: #8fa6bb;
+    padding: 40px 50px;
+    border-radius: 25px;
+    width: 500px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.add-container h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #2c3e50;
+    font-size: 28px;
+}
+
+.add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-group label {
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: none;
+    background: #e4ebf2;
+    font-size: 14px;
+}
+
+.input-wrapper input:focus {
+    outline: 2px solid #4a657d;
+}
+
+/*  icon */
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 14px;
+    color: #4a657d;
+}
+
+.add-btn {
+    margin-top: 10px;
+    background: #4a657d;
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 18px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.add-btn:hover {
+    background: #3b5368;
+    transform: translateY(-2px);
+}
+
+
+/* dropdown style */
+.input-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: none;
+    background: #e4ebf2;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.input-group select:focus {
+    outline: 2px solid #4a657d;
+}

@@ -34,7 +34,7 @@ const menuConfig = {
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   supervisor: [
-    { label: "Dashboard", path: "/dashboard", icon: I.dashboard },
+    { label: "Dashboard", path: "/supervisor-dashboard", icon: I.dashboard },
     { label: "Assign Staff", path: "/assign-staff", icon: I.assign },
     { label: "Manage Requests", path: "/requests", icon: I.request },
     { label: "Nurse-to-Patient", path: "/ratio", icon: I.ratio },

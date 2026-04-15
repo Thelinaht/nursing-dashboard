@@ -45,8 +45,11 @@ export default function Qualification() {
     };
 
     return (
-        <Layout role="secretary" logoSrc="/logo.png" username="Secretary">
-
+        <Layout
+            role="secretary"
+            logoSrc="/logo.png"
+            username={JSON.parse(localStorage.getItem("user"))?.full_name || "Secretary"}
+        >
 
             <div className="qual-container">
 

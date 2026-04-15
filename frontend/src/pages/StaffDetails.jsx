@@ -12,7 +12,7 @@ export default function SatffDetails() {
 
 
     useEffect(() => {
-        fetch(`http://localhost:4000/api/nurses/${id}`)
+        fetch(`http://localhost:4000/api/nurses/user/${id}`)
             .then(res => res.json())
             .then(data => setNurse(data))
             .catch(err => console.error(err));
@@ -21,8 +21,11 @@ export default function SatffDetails() {
     if (!nurse) return <p>Loading...</p>;
 
     return (
-        <Layout role="secretary" logoSrc="/logo.png" username="Secretary">
-
+        <Layout
+            role="secretary"
+            logoSrc="/logo.png"
+            username={JSON.parse(localStorage.getItem("user"))?.full_name || "Secretary"}
+        >
 
             {/* back button*/}
             <button className="back-btn" onClick={() => navigate(-1)}>

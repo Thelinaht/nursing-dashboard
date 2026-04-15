@@ -49,3 +49,12 @@ exports.remove = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.getByUserId = async (req, res) => {
+    try {
+        const nurse = await nursesModel.getNurseByUserId(req.params.user_id);
+        res.json(nurse);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
