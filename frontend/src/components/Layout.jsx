@@ -7,6 +7,18 @@ export default function Layout({ children, role = "nurse", logoSrc = logo, usern
   console.log("LOGO:", logoSrc);
   const navigate = useNavigate();
 
+  let displayUsername = username;
+  if (!username || username === "User") {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user && user.full_name) {
+        displayUsername = user.full_name;
+      }
+    } catch (err) {
+      console.error("Failed to parse user from localStorage", err);
+    }
+  }
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
@@ -16,7 +28,7 @@ export default function Layout({ children, role = "nurse", logoSrc = logo, usern
 
   return (
     <div style={styles.wrapper}>
-      <Navbar username={username} />
+      <Navbar username={displayUsername} />
       <div style={styles.body}>
         <Sidebar role={role} onLogout={handleLogout} logoSrc={logoSrc} />
         <div style={styles.content}>

@@ -2,14 +2,14 @@ const pool = require("../db");
 
 // GET all
 exports.getAllRequests = async () => {
-    const [rows] = await pool.query("SELECT * FROM request");
+    const [rows] = await pool.query("SELECT * FROM Request");
     return rows;
 };
 
 // GET by nurse id
 exports.getRequestsByNurseId = async (nurseId) => {
     const [rows] = await pool.query(
-        "SELECT * FROM request WHERE nurse_id = ?",
+        "SELECT * FROM Request WHERE nurse_id = ?",
         [nurseId]
     );
 
@@ -19,7 +19,7 @@ exports.getRequestsByNurseId = async (nurseId) => {
 // GET one
 exports.getRequestById = async (id) => {
     const [rows] = await pool.query(
-        "SELECT * FROM request WHERE request_id = ?",
+        "SELECT * FROM Request WHERE request_id = ?",
         [id]
     );
     return rows[0];
@@ -27,12 +27,12 @@ exports.getRequestById = async (id) => {
 
 // CREATE
 exports.createRequest = async (data) => {
-    const { nurse_id, request_type } = data;
+    const { nurse_id, request_type, title, description } = data;
 
     const [result] = await pool.query(
-        `INSERT INTO request (nurse_id, request_type, submission_date, current_status)
-     VALUES (?, ?, CURDATE(), 'Pending')`,
-        [nurse_id, request_type]
+        `INSERT INTO Request (nurse_id, request_type, title, description, submission_date, current_status)
+     VALUES (?, ?, ?, ?, CURDATE(), 'Pending')`,
+        [nurse_id, request_type, title, description]
     );
 
     return result;
@@ -41,7 +41,7 @@ exports.createRequest = async (data) => {
 // UPDATE status
 exports.updateRequestStatus = async (id, status) => {
     const [result] = await pool.query(
-        "UPDATE request SET current_status=? WHERE request_id=?",
+        "UPDATE Request SET current_status=? WHERE request_id=?",
         [status, id]
     );
 
@@ -51,7 +51,7 @@ exports.updateRequestStatus = async (id, status) => {
 // DELETE
 exports.deleteRequest = async (id) => {
     const [result] = await pool.query(
-        "DELETE FROM request WHERE request_id=?",
+        "DELETE FROM Request WHERE request_id=?",
         [id]
     );
 
