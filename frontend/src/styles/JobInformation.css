@@ -1,0 +1,183 @@
+.job-container {
+    background: #9fb3cc;
+    padding: 30px;
+    border-radius: 25px;
+}
+
+.job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.job-header h1 {
+    font-size: 28px;
+    color: #2f3e55;
+    margin: 0;
+}
+
+/* ── Content ── */
+.job-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── Docs grid ── */
+.job-docs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.job-doc-card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.job-doc-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2f3e55;
+    margin: 0;
+}
+
+/* ── Sub-items ── */
+.job-sub-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.job-sub-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #f0f4f9;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.sub-name {
+    font-size: 12px;
+    color: #444;
+    flex: 1;
+}
+
+/* ── Certificate cell ── */
+.cert-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.cert-view {
+    background: #5a6f87;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    text-decoration: none;
+}
+
+.cert-view:hover {
+    background: #3e536b;
+}
+
+.cert-none {
+    color: #aaa;
+    font-size: 12px;
+}
+
+.cert-upload-btn {
+    background: #dce6f2;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.cert-upload-btn:hover {
+    background: #5a6f87;
+    color: white;
+}
+
+/* ── Job Description ── */
+.job-desc-section {
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.job-desc-textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #f0f4f9;
+    font-size: 13px;
+    resize: vertical;
+    box-sizing: border-box;
+    color: #333;
+    font-family: inherit;
+}
+
+.job-desc-textarea.editing {
+    background: white;
+    border: 1.5px solid #5a6f87;
+}
+
+.job-desc-textarea:disabled {
+    cursor: default;
+    color: #444;
+}
+
+/* ── Buttons ── */
+.back-btn {
+    background: #dce6f2;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.back-btn:hover {
+    background: #5a6f87;
+    color: white;
+}
+
+.edit-btn,
+.save-btn {
+    background: #5a6f87;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.edit-btn:hover,
+.save-btn:hover {
+    background: #3e536b;
+    transform: translateY(-2px);
+}

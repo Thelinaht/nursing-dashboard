@@ -12,6 +12,14 @@ const userRoutes = require("./routes/userRoutes");
 const infoRoutes = require("./routes/informationRoutes");
 const roleRoutes = require("./routes/roleRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const orientationRoutes = require("./routes/orientationRoutes");
+const jobDocumentRoutes = require("./routes/jobDocumentRoutes");
+const evaluationRoutes = require("./routes/evaluationRoutes");
+const miscRoutes = require("./routes/miscRoutes");
+
+
+
+
 
 
 
@@ -57,6 +65,15 @@ app.use("/api/roles", roleRoutes);
 
 
 app.use("/api/uploads", uploadRoutes);
+
+app.use("/api/orientation", orientationRoutes);
+
+app.use("/api/job", jobDocumentRoutes);
+
+app.use("/api/evaluation", evaluationRoutes);
+
+app.use("/api/misc", miscRoutes);
+
 
 
 

@@ -1,0 +1,110 @@
+.eval-container {
+    background: #9fb3cc;
+    padding: 30px;
+    border-radius: 25px;
+}
+
+.eval-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.eval-header h1 {
+    font-size: 28px;
+    color: #2f3e55;
+    margin: 0;
+}
+
+/* ── Grid ── */
+.eval-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+/* ── Card ── */
+.eval-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.eval-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2f3e55;
+    margin: 0;
+}
+
+.eval-file-area {
+    width: 100%;
+    background: #f0f4f9;
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Buttons ── */
+.back-btn {
+    background: #dce6f2;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.back-btn:hover {
+    background: #5a6f87;
+    color: white;
+}
+
+.cert-view {
+    background: #5a6f87;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.cert-view:hover {
+    background: #3e536b;
+}
+
+.cert-none {
+    color: #aaa;
+    font-size: 13px;
+}
+
+.cert-upload-btn {
+    background: #5a6f87;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 100%;
+    text-align: center;
+}
+
+.cert-upload-btn:hover {
+    background: #3e536b;
+    transform: translateY(-2px);
+}

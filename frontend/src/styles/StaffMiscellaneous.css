@@ -1,0 +1,196 @@
+.misc-container {
+    background: #9fb3cc;
+    padding: 30px;
+    border-radius: 25px;
+}
+
+.misc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.misc-header h1 {
+    font-size: 28px;
+    color: #2f3e55;
+    margin: 0;
+}
+
+/* ── Body layout ── */
+.misc-body {
+    display: flex;
+    gap: 16px;
+}
+
+/* ── Sidebar tabs ── */
+.misc-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 200px;
+}
+
+.misc-tab {
+    background: #b8cad8;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2f3e55;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+    text-align: left;
+}
+
+.misc-tab:hover {
+    background: #a0b5c8;
+}
+
+.misc-tab.active {
+    background: #5a6f87;
+    color: white;
+}
+
+.tab-count {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+/* ── Content area ── */
+.misc-content {
+    flex: 1;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.misc-upload-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.upload-btn {
+    background: #5a6f87;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+.upload-btn:hover {
+    background: #3e536b;
+}
+
+.upload-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── Files list ── */
+.misc-files {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.misc-file-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f0f4f9;
+    border-radius: 10px;
+    padding: 10px 14px;
+}
+
+.file-icon {
+    font-size: 18px;
+}
+
+.file-name {
+    flex: 1;
+    font-size: 13px;
+    color: #2f3e55;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-date {
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.cert-view {
+    background: #5a6f87;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.cert-view:hover {
+    background: #3e536b;
+}
+
+.delete-file-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.5;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+.delete-file-btn:hover {
+    opacity: 1;
+    background: #ffe0e0;
+    border-radius: 6px;
+}
+
+.misc-empty {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+    font-size: 14px;
+}
+
+/* ── Buttons ── */
+.back-btn {
+    background: #dce6f2;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.back-btn:hover {
+    background: #5a6f87;
+    color: white;
+}

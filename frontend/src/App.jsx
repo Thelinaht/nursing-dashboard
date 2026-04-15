@@ -9,6 +9,11 @@ import StaffProfile from "./pages/StaffProfile";
 import StaffQualification from "./pages/StaffQualification";
 import StaffOrientation from "./pages/StaffOrientation";
 import RequestPage from "./pages/RequestPage.jsx";
+import JobInformation from "./pages/JobInformation";
+import StaffEvaluation from "./pages/StaffEvaluation";
+import StaffMiscellaneous from "./pages/StaffMiscellaneous";
+
+
 
 // dashboards / admin
 import AddNurse from "./pages/AddNurse";
@@ -24,6 +29,7 @@ import TrainingRequest from "./pages/TrainingRequest";
 import GeneralRequest from "./pages/GeneralRequest";
 import RequestHistory from "./pages/RequestHistory";
 import TrainingPage from "./pages/TrainingPage";
+
 
 function App() {
   return (
@@ -46,6 +52,9 @@ function App() {
         <Route path="/nurse/:id/profile" element={<StaffProfile />} />
         <Route path="/nurse/:id/qualification" element={<StaffQualification />} />
         <Route path="/nurse/:id/orientation" element={<StaffOrientation />} />
+        <Route path="/nurse/:id/job" element={<JobInformation />} />
+        <Route path="/nurse/:id/evaluation" element={<StaffEvaluation />} />
+        <Route path="/nurse/:id/misc" element={<StaffMiscellaneous />} />
 
         {/* requests */}
         <Route path="/request" element={<RequestPage />} />
