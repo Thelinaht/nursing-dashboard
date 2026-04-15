@@ -11,6 +11,8 @@ import StaffQualification from "./pages/StaffQualification";
 import RequestPage from "./pages/RequestPage.jsx";
 import AddNurse from "./pages/AddNurse";
 import DirectorDashboard from "./pages/DirectorDashboard";
+import QualityManagerDashboard from "./pages/QualityManagerDashboard";
+
 
 
 function App() {
@@ -29,6 +31,7 @@ function App() {
         <Route path="/request" element={<RequestPage />} />
         <Route path="/add-nurse" element={<AddNurse />} />
         <Route path="/director-dashboard" element={<DirectorDashboard />} />
+        <Route path="/quality-manager-dashboard" element={<QualityManagerDashboard />} />
       </Routes>
     </Router>
   );
