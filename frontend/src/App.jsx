@@ -7,6 +7,7 @@ import AssignStaff from "./pages/AssignStaff";
 import StaffDetails from "./pages/StaffDetails";
 import StaffProfile from "./pages/StaffProfile";
 import StaffQualification from "./pages/StaffQualification";
+import StaffOrientation from "./pages/StaffOrientation";
 import RequestPage from "./pages/RequestPage.jsx";
 
 // dashboards / admin
@@ -44,6 +45,7 @@ function App() {
         <Route path="/nurse/:id" element={<StaffDetails />} />
         <Route path="/nurse/:id/profile" element={<StaffProfile />} />
         <Route path="/nurse/:id/qualification" element={<StaffQualification />} />
+        <Route path="/nurse/:id/orientation" element={<StaffOrientation />} />
 
         {/* requests */}
         <Route path="/request" element={<RequestPage />} />

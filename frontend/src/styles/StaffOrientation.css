@@ -1,0 +1,90 @@
+.orientation-container {
+    padding: 30px;
+}
+
+.orientation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.orientation-header h1 {
+    font-size: 32px;
+    color: #2f3e5c;
+}
+
+.edit-btn {
+    background-color: #4a5d73;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.orientation-card {
+    background-color: #f7f7f7;
+    border-radius: 20px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* TABLE */
+.orientation-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+}
+
+.orientation-table th {
+    text-align: left;
+    color: #6b7280;
+    font-weight: 500;
+    padding-bottom: 10px;
+}
+
+.orientation-table td {
+    background-color: #e5edf5;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.cert-name {
+    font-weight: 500;
+    color: #2f3e5c;
+}
+
+/* INPUTS */
+.orientation-table input {
+    width: 100%;
+    padding: 6px;
+    border-radius: 8px;
+    border: none;
+    background-color: #d9e3ef;
+}
+
+.orientation-table input:disabled {
+    opacity: 0.6;
+}
+
+/* SAVE BUTTON */
+.save-container {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.save-btn {
+    background-color: #4a5d73;
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
