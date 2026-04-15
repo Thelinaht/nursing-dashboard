@@ -3,12 +3,6 @@ import Login from "./pages/Login";
 import NurseDashboard from "./pages/NurseDashboard";
 import SecretaryDashboard from "./pages/SecretaryDashboard";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
-<<<<<<< HEAD
-import DirectorDashboard from "./pages/DirectorDashboard";  // New import
-import StaffDetails from "./pages/StaffDetails";
-import StaffProfile from "./pages/StaffProfile";
-import StaffQualification from "./pages/StaffQualification";
-=======
 import AssignStaff from "./pages/AssignStaff";
 import StaffDetails from "./pages/StaffDetails";
 import StaffProfile from "./pages/StaffProfile";
@@ -17,7 +11,6 @@ import RequestPage from "./pages/RequestPage.jsx";
 import AddNurse from "./pages/AddNurse";
 import DirectorDashboard from "./pages/DirectorDashboard";
 
->>>>>>> 8f9ce145546c188713e48a7099d5482df2b2cc69
 
 function App() {
   return (
@@ -28,12 +21,6 @@ function App() {
         <Route path="/nurse-info" element={<NurseDashboard />} />
         <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
         <Route path="/supervisor-dashboard" element={<SupervisorDashboard />} />
-<<<<<<< HEAD
-        <Route path="/director-dashboard" element={<DirectorDashboard />} />  {/* New route */}
-        <Route path="/nurse/:id" element={<StaffDetails />} />
-        <Route path="/nurse/:id/profile" element={<StaffProfile />} />
-        <Route path="/nurse/:id/qualification" element={<StaffQualification />} />
-=======
         <Route path="/assign-staff" element={<AssignStaff />} />
         <Route path="/nurse/:id" element={<StaffDetails />} />
         <Route path="/nurse/:id/profile" element={<StaffProfile />} />
@@ -41,7 +28,6 @@ function App() {
         <Route path="/request" element={<RequestPage />} />
         <Route path="/add-nurse" element={<AddNurse />} />
         <Route path="/director-dashboard" element={<DirectorDashboard />} />
->>>>>>> 8f9ce145546c188713e48a7099d5482df2b2cc69
       </Routes>
     </Router>
   );

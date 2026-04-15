@@ -7,7 +7,6 @@ export default function SupervisorDashboard() {
     const [nurses, setNurses] = useState([]);
     const [staffingFilter, setStaffingFilter] = useState("All Units");
     const [assignUnitFilters, setAssignUnitFilters] = useState([]);
-    const [assignShiftFilter, setAssignShiftFilter] = useState("All Shifts");
     const [showUnitDropdown, setShowUnitDropdown] = useState(false);
 
     // Fetch data from backend
@@ -28,13 +27,11 @@ export default function SupervisorDashboard() {
     const assignedStaff = nurses.map((nurse, index) => ({
         id: nurse.nurse_id || `0${index + 1}`,
         unit: nurse.unit || "Unassigned",
-        name: nurse.full_name,
-        shift: ["Day", "Evening", "Night"][index % 3] // Mock shift since not in DB
+        name: nurse.full_name
     })).filter(staff => {
         const matchesSearch = staff.name.toLowerCase().includes(search.toLowerCase());
         const matchesUnit = assignUnitFilters.length === 0 || assignUnitFilters.includes(staff.unit);
-        const matchesShift = assignShiftFilter === "All Shifts" || staff.shift === assignShiftFilter;
-        return matchesSearch && matchesUnit && matchesShift;
+        return matchesSearch && matchesUnit;
     });
 
     const toggleUnitFilter = (u) => {
@@ -115,7 +112,6 @@ export default function SupervisorDashboard() {
                                         <button className="btn-small dark" onClick={() => {
                                             setSearch("");
                                             setAssignUnitFilters([]);
-                                            setAssignShiftFilter("All Shifts");
                                         }}>Clear Filters</button>
                                     </div>
                                 </div>
@@ -158,31 +154,20 @@ export default function SupervisorDashboard() {
                                         )}
                                     </div>
 
-                                    <select
-                                        className="filter-select"
-                                        value={assignShiftFilter}
-                                        onChange={e => setAssignShiftFilter(e.target.value)}
-                                    >
-                                        <option value="All Shifts">All Shifts</option>
-                                        <option value="Day">Day</option>
-                                        <option value="Evening">Evening</option>
-                                        <option value="Night">Night</option>
-                                    </select>
+
                                 </div>
                             </div>
                             <div className="custom-table" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                                <div className="table-header">
+                                <div className="table-header" style={{ gridTemplateColumns: "0.5fr 1.5fr 2fr" }}>
                                     <span>#</span>
                                     <span>Unit</span>
                                     <span>Name</span>
-                                    <span>Shift</span>
                                 </div>
                                 {assignedStaff.length > 0 ? assignedStaff.map(staff => (
-                                    <div key={staff.id} className="table-row">
+                                    <div key={staff.id} className="table-row" style={{ gridTemplateColumns: "0.5fr 1.5fr 2fr" }}>
                                         <span>{staff.id}</span>
                                         <span>{staff.unit}</span>
                                         <span>{staff.name}</span>
-                                        <span>{staff.shift}</span>
                                     </div>
                                 )) : <div style={{ padding: "10px", color: "#44596f" }}>No matching staff</div>}
                             </div>
