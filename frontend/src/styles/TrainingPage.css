@@ -1,0 +1,143 @@
+.main {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.main h2 {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2f3e55;
+    margin-bottom: 20px;
+}
+
+.tr-table-box {
+    background: linear-gradient(135deg, #b3c4d8, #9fb3cc);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    max-width: 100%;
+}
+
+/* Header */
+.tr-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    background: #8fa8c0;
+    padding: 12px 20px;
+    gap: 10px;
+}
+
+.tr-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tr-col-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2f3e55;
+}
+
+.tr-search {
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.5);
+    color: #2f3e55;
+    outline: none;
+    width: 100%;
+}
+
+.tr-select {
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.5);
+    color: #2f3e55;
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+}
+
+/* Rows */
+.tr-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 14px 20px;
+    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    transition: 0.2s;
+}
+
+.tr-row:last-child {
+    border-bottom: none;
+}
+
+.tr-row:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.tr-cell {
+    font-size: 13px;
+    color: #2f3e55;
+    font-weight: 500;
+}
+
+/* Badges */
+.tbadge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.tbadge.complete {
+    background: #c8f7d1;
+    color: #1b8a3d;
+    border: 1px solid #1b8a3d;
+}
+
+.tbadge.overdue {
+    background: #ffcdd2;
+    color: #c62828;
+    border: 1px solid #c62828;
+}
+
+.tbadge.pending {
+    background: #bbdefb;
+    color: #1565c0;
+    border: 1px solid #1565c0;
+}
+
+/* Date badge */
+.date-badge {
+    background: rgba(255, 255, 255, 0.4);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #2f3e55;
+}
+
+/* Action button */
+.action-btn {
+    background: transparent;
+    border: none;
+    color: #2f3e55;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    transition: 0.2s;
+}
+
+.action-btn:hover {
+    color: #44596f;
+    text-decoration: underline;
+}

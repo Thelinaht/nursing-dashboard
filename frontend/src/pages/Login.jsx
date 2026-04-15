@@ -35,6 +35,8 @@ export default function Login() {
                     window.location.href = "/supervisor-dashboard";
                 } else if (user.role_id === 4) {
                     window.location.href = "/director-dashboard";
+                } else if (user.role_id === 5) {
+                    window.location.href = "/quality-manager-dashboard";
                 } else {
                     alert("Unknown role");
                 }

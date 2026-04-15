@@ -2,7 +2,7 @@ const pool = require("../db");
 
 
 exports.getAllApprovals = async () => {
-    const [rows] = await pool.query("SELECT * FROM request_approval");
+    const [rows] = await pool.query("SELECT * FROM Request_approval");
     return rows;
 };
 
@@ -12,7 +12,7 @@ exports.getAllApprovals = async () => {
 // إنشاء approval (Supervisor أول)
 exports.createApproval = async (request_id, role) => {
     const [result] = await pool.query(
-        `INSERT INTO request_approval 
+        `INSERT INTO Request_approval 
         (request_id, approver_role, decision) 
         VALUES (?, ?, 'Pending')`,
         [request_id, role]
@@ -24,7 +24,7 @@ exports.createApproval = async (request_id, role) => {
 // تحديث القرار
 exports.makeDecision = async (request_id, role, decision) => {
     const [result] = await pool.query(
-        `UPDATE request_approval 
+        `UPDATE Request_approval 
          SET decision=?, decision_date=NOW()
          WHERE request_id=? AND approver_role=?`,
         [decision, request_id, role]

@@ -152,7 +152,39 @@ export default function StaffProfile() {
 
                     {renderInput("National ID", "national_id_iqama")}
                     {renderSelect("Gender", "gender", ["Male", "Female"])}
-                    {renderInput("Nationality", "nationality")}
+                    {renderSelect("Nationality", "nationality", [
+                        "Afghan", "Albanian", "Algerian", "American", "Andorran", "Angolan",
+                        "Argentinian", "Armenian", "Australian", "Austrian", "Azerbaijani",
+                        "Bahraini", "Bangladeshi", "Belarusian", "Belgian", "Belizean",
+                        "Beninese", "Bhutanese", "Bolivian", "Bosnian", "Botswanan",
+                        "Brazilian", "British", "Bruneian", "Bulgarian", "Burkinabe",
+                        "Burundian", "Cambodian", "Cameroonian", "Canadian", "Cape Verdean",
+                        "Central African", "Chadian", "Chilean", "Chinese", "Colombian",
+                        "Comoran", "Congolese", "Costa Rican", "Croatian", "Cuban", "Cypriot",
+                        "Czech", "Danish", "Djiboutian", "Dominican", "Dutch", "Ecuadorian",
+                        "Egyptian", "Emirati", "Equatorial Guinean", "Eritrean", "Estonian",
+                        "Ethiopian", "Fijian", "Filipino", "Finnish", "French", "Gabonese",
+                        "Gambian", "Georgian", "German", "Ghanaian", "Greek", "Grenadian",
+                        "Guatemalan", "Guinean", "Guyanese", "Haitian", "Honduran",
+                        "Hungarian", "Icelandic", "Indian", "Indonesian", "Iranian", "Iraqi",
+                        "Irish", "Israeli", "Italian", "Ivorian", "Jamaican", "Japanese",
+                        "Jordanian", "Kazakhstani", "Kenyan", "Kuwaiti", "Kyrgyz", "Laotian",
+                        "Latvian", "Lebanese", "Lesothan", "Liberian", "Libyan",
+                        "Liechtensteiner", "Lithuanian", "Luxembourgish", "Macedonian",
+                        "Malagasy", "Malawian", "Malaysian", "Maldivian", "Malian",
+                        "Maltese", "Mauritanian", "Mauritian", "Mexican", "Moldovan",
+                        "Mongolian", "Montenegrin", "Moroccan", "Mozambican", "Namibian",
+                        "Nepalese", "New Zealander", "Nicaraguan", "Nigerian", "Norwegian",
+                        "Omani", "Pakistani", "Panamanian", "Paraguayan", "Peruvian",
+                        "Polish", "Portuguese", "Qatari", "Romanian", "Russian", "Rwandan",
+                        "Saudi", "Senegalese", "Serbian", "Sierra Leonean", "Singaporean",
+                        "Slovak", "Slovenian", "Somali", "South African", "South Korean",
+                        "South Sudanese", "Spanish", "Sri Lankan", "Sudanese", "Surinamese",
+                        "Swazi", "Swedish", "Swiss", "Syrian", "Taiwanese", "Tajik",
+                        "Tanzanian", "Thai", "Togolese", "Trinidadian", "Tunisian", "Turkish",
+                        "Turkmen", "Ugandan", "Ukrainian", "Uruguayan", "Uzbek", "Venezuelan",
+                        "Vietnamese", "Yemeni", "Zambian", "Zimbabwean"
+                    ])}
 
                     {/* Birth dates */}
                     <div>
@@ -203,7 +235,9 @@ export default function StaffProfile() {
                         <input value={convertToHijriISO(formData.contract_date_gregorian)} readOnly />
                     </div>
 
-                    {renderInput("Qualification", "qualification")}
+                    {renderSelect("Qualification", "qualification", [
+                        "Bachelor", "Diploma", "Master's", "Doctorate"
+                    ])}
                     {renderInput("License Number", "license_number")}
 
                     <div>
