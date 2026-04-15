@@ -12,7 +12,7 @@ exports.getById = async (id) => {
 // UPDATE by user_id
 exports.updateById = async (id, data) => {
     const allowedFields = [
-        "full_name", "middle_name", "last_name",
+        "full_name", "first_name", "middle_name", "last_name",
         "national_id_iqama", "hospital_id_number", "payroll_number",
         "track_care_number", "gender", "nationality",
         "birth_date_gregorian", "birth_date_hijri",
