@@ -10,6 +10,7 @@ export default function SecretaryDashboard() {
 
     const navigate = useNavigate();
     const [nurses, setNurses] = useState([]);
+    const [expiredLicenses, setExpiredLicenses] = useState(0);
 
     //  search
     const [search, setSearch] = useState("");
@@ -21,6 +22,14 @@ export default function SecretaryDashboard() {
         unit: "",
         status: ""
     });
+
+    // fetch expiring licenses count
+    useEffect(() => {
+        fetch("http://localhost:4000/api/licenses/expiring")
+            .then(res => res.json())
+            .then(data => setExpiredLicenses(Array.isArray(data) ? data.length : 0))
+            .catch(console.error);
+    }, []);
 
     //  fetch data
     useEffect(() => {
@@ -102,9 +111,9 @@ export default function SecretaryDashboard() {
                         <h1>{totalNurses}</h1>
                     </div>
 
-                    <div className="card big danger">
+                    <div className="card big danger" onClick={() => navigate("/licenses")} style={{ cursor: "pointer" }}>
                         <p>Expired License</p>
-                        <h1>{expired}</h1>
+                        <h1>{expiredLicenses}</h1>
                     </div>
 
                     <button

@@ -16,6 +16,8 @@ const orientationRoutes = require("./routes/orientationRoutes");
 const jobDocumentRoutes = require("./routes/jobDocumentRoutes");
 const evaluationRoutes = require("./routes/evaluationRoutes");
 const miscRoutes = require("./routes/miscRoutes");
+const licenseRoutes = require("./routes/licenseRoutes");
+
 
 
 
@@ -73,6 +75,8 @@ app.use("/api/job", jobDocumentRoutes);
 app.use("/api/evaluation", evaluationRoutes);
 
 app.use("/api/misc", miscRoutes);
+
+app.use("/api/licenses", licenseRoutes);
 
 
 

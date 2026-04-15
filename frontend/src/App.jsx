@@ -12,6 +12,8 @@ import RequestPage from "./pages/RequestPage.jsx";
 import JobInformation from "./pages/JobInformation";
 import StaffEvaluation from "./pages/StaffEvaluation";
 import StaffMiscellaneous from "./pages/StaffMiscellaneous";
+import LicenseTracker from "./pages/LicenseTracker";
+
 
 
 
@@ -55,6 +57,8 @@ function App() {
         <Route path="/nurse/:id/job" element={<JobInformation />} />
         <Route path="/nurse/:id/evaluation" element={<StaffEvaluation />} />
         <Route path="/nurse/:id/misc" element={<StaffMiscellaneous />} />
+        <Route path="/licenses" element={<LicenseTracker />} />
+
 
         {/* requests */}
         <Route path="/request" element={<RequestPage />} />

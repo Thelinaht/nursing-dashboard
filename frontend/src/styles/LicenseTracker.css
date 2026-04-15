@@ -1,0 +1,220 @@
+.lt-container {
+    background: #9fb3cc;
+    padding: 30px;
+    border-radius: 25px;
+}
+
+.lt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.lt-header h1 {
+    font-size: 28px;
+    color: #2f3e55;
+    margin: 0;
+}
+
+/* ── Summary cards ── */
+.lt-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.lt-card {
+    border-radius: 16px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: 0.2s;
+    color: white;
+}
+
+.lt-card:hover {
+    transform: translateY(-3px);
+}
+
+.lt-card p {
+    margin: 0 0 6px;
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.lt-card h2 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.expired-card {
+    background: #c0392b;
+}
+
+.critical-card {
+    background: #e67e22;
+}
+
+.warning-card {
+    background: #f1c40f;
+    color: #333;
+}
+
+.all-card {
+    background: #5a6f87;
+}
+
+/* ── Tabs ── */
+.lt-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.lt-tab {
+    background: #b8cad8;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2f3e55;
+    transition: 0.2s;
+}
+
+.lt-tab:hover {
+    background: #a0b5c8;
+}
+
+.lt-tab.active {
+    background: #5a6f87;
+    color: white;
+}
+
+/* ── Table ── */
+.lt-table {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.lt-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1.2fr 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 4px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.lt-row:last-child {
+    border-bottom: none;
+}
+
+.lt-row.header {
+    font-weight: 700;
+    font-size: 12px;
+    color: #5a6f87;
+    text-transform: uppercase;
+    border-bottom: 2px solid #dce6f2;
+    padding-bottom: 12px;
+    margin-bottom: 4px;
+}
+
+.lt-row:not(.header):hover {
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.lt-name {
+    font-weight: 600;
+    color: #2f3e55;
+    font-size: 13px;
+}
+
+/* ── Badges ── */
+.days-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 8px;
+}
+
+.days-expired {
+    background: #fde8e8;
+    color: #c0392b;
+}
+
+.days-critical {
+    background: #fdebd0;
+    color: #e67e22;
+}
+
+.days-warning {
+    background: #fef9e7;
+    color: #b7950b;
+}
+
+.days-ok {
+    background: #eafaf1;
+    color: #27ae60;
+}
+
+.status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.status-expired {
+    background: #c0392b;
+    color: white;
+}
+
+.status-critical {
+    background: #e67e22;
+    color: white;
+}
+
+.status-warning {
+    background: #f1c40f;
+    color: #333;
+}
+
+.status-ok {
+    background: #27ae60;
+    color: white;
+}
+
+.lt-empty {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+    font-size: 14px;
+}
+
+/* ── Back btn ── */
+.back-btn {
+    background: #dce6f2;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.back-btn:hover {
+    background: #5a6f87;
+    color: white;
+}
