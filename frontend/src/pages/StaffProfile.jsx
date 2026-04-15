@@ -48,8 +48,14 @@ export default function StaffProfile() {
 
     const handleSave = async () => {
         try {
+            // Clean date fields — strip time portion before sending to MySQL
+            const cleanDate = (val) => val ? val.split("T")[0] : null;
+
             const updatedData = {
                 ...formData,
+                birth_date_gregorian: cleanDate(formData.birth_date_gregorian),
+                contract_date_gregorian: cleanDate(formData.contract_date_gregorian),
+                hire_date: cleanDate(formData.hire_date),
                 birth_date_hijri: convertToHijriISO(formData.birth_date_gregorian),
                 contract_date_hijri: convertToHijriISO(formData.contract_date_gregorian),
             };
@@ -60,13 +66,16 @@ export default function StaffProfile() {
                 body: JSON.stringify(updatedData)
             });
 
+            const result = await response.json();
+
             if (!response.ok) {
-                alert("❌ Update failed");
+                alert("❌ Update failed: " + (result.error || response.status));
                 return;
             }
 
-            const result = await response.json();
-            if (result.affectedRows === 0) {
+            // affectedRows=0 + changedRows=0 means record not found
+            // affectedRows=1 + changedRows=0 means same value (still ok)
+            if (result.affectedRows === 0 && result.changedRows === undefined) {
                 alert("❌ Update failed: no record found");
                 return;
             }

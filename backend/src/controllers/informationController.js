@@ -17,9 +17,9 @@ exports.updateInformation = async (req, res) => {
             req.params.id,
             req.body
         );
-
         res.json(result);
     } catch (err) {
+        console.error("UPDATE ERROR:", err.message);
         res.status(500).json({ error: err.message });
     }
 };
