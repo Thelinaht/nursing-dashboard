@@ -194,3 +194,88 @@
     font-size: 13px;
     color: #2f3e55;
 }
+
+/* Supervisor Specific Grid */
+.rh-header-sup {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr 1.5fr 1fr 0.5fr 1.5fr;
+    background: #8fa8c0;
+    padding: 12px 20px;
+    gap: 10px;
+}
+.rh-row-sup {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr 1.5fr 1fr 0.5fr 1.5fr;
+    padding: 14px 20px;
+    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    transition: 0.2s;
+}
+.rh-row-sup:last-of-type {
+    border-bottom: none;
+}
+.rh-row-sup:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Action Buttons */
+.action-btns {
+    display: flex;
+    gap: 8px;
+}
+.action-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+}
+.approve-btn {
+    background: #4caf50;
+}
+.reject-btn {
+    background: #f44336;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.modal-content h3 {
+    margin: 0;
+    color: #2f3e55;
+}
+.modal-content textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #c7d5e5;
+    outline: none;
+    font-family: inherit;
+    resize: none;
+    box-sizing: border-box;
+}
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}

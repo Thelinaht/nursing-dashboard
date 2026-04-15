@@ -2,7 +2,12 @@ const pool = require("../db");
 
 // GET all
 exports.getAllRequests = async () => {
-    const [rows] = await pool.query("SELECT * FROM Request");
+    const query = `
+        SELECT r.*, n.full_name AS nurse_name 
+        FROM Request r
+        LEFT JOIN Nursing_staff n ON r.nurse_id = n.user_id
+    `;
+    const [rows] = await pool.query(query);
     return rows;
 };
 

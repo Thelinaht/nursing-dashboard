@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import NurseDashboard from "./pages/NurseDashboard";
 import SecretaryDashboard from "./pages/SecretaryDashboard";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
+import ManageRequests from "./pages/ManageRequests";
 import AssignStaff from "./pages/AssignStaff";
 import StaffDetails from "./pages/StaffDetails";
 import StaffProfile from "./pages/StaffProfile";
@@ -44,6 +45,7 @@ function App() {
         <Route path="/nurse-info" element={<NurseDashboard />} />
         <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
         <Route path="/supervisor-dashboard" element={<SupervisorDashboard />} />
+        <Route path="/supervisor/manage-requests" element={<ManageRequests />} />
         <Route path="/director-dashboard" element={<DirectorDashboard />} />
         <Route path="/quality-manager-dashboard" element={<QualityManagerDashboard />} />
         <Route path="/add-nurse" element={<AddNurse />} />
