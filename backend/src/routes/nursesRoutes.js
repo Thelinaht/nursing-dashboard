@@ -18,4 +18,6 @@ router.put("/:id", nursesController.update);
 // DELETE
 router.delete("/:id", nursesController.remove);
 
+router.get("/user/:user_id", nursesController.getByUserId);
+
 module.exports = router;

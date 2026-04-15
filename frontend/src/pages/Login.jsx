@@ -33,6 +33,8 @@ export default function Login() {
                     window.location.href = "/secretary-dashboard";
                 } else if (user.role_id === 3) {
                     window.location.href = "/supervisor-dashboard";
+                } else if (user.role_id === 4) {
+                    window.location.href = "/director-dashboard";
                 } else {
                     alert("Unknown role");
                 }

@@ -8,6 +8,12 @@ const authRoutes = require("./routes/authRoutes");
 const trainingRoutes = require("./routes/trainingRoutes");
 const assignmentRoutes = require("./routes/assignmentRoutes");
 const assignmentController = require("./controllers/assignmentController");
+const userRoutes = require("./routes/userRoutes");
+const infoRoutes = require("./routes/informationRoutes");
+const roleRoutes = require("./routes/roleRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
+
+
 
 const app = express();
 
@@ -37,6 +43,20 @@ app.use("/api/auth", authRoutes);
 
 //training API
 app.use("/api/training", trainingRoutes);
+
+
+app.use("/api/users", userRoutes);
+
+
+app.use("/api/information", infoRoutes);
+
+
+app.use("/api/roles", roleRoutes);
+
+
+app.use("/api/uploads", uploadRoutes);
+
+
 
 const PORT = 4000;
 

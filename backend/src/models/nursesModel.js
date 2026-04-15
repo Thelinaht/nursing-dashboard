@@ -56,3 +56,11 @@ exports.deleteNurse = async (id) => {
 
     return result;
 };
+
+exports.getNurseByUserId = async (user_id) => {
+    const [rows] = await pool.query(
+        "SELECT * FROM Nursing_staff WHERE user_id = ?",
+        [user_id]
+    );
+    return rows[0];
+};

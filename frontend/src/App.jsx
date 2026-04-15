@@ -9,6 +9,9 @@ import StaffDetails from "./pages/StaffDetails";
 import StaffProfile from "./pages/StaffProfile";
 import StaffQualification from "./pages/StaffQualification";
 import RequestPage from "./pages/RequestPage.jsx";
+import AddNurse from "./pages/AddNurse";
+import DirectorDashboard from "./pages/DirectorDashboard";
+
 
 function App() {
   return (
@@ -24,6 +27,8 @@ function App() {
         <Route path="/nurse/:id/profile" element={<StaffProfile />} />
         <Route path="/nurse/:id/qualification" element={<StaffQualification />} />
         <Route path="/request" element={<RequestPage />} />
+        <Route path="/add-nurse" element={<AddNurse />} />
+        <Route path="/director-dashboard" element={<DirectorDashboard />} />
       </Routes>
     </Router>
   );
