@@ -13,9 +13,9 @@ export default function Login() {
             const res = await fetch("http://localhost:4000/api/auth/login", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password }),
             });
 
             const data = await res.json();
@@ -23,24 +23,32 @@ export default function Login() {
             if (res.ok) {
                 const user = data.user;
 
-                //  حفظ بيانات المستخدم
+                // Save user data to localStorage
                 localStorage.setItem("user", JSON.stringify(user));
 
-                //  توجيه حسب الرول
-                if (user.role_id === 1) {
-                    window.location.href = "/nurse-dashboard";
-                } else if (user.role_id === 2) {
-                    window.location.href = "/secretary-dashboard";
-                } else if (user.role_id === 3) {
-                    window.location.href = "/supervisor-dashboard";
-                } else {
-                    alert("Unknown role");
-                }
+                // Log the user data for debugging
+                console.log("User data from backend:", user);
 
+                // Redirect user based on role_name
+                switch (user.role_name) {
+                    case "nurse":
+                        window.location.href = "/nurse-dashboard";
+                        break;
+                    case "office Secretaries":
+                        window.location.href = "/secretary-dashboard";
+                        break;
+                    case "nursing supervisor":
+                        window.location.href = "/supervisor-dashboard";
+                        break;
+                    case "Associate Director of Nursing - Director of Nursing":
+                        window.location.href = "/director-dashboard";
+                        break;
+                    default:
+                        alert("Unknown role");
+                }
             } else {
                 alert(data.message);
             }
-
         } catch (err) {
             console.error("ERROR:", err);
             alert("Server error");

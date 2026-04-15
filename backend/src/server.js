@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-
+const chatRoutes = require("./routes/chatRoutes");
 const nursesRoutes = require("./routes/nursesRoutes");
 const requestsRoutes = require("./routes/requestsRoutes");
 const approvalRoutes = require("./routes/approvalRoutes");
@@ -17,6 +17,8 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.send("Server is working ✅");
 });
+
+app.use("/api/chat", chatRoutes);
 
 // nurses API
 app.use("/api/nurses", nursesRoutes);
@@ -38,6 +40,8 @@ const PORT = 4000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
+
 
 
 
