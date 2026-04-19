@@ -9,35 +9,26 @@ export default function NurseDashboard() {
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem("user"));
-        console.log("USER:", user);
+        if (!user?.user_id) return;
 
-        if (!user?.nurse_id) {
-            console.log("No nurse_id found in user, backend needs restart.");
-            setNurse({ error: "الرجاء إعادة تشغيل سيرفر الباك إند! (Backend needs restart)" });
-            return;
-        }
-
-        fetch(`http://localhost:4000/api/nurses/${user?.nurse_id}`)
-            .then(res => {
-                console.log("STATUS:", res.status);
-                return res.json();
+        fetch(`http://localhost:4000/api/nurses/${user.user_id}`)
+            .then(res => res.json())
+            .then(async (nurseData) => {
+                try {
+                    const trainingRes = await fetch(`http://localhost:4000/api/training/${user.user_id}`);
+                    const trainingData = await trainingRes.json();
+                    setNurse({
+                        ...nurseData,
+                        trainings: trainingData?.rows?.filter(t => t.status !== 'Completed').slice(0, 4) || []
+                    });
+                } catch {
+                    setNurse(nurseData);
+                }
             })
-            .then(data => {
-                console.log("NURSE DATA:", data);
-                setNurse(data);
-            })
-            .catch(err => console.error("FETCH ERROR:", err));
+            .catch(err => console.error(err));
     }, []);
 
     if (!nurse) return <div style={{ padding: 40 }}>Loading...</div>;
-
-    if (nurse.error) return (
-        <div style={{ padding: 40, color: 'red', textAlign: 'center', fontSize: '20px' }}>
-            <h2>❌ خطأ في الباك إند</h2>
-            <p>{nurse.error}</p>
-            <p>التعديلات التي قمنا بها في الباك إند لم تتفعل بعد. يرجى الذهاب للـ Terminal الخاص بالباك إند، إيقافه (CTRL+C) ثم تشغيله من جديد (npm run dev)!</p>
-        </div>
-    );
 
     return (
         <Layout role="nurse" logoSrc="/logo.png" username={nurse.full_name}>
@@ -142,13 +133,15 @@ export default function NurseDashboard() {
                             {nurse.trainings?.length > 0 ? (
                                 nurse.trainings.map((t, i) => (
                                     <div className="train-row" key={i}>
-                                        <span className="train-name">{t.course_name}</span>
+                                        <span className="train-name">{t.training_name}</span>
                                         <span>
-                                            <span className={`tbadge ${t.status?.toLowerCase()}`}>
+                                            <span className={`tbadge ${t.status?.toLowerCase().replace(' ', '')}`}>
                                                 {t.status}
                                             </span>
                                         </span>
-                                        <span className="train-date">{t.date || "–"}</span>
+                                        <span className="train-date">
+                                            {t.due_date ? new Date(t.due_date).toLocaleDateString("en-GB") : "–"}
+                                        </span>
                                     </div>
                                 ))
                             ) : (

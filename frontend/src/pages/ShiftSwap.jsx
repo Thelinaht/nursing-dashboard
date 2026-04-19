@@ -13,9 +13,9 @@ export default function ShiftSwap() {
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem("user"));
-        if (!user?.nurse_id) return;
+        if (!user?.user_id) return;
 
-        fetch(`http://localhost:4000/api/nurses/${user.nurse_id}`)
+        fetch(`http://localhost:4000/api/nurses/${user.user_id}`)
             .then(res => res.json())
             .then(data => setNurse(data))
             .catch(err => console.error(err));
@@ -39,8 +39,10 @@ export default function ShiftSwap() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    nurse_id: user.nurse_id,
+                    nurse_id: nurse?.nurse_id,
                     request_type: "Shift Swap",
+                    title: message,
+                    description: reason,
                 }),
             });
 
@@ -60,6 +62,9 @@ export default function ShiftSwap() {
         <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
 
             <div className="leave-main">
+                <button className="back-btn" onClick={() => navigate("/request")}>
+                    ← Back
+                </button>
                 <div className="leave-form-card">
 
                     <div className="leave-header">

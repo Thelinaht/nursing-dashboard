@@ -122,4 +122,38 @@
     padding: 10px 18px;
     font-size: 13px;
     color: #2f3e55;
+
+}
+
+.leave-main {
+    position: relative;
+}
+
+.leave-main {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.back-btn {
+    align-self: flex-start;
+    margin-bottom: 16px;
+    padding: 8px 18px;
+    background: #dce6f2;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2f3e55;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.back-btn:hover {
+    background: #cfdced;
+    transform: scale(1.03);
 }

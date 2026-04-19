@@ -35,6 +35,8 @@ export default function UnitTransfer() {
                 body: JSON.stringify({
                     nurse_id: user.nurse_id,
                     request_type: "Unit Transfer",
+                    title: reason,
+                    description: message
                 }),
             });
             if (res.ok) { alert("Request submitted successfully!"); navigate("/request"); }
@@ -45,6 +47,9 @@ export default function UnitTransfer() {
     return (
         <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
             <div className="leave-main">
+                <button className="back-btn" onClick={() => navigate(-1)}>
+                    ← Back
+                </button>
                 <div className="leave-form-card">
                     <div className="leave-header">
                         <div className="leave-header-icon">

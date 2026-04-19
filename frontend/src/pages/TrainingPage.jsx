@@ -16,34 +16,43 @@ export default function TrainingPage() {
 
         fetch(`http://localhost:4000/api/nurses/${user.user_id}`)
             .then(res => res.json())
+            .then(data => setNurse(data))
+            .catch(err => console.error(err));
+
+        fetch(`http://localhost:4000/api/training/${user.user_id}`)
+            .then(res => res.json())
             .then(data => {
-                setNurse(data);
-                setTrainings(data.trainings || []);
+                console.log("TRAINING DATA:", data);
+                setTrainings(data?.rows ?? []);
             })
             .catch(err => console.error(err));
     }, []);
 
-    const filtered = trainings.filter(t =>
-        (statusFilter === "All" || t.status === statusFilter) &&
-        (actionFilter === "All" || getAction(t.status) === actionFilter) &&
-        (searchName === "" || t.course_name?.toLowerCase().includes(searchName.toLowerCase())) &&
-        (searchDate === "" || t.due_date?.includes(searchDate))
-    );
-
     const getAction = (status) => {
-        if (status === "Complete") return "View";
+        if (status === "Completed") return "View";
         if (status === "Overdue") return "Start";
-        return "Continue";
+        if (status === "In Progress") return "Continue";
+        return "Start";
     };
 
     const statusClass = (s) => {
-        if (s === "Complete") return "tbadge complete";
+        if (s === "Completed") return "tbadge complete";
         if (s === "Overdue") return "tbadge overdue";
+        if (s === "In Progress") return "tbadge inprogress";
         return "tbadge pending";
     };
 
-    const statuses = ["All", "Complete", "Overdue", "Pending"];
+    const filtered = trainings.filter(t =>
+        (statusFilter === "All" || t.status === statusFilter) &&
+        (actionFilter === "All" || getAction(t.status) === actionFilter) &&
+        (searchName === "" || t.training_name?.toLowerCase().includes(searchName.toLowerCase())) &&
+        (searchDate === "" || t.due_date?.includes(searchDate))
+    );
+
+    const statuses = ["All", "Completed", "Pending", "Overdue", "In Progress"];
     const actions = ["All", "View", "Start", "Continue"];
+
+    const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-GB") : "–";
 
     return (
         <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
@@ -88,12 +97,12 @@ export default function TrainingPage() {
                     {/* Rows */}
                     {filtered.length > 0 ? filtered.map((t, i) => (
                         <div className="tr-row" key={i}>
-                            <div className="tr-cell">{t.course_name}</div>
+                            <div className="tr-cell">{t.training_name}</div>
                             <div className="tr-cell">
                                 <span className={statusClass(t.status)}>{t.status}</span>
                             </div>
                             <div className="tr-cell">
-                                <span className="date-badge">{t.due_date || "–"}</span>
+                                <span className="date-badge">{formatDate(t.due_date)}</span>
                             </div>
                             <div className="tr-cell">
                                 <button className="action-btn">{getAction(t.status)}</button>

@@ -41,8 +41,8 @@ export default function LeaveRequest() {
                 body: JSON.stringify({
                     nurse_id: user.nurse_id,
                     request_type: "Leave Request",
-                    title: message,
-                    description: reason
+                    title: reason,
+                    description: message
                 }),
             });
 
@@ -62,6 +62,9 @@ export default function LeaveRequest() {
         <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
 
             <div className="leave-main">
+                <button className="back-btn" onClick={() => navigate(-1)}>
+                    ← Back
+                </button>
                 <div className="leave-form-card">
 
                     <div className="leave-header">
