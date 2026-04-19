@@ -30,7 +30,6 @@ const menuConfig = {
   ],
   secretary: [
     { label: "Dashboard", path: "/secretary-dashboard", icon: I.staff },
-    { label: "Add Nurse", path: "/add-nurse", icon: I.addNurse },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   supervisor: [

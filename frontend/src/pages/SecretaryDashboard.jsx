@@ -14,6 +14,7 @@ export default function SecretaryDashboard() {
 
     //  search
     const [search, setSearch] = useState("");
+    const [sortOrder, setSortOrder] = useState("az"); // az | za
 
     //  filters
     const [filters, setFilters] = useState({
@@ -45,7 +46,7 @@ export default function SecretaryDashboard() {
     const units = [...new Set(nurses.map(n => n.unit).filter(Boolean))];
     const statuses = [...new Set(nurses.map(n => n.status).filter(Boolean))];
 
-    //  filtering logic
+    //  filtering + sorting logic
     const filteredNurses = nurses.filter(n =>
         (!filters.job_title || n.job_title === filters.job_title) &&
         (!filters.position_title || n.position_title === filters.position_title) &&
@@ -55,7 +56,11 @@ export default function SecretaryDashboard() {
             n.full_name?.toLowerCase().includes(search.toLowerCase()) ||
             n.national_id_iqama?.includes(search)
         )
-    );
+    ).sort((a, b) => {
+        const nameA = a.full_name?.toLowerCase() || "";
+        const nameB = b.full_name?.toLowerCase() || "";
+        return sortOrder === "az" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+    });
 
     //  stats
     const totalNurses = filteredNurses.length;
@@ -102,7 +107,7 @@ export default function SecretaryDashboard() {
         >
             <div className="main">
 
-                <h2>Staff Directory</h2>
+                <h1>Staff Directory</h1>
 
                 {/*  Cards */}
                 <div className="cards">
@@ -124,59 +129,63 @@ export default function SecretaryDashboard() {
                     </button>
                 </div>
 
-                {/*  Filters */}
-                <div className="filter-grid">
+                {/* Filters */}
+                <div className="filter-section">
 
-                    <input
-                        type="text"
-                        placeholder="Search by name or iqama..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="search-input"
-                    />
+                    {/* Row 1: Search + dropdowns */}
+                    <div className="filter-row">
+                        <input
+                            type="text"
+                            placeholder="🔍  Search by name or iqama..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="search-input"
+                        />
+                        <select className="filter-select" value={filters.job_title} onChange={(e) => handleFilterChange("job_title", e.target.value)}>
+                            <option value="">Job Title</option>
+                            {jobTitles.map(j => <option key={j}>{j}</option>)}
+                        </select>
+                        <select className="filter-select" value={filters.position_title} onChange={(e) => handleFilterChange("position_title", e.target.value)}>
+                            <option value="">Position</option>
+                            {positions.map(p => <option key={p}>{p}</option>)}
+                        </select>
+                        <select className="filter-select" value={filters.unit} onChange={(e) => handleFilterChange("unit", e.target.value)}>
+                            <option value="">Unit</option>
+                            {units.map(u => <option key={u}>{u}</option>)}
+                        </select>
+                        <select className="filter-select" value={filters.status} onChange={(e) => handleFilterChange("status", e.target.value)}>
+                            <option value="">Status</option>
+                            {statuses.map(s => <option key={s}>{s}</option>)}
+                        </select>
+                    </div>
 
-                    <select
-                        value={filters.job_title}
-                        onChange={(e) => handleFilterChange("job_title", e.target.value)}
-                    >
-                        <option value="">Job Title</option>
-                        {jobTitles.map(j => <option key={j}>{j}</option>)}
-                    </select>
-
-                    <select
-                        value={filters.position_title}
-                        onChange={(e) => handleFilterChange("position_title", e.target.value)}
-                    >
-                        <option value="">Position</option>
-                        {positions.map(p => <option key={p}>{p}</option>)}
-                    </select>
-
-                    <select
-                        value={filters.unit}
-                        onChange={(e) => handleFilterChange("unit", e.target.value)}
-                    >
-                        <option value="">Unit</option>
-                        {units.map(u => <option key={u}>{u}</option>)}
-                    </select>
-
-                    <select
-                        value={filters.status}
-                        onChange={(e) => handleFilterChange("status", e.target.value)}
-                    >
-                        <option value="">Status</option>
-                        {statuses.map(s => <option key={s}>{s}</option>)}
-                    </select>
-
-                    <button className="report-btn" onClick={generatePDF}>
-                        Generate Report
-                    </button>
+                    {/* Row 2: active chips + report btn */}
+                    <div className="filter-actions">
+                        <div className="active-filters">
+                            <span className="results-count">{filteredNurses.length} result{filteredNurses.length !== 1 ? "s" : ""}</span>
+                            {filters.job_title && <span className="filter-chip">{filters.job_title}<button onClick={() => handleFilterChange("job_title", "")}>✕</button></span>}
+                            {filters.position_title && <span className="filter-chip">{filters.position_title}<button onClick={() => handleFilterChange("position_title", "")}>✕</button></span>}
+                            {filters.unit && <span className="filter-chip">{filters.unit}<button onClick={() => handleFilterChange("unit", "")}>✕</button></span>}
+                            {filters.status && <span className="filter-chip">{filters.status}<button onClick={() => handleFilterChange("status", "")}>✕</button></span>}
+                            {(filters.job_title || filters.position_title || filters.unit || filters.status || search) && (
+                                <button className="clear-btn" onClick={() => { setFilters({ job_title: "", position_title: "", unit: "", status: "" }); setSearch(""); }}>Clear all</button>
+                            )}
+                        </div>
+                        <button className="report-btn" onClick={generatePDF}>Generate Report</button>
+                    </div>
 
                 </div>
 
                 {/*  Table */}
                 <div className="table-box">
 
-                    <h2 className="table-title">Nurses Informations</h2>
+                    <div className="table-header-row">
+                        <h2 className="table-title">Nurses Informations</h2>
+                        <select className="sort-select" value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
+                            <option value="az">Sort By Name: A → Z</option>
+                            <option value="za">Sort By Name: Z → A</option>
+                        </select>
+                    </div>
 
                     <div className="list-header">
                         <span>Name</span>
