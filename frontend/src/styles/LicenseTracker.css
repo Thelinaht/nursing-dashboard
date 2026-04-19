@@ -36,7 +36,6 @@
     padding: 18px 20px;
     cursor: pointer;
     transition: 0.2s;
-    color: white;
 }
 
 .lt-card:hover {
@@ -46,7 +45,7 @@
 .lt-card p {
     margin: 0 0 6px;
     font-size: 13px;
-    opacity: 0.9;
+    font-weight: 500;
 }
 
 .lt-card h2 {
@@ -56,20 +55,23 @@
 }
 
 .expired-card {
-    background: #c0392b;
+    background: #e8c5c5;
+    color: #7b2020;
 }
 
 .critical-card {
-    background: #e67e22;
+    background: #f0d9bf;
+    color: #7a4510;
 }
 
 .warning-card {
-    background: #f1c40f;
-    color: #333;
+    background: #f5ecbf;
+    color: #6b5a10;
 }
 
 .all-card {
-    background: #5a6f87;
+    background: #b8cad8;
+    color: #2f3e55;
 }
 
 /* ── Tabs ── */
@@ -131,7 +133,7 @@
 }
 
 .lt-row:not(.header):hover {
-    background: #f8fafc;
+    background: #f5f8fc;
     border-radius: 8px;
 }
 
@@ -141,60 +143,61 @@
     font-size: 13px;
 }
 
-/* ── Badges ── */
+/* ── Days badges ── */
 .days-badge {
     font-size: 12px;
     font-weight: 600;
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 8px;
 }
 
 .days-expired {
-    background: #fde8e8;
-    color: #c0392b;
+    background: #f2dada;
+    color: #922b21;
 }
 
 .days-critical {
-    background: #fdebd0;
-    color: #e67e22;
+    background: #f5e6d0;
+    color: #935116;
 }
 
 .days-warning {
-    background: #fef9e7;
-    color: #b7950b;
+    background: #f7f0cc;
+    color: #7d6608;
 }
 
 .days-ok {
-    background: #eafaf1;
-    color: #27ae60;
+    background: #d5f0e0;
+    color: #1e6b3a;
 }
 
+/* ── Status badges ── */
 .status-badge {
     font-size: 11px;
     font-weight: 700;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 20px;
     text-align: center;
 }
 
 .status-expired {
-    background: #c0392b;
-    color: white;
+    background: #e8c5c5;
+    color: #7b2020;
 }
 
 .status-critical {
-    background: #e67e22;
-    color: white;
+    background: #f0d9bf;
+    color: #7a4510;
 }
 
 .status-warning {
-    background: #f1c40f;
-    color: #333;
+    background: #f5ecbf;
+    color: #6b5a10;
 }
 
 .status-ok {
-    background: #27ae60;
-    color: white;
+    background: #c8ecd6;
+    color: #1e6b3a;
 }
 
 .lt-empty {

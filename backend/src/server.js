@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const chatRoutes = require("./routes/chatRoutes");
 const nursesRoutes = require("./routes/nursesRoutes");
 const requestsRoutes = require("./routes/requestsRoutes");
@@ -29,6 +30,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // test
 app.get("/", (req, res) => {
@@ -86,8 +90,3 @@ const PORT = 4000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
-
-
-
-
-

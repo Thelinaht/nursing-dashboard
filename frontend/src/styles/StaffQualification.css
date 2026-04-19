@@ -232,3 +232,75 @@
     background: #3e536b;
     transform: translateY(-2px);
 }
+
+/* ── Saudi Council Card ── */
+.saudi-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.saudi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.saudi-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #2f3e55;
+}
+
+.saudi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.saudi-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.saudi-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #5a6f87;
+}
+
+.saudi-field input {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: none;
+    background: #f0f4f9;
+    font-size: 13px;
+    color: #2f3e55;
+}
+
+.saudi-field input.editing {
+    background: white;
+    border: 1.5px solid #5a6f87;
+}
+
+.saudi-field input:disabled {
+    background: #f0f4f9;
+    color: #444;
+    cursor: default;
+}
+
+.saudi-cert {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.saudi-cert label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #5a6f87;
+}

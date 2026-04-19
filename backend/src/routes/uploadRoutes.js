@@ -2,23 +2,29 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 const pool = require("../db");
 
-// Storage config — saves files in backend/uploads/
+// Make sure uploads folder exists
+const uploadsDir = path.join(__dirname, "../../uploads");
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Storage config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, "../../uploads"));
+        cb(null, uploadsDir);
     },
     filename: (req, file, cb) => {
-        // e.g.  31_cv_1713180000000.pdf
-        const unique = `${req.params.user_id}_${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`;
+        const unique = `${req.params.user_id}_${req.params.docType}_${Date.now()}${path.extname(file.originalname)}`;
         cb(null, unique);
     }
 });
 
 const upload = multer({
     storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
+    limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         const allowed = [".pdf", ".jpg", ".jpeg", ".png"];
         const ext = path.extname(file.originalname).toLowerCase();
@@ -27,7 +33,7 @@ const upload = multer({
     }
 });
 
-// Column name map — fieldname → DB column
+// Column name map
 const fieldToColumn = {
     cv: "cv_path",
     hospital_id: "hospital_id_path",
@@ -37,7 +43,6 @@ const fieldToColumn = {
 };
 
 // POST /api/uploads/:user_id/:docType
-// docType: cv | hospital_id | national_id | passport | picture
 router.post("/:user_id/:docType", upload.single("file"), async (req, res) => {
     try {
         const { user_id, docType } = req.params;
@@ -51,7 +56,6 @@ router.post("/:user_id/:docType", upload.single("file"), async (req, res) => {
             return res.status(400).json({ error: "No file uploaded" });
         }
 
-        // Save relative path in DB
         const filePath = `uploads/${req.file.filename}`;
 
         await pool.query(
@@ -62,12 +66,12 @@ router.post("/:user_id/:docType", upload.single("file"), async (req, res) => {
         res.json({ success: true, path: filePath });
 
     } catch (err) {
-        console.error(err);
+        console.error("Upload error:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// GET /api/uploads/:user_id — get all doc paths for a nurse
+// GET /api/uploads/:user_id
 router.get("/:user_id", async (req, res) => {
     try {
         const [rows] = await pool.query(

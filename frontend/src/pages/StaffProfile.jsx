@@ -350,7 +350,7 @@ export default function StaffProfile() {
                         className="doc-upload-btn"
                         onClick={() => inputRef.current.click()}
                     >
-                        {filePath ? "Replace" : "Upload"}
+                        {filePath ? "Update" : "Upload"}
                     </button>
                     <input
                         type="file"

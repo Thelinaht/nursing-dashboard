@@ -62,9 +62,6 @@ const menuConfig = {
   ],
   qualityManager: [
     { label: "Dashboard", path: "/quality-manager-dashboard", icon: I.dashboard },
-    { label: "Compliance", path: "/compliance", icon: I.compliance },
-    { label: "Evaluation", path: "/evaluation", icon: I.evaluation },
-    { label: "Reports", path: "/reports", icon: I.report },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   researchDirector: [
