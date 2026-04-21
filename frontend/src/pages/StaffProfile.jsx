@@ -128,7 +128,7 @@ export default function StaffProfile() {
         <Layout
             role="secretary"
             logoSrc="/logo.png"
-            username={JSON.parse(localStorage.getItem("user"))?.full_name || "Secretary"}
+            username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}
         >
             <div className="profile-container">
 

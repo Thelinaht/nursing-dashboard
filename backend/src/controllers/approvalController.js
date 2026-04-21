@@ -46,13 +46,35 @@ exports.assistantDecision = async (req, res) => {
     const { request_id, decision } = req.body;
 
     try {
-        //  قرار الاسستنت
         await approvalModel.makeDecision(request_id, "Assistant Director", decision);
 
-        // القرار النهائي
+        if (decision === "Rejected") {
+            await requestModel.updateRequestStatus(request_id, "Rejected");
+            return res.json({ message: "Request rejected by Assistant Director ❌" });
+        }
+
+        if (decision === "Approved") {
+            // Move to final stage: Director
+            await approvalModel.createApproval(request_id, "Director");
+            return res.json({ message: "Moved to Director ✅" });
+        }
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Director decision (Final)
+exports.directorDecision = async (req, res) => {
+    const { request_id, decision } = req.body;
+
+    try {
+        await approvalModel.makeDecision(request_id, "Director", decision);
+
+        // Final decision applied to the request
         await requestModel.updateRequestStatus(request_id, decision);
 
-        res.json({ message: "Final decision applied ✅" });
+        res.json({ message: `Final decision (${decision}) applied by Director ✅` });
 
     } catch (err) {
         res.status(500).json({ error: err.message });

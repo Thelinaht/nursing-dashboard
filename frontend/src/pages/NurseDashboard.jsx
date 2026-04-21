@@ -8,8 +8,10 @@ export default function NurseDashboard() {
     const [nurse, setNurse] = useState(null);
 
     useEffect(() => {
+
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user?.user_id) return;
+
 
         fetch(`http://localhost:4000/api/nurses/${user.user_id}`)
             .then(res => res.json())
@@ -38,7 +40,7 @@ export default function NurseDashboard() {
                 <h2>Nurse Profile</h2>
 
                 {/* Profile Top Card */}
-                <div className="profile-top">
+                <div className="profile-top glass-card">
                     <div className="profile-col">
                         <div className="profile-row">
                             <span className="profile-label">Name</span>
@@ -77,7 +79,7 @@ export default function NurseDashboard() {
                 <div className="bottom-cards">
 
                     {/* Left: Employment + Personal */}
-                    <div className="info-card">
+                    <div className="info-card content-box">
                         <h3>Employment Information</h3>
                         <div className="info-row">
                             <span className="lbl">Start Date</span>
@@ -123,7 +125,7 @@ export default function NurseDashboard() {
                     <div className="bottom-right">
 
                         {/* Training History */}
-                        <div className="info-card">
+                        <div className="info-card content-box">
                             <h3>Training History</h3>
                             <div className="train-header">
                                 <span>Course Name</span>
@@ -152,7 +154,7 @@ export default function NurseDashboard() {
                         </div>
 
                         {/* License Information */}
-                        <div className="info-card">
+                        <div className="info-card content-box">
                             <h3>License Information</h3>
                             <div className="info-row">
                                 <span className="lbl">License Number</span>

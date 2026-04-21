@@ -81,22 +81,22 @@ export default function SupervisorDashboard() {
     const exceedingUnitsStr = ratios.filter(r => r.status === 'exceeds').map(r => r.unit).join(', ') || 'None';
 
     return (
-        <Layout role="supervisor" logoSrc="/logo.png" username={JSON.parse(localStorage.getItem("user"))?.full_name || "Supervisor"}>
+        <Layout role="supervisor" logoSrc="/logo.png" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Supervisor"}>
 
             <div className="main">
                 <div className="supervisor-container">
 
                     {/* Top Stats Cards */}
                     <div className="cards-row">
-                        <div className="wave-card">
+                        <div className="wave-card glass-card">
                             <p><i>👥</i> Number of Nurses</p>
                             <h1>{totalNurses}</h1>
                         </div>
-                        <div className="wave-card">
+                        <div className="wave-card glass-card">
                             <p><i>🏥</i> Units</p>
                             <h1>{totalUnits}</h1>
                         </div>
-                        <div className="wave-card danger-text">
+                        <div className="wave-card glass-card danger-text">
                             <p><i>⚕️</i> Patient-to-staff Ratio</p>
                             <h1>3</h1> {/* Mocked since total patients isn't in DB */}
                         </div>
@@ -104,12 +104,12 @@ export default function SupervisorDashboard() {
 
                     {/* Middle Section */}
                     <div className="middle-section">
-                        <div className="table-box">
+                        <div className="table-box content-box">
                             <div className="box-header" style={{ flexDirection: 'column', gap: '10px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                    <h2 className="table-title">Assign staff</h2>
+                                    <h2 className="content-box-title">Assign staff</h2>
                                     <div className="actions">
-                                        <button className="btn-small dark" onClick={() => {
+                                        <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }} onClick={() => {
                                             setSearch("");
                                             setAssignUnitFilters([]);
                                         }}>Clear Filters</button>
@@ -121,8 +121,8 @@ export default function SupervisorDashboard() {
                                         placeholder="🔍 Search name..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        className="search-input"
-                                        style={{ flex: 1, minWidth: "120px", padding: "6px 12px", borderRadius: "10px", border: "none", outline: "none", background: "#dce4ed", color: "#2f3e55", fontSize: "12px" }}
+                                        className="input-pill"
+                                        style={{ flex: 1, minWidth: "120px", padding: "6px 12px" }}
                                     />
 
                                     <div style={{ position: "relative" }}>
@@ -164,18 +164,22 @@ export default function SupervisorDashboard() {
                                     <span>Name</span>
                                 </div>
                                 {assignedStaff.length > 0 ? assignedStaff.map(staff => (
+<<<<<<< HEAD
                                     <div key={staff.id} className="table-row" style={{ gridTemplateColumns: "0.5fr 1.5fr 2fr" }}>
+=======
+                                    <div key={staff.id} className="table-row premium-row">
+>>>>>>> 37000de (Bushra update)
                                         <span>{staff.id}</span>
                                         <span>{staff.unit}</span>
                                         <span>{staff.name}</span>
                                     </div>
-                                )) : <div style={{ padding: "10px", color: "#44596f" }}>No matching staff</div>}
+                                )) : <div style={{ padding: "10px", color: "var(--text-secondary)" }}>No matching staff</div>}
                             </div>
                         </div>
 
-                        <div className="table-box">
+                        <div className="table-box content-box">
                             <div className="box-header">
-                                <h2 className="table-title">daily Staffing by Unit</h2>
+                                <h2 className="content-box-title">daily Staffing by Unit</h2>
                                 <div className="actions">
                                     <select
                                         className="filter-select"
@@ -195,13 +199,13 @@ export default function SupervisorDashboard() {
                                     <span>Coverage</span>
                                 </div>
                                 {filteredDailyStaffing.length > 0 ? filteredDailyStaffing.map((row, i) => (
-                                    <div key={i} className="table-row staffing-row">
+                                    <div key={i} className="table-row staffing-row premium-row">
                                         <span>{row.unit}</span>
                                         <span>{row.required}</span>
                                         <span>{row.available}</span>
                                         <span className={`badge ${row.status}`}>{row.coverage}</span>
                                     </div>
-                                )) : <div style={{ padding: "10px", color: "#44596f" }}>No units data</div>}
+                                )) : <div style={{ padding: "10px", color: "var(--text-secondary)" }}>No units data</div>}
                             </div>
                             <div className="legend">
                                 <span className="legend-item critical">Critical shortage</span>
@@ -218,12 +222,12 @@ export default function SupervisorDashboard() {
                         <i className="warning-icon">i</i> {ratios.filter(r => r.status === 'exceeds').length} Units are exceeding the allowed nurse-to-patient ratio: {exceedingUnitsStr}
                     </div>
 
-                    <div className="table-box">
+                    <div className="table-box content-box">
                         <div className="box-header">
-                            <h2 className="table-title">Nurse-to-patient Ratios by Unit</h2>
+                            <h2 className="content-box-title">Nurse-to-patient Ratios by Unit</h2>
                             <div className="actions stack">
-                                <button className="btn-small">Update Ratio</button>
-                                <button className="btn-small dark">View All</button>
+                                <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }}>Update Ratio</button>
+                                <button className="btn-pill" style={{ background: 'var(--text-primary)', color: 'white' }}>View All</button>
                             </div>
                         </div>
                         <div className="ratios-list">

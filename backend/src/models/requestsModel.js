@@ -1,13 +1,21 @@
 const pool = require("../db");
 
-// GET all
+// GET all with nurse info
 exports.getAllRequests = async () => {
+<<<<<<< HEAD
     const query = `
         SELECT r.*, n.full_name AS nurse_name 
         FROM Request r
         LEFT JOIN Nursing_staff n ON r.nurse_id = n.user_id
     `;
     const [rows] = await pool.query(query);
+=======
+    const [rows] = await pool.query(`
+        SELECT r.*, n.full_name 
+        FROM request r
+        LEFT JOIN Nursing_staff n ON r.nurse_id = n.nurse_id
+    `);
+>>>>>>> 37000de (Bushra update)
     return rows;
 };
 

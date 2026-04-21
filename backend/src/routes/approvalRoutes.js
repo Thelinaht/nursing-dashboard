@@ -11,5 +11,8 @@ router.post("/supervisor", approvalController.supervisorDecision);
 // Assistant
 router.post("/assistant", approvalController.assistantDecision);
 
+// Director
+router.post("/director", approvalController.directorDecision);
+
 module.exports = router;
 

@@ -32,51 +32,53 @@ import TrainingRequest from "./pages/TrainingRequest";
 import GeneralRequest from "./pages/GeneralRequest";
 import RequestHistory from "./pages/RequestHistory";
 import TrainingPage from "./pages/TrainingPage";
-
+import StaffDirectory from "./pages/StaffDirectory";
 
 function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
+        return (
+                <Router>
+                        <Routes>
+                                <Route path="/" element={<Login />} />
 
-        {/* dashboards */}
-        <Route path="/nurse-dashboard" element={<NurseDashboard />} />
-        <Route path="/nurse-info" element={<NurseDashboard />} />
-        <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
-        <Route path="/supervisor-dashboard" element={<SupervisorDashboard />} />
-        <Route path="/supervisor/manage-requests" element={<ManageRequests />} />
-        <Route path="/director-dashboard" element={<DirectorDashboard />} />
-        <Route path="/quality-manager-dashboard" element={<QualityManagerDashboard />} />
-        <Route path="/add-nurse" element={<AddNurse />} />
+                                {/* dashboards */}
+                                <Route path="/nurse-dashboard" element={<NurseDashboard />} />
+                                <Route path="/nurse-info" element={<NurseDashboard />} />
+                                <Route path="/secretary-dashboard" element={<SecretaryDashboard />} />
+                                <Route path="/supervisor-dashboard" element={<SupervisorDashboard />} />
+                                <Route path="/supervisor/manage-requests" element={<ManageRequests />} />
+                                <Route path="/director-dashboard" element={<DirectorDashboard />} />
+                                <Route path="/quality-manager-dashboard" element={<QualityManagerDashboard />} />
+                                <Route path="/add-nurse" element={<AddNurse />} />
 
-        {/* staff */}
-        <Route path="/assign-staff" element={<AssignStaff />} />
-        <Route path="/nurse/:id" element={<StaffDetails />} />
-        <Route path="/nurse/:id/profile" element={<StaffProfile />} />
-        <Route path="/nurse/:id/qualification" element={<StaffQualification />} />
-        <Route path="/nurse/:id/orientation" element={<StaffOrientation />} />
-        <Route path="/nurse/:id/job" element={<JobInformation />} />
-        <Route path="/nurse/:id/evaluation" element={<StaffEvaluation />} />
-        <Route path="/nurse/:id/misc" element={<StaffMiscellaneous />} />
-        <Route path="/licenses" element={<LicenseTracker />} />
+                                {/* staff */}
+
+                                <Route path="/assign-staff" element={<AssignStaff />} />
+                                <Route path="/nurse/:id" element={<StaffDetails />} />
+                                <Route path="/nurse/:id/profile" element={<StaffProfile />} />
+                                <Route path="/nurse/:id/qualification" element={<StaffQualification />} />
+                                <Route path="/nurse/:id/orientation" element={<StaffOrientation />} />
+                                <Route path="/nurse/:id/job" element={<JobInformation />} />
+                                <Route path="/nurse/:id/evaluation" element={<StaffEvaluation />} />
+                                <Route path="/nurse/:id/misc" element={<StaffMiscellaneous />} />
+                                <Route path="/licenses" element={<LicenseTracker />} />
 
 
-        {/* requests */}
-        <Route path="/request" element={<RequestPage />} />
-        <Route path="/request/leave" element={<LeaveRequest />} />
-        <Route path="/request/shift-swap" element={<ShiftSwap />} />
-        <Route path="/request/document-update" element={<DocumentUpdate />} />
-        <Route path="/request/unit-transfer" element={<UnitTransfer />} />
-        <Route path="/request/training" element={<TrainingRequest />} />
-        <Route path="/request/general" element={<GeneralRequest />} />
-        <Route path="/request/history" element={<RequestHistory />} />
+                                {/* requests */}
+                                <Route path="/request" element={<RequestPage />} />
+                                <Route path="/request/leave" element={<LeaveRequest />} />
+                                <Route path="/request/shift-swap" element={<ShiftSwap />} />
+                                <Route path="/request/document-update" element={<DocumentUpdate />} />
+                                <Route path="/request/unit-transfer" element={<UnitTransfer />} />
+                                <Route path="/request/training" element={<TrainingRequest />} />
+                                <Route path="/request/general" element={<GeneralRequest />} />
+                                <Route path="/request/history" element={<RequestHistory />} />
 
-        {/* training */}
-        <Route path="/training" element={<TrainingPage />} />
-      </Routes>
-    </Router>
-  );
+                                {/* training */}
+                                <Route path="/training" element={<TrainingPage />} />
+                                <Route path="/staff" element={<StaffDirectory />} />
+                        </Routes>
+                </Router>
+        );
 }
 
 export default App;

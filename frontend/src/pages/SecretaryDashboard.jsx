@@ -103,7 +103,7 @@ export default function SecretaryDashboard() {
         <Layout
             role="secretary"
             logoSrc="/logo.png"
-            username={JSON.parse(localStorage.getItem("user"))?.full_name || "Secretary"}
+            username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}
         >
             <div className="main">
 
@@ -111,12 +111,14 @@ export default function SecretaryDashboard() {
 
                 {/*  Cards */}
                 <div className="cards">
-                    <div className="card big">
+                    <div className="card big glass-card">
                         <p>Total Number of Nurses</p>
                         <h1>{totalNurses}</h1>
                     </div>
 
+
                     <div className="card big danger" onClick={() => navigate("/licenses")} style={{ cursor: "pointer" }}>
+
                         <p>Expired License</p>
                         <h1>{expiredLicenses}</h1>
                     </div>
@@ -177,7 +179,7 @@ export default function SecretaryDashboard() {
                 </div>
 
                 {/*  Table */}
-                <div className="table-box">
+                <div className="table-box content-box">
 
                     <div className="table-header-row">
                         <h2 className="table-title">Nurses Informations</h2>
@@ -186,6 +188,8 @@ export default function SecretaryDashboard() {
                             <option value="za">Sort By Name: Z → A</option>
                         </select>
                     </div>
+
+                    <h2 className="content-box-title">Nurses Informations</h2>
 
                     <div className="list-header">
                         <span>Name</span>
@@ -200,7 +204,7 @@ export default function SecretaryDashboard() {
                         {filteredNurses.map(nurse => (
                             <div
                                 key={nurse.user_id}
-                                className="nurse-card"
+                                className="nurse-card premium-row"
                                 onClick={() => navigate(`/nurse/${nurse.user_id}`)}
                             >
                                 <div>{nurse.full_name}</div>
@@ -217,10 +221,10 @@ export default function SecretaryDashboard() {
                         ))}
                     </div>
 
-                </div>
+                </div >
 
-            </div>
+            </div >
 
-        </Layout>
+        </Layout >
     );
 }

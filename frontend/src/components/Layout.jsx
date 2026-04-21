@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import ChatHub from "./ChatHub";
 import logo from "../assets/logo.png";
+import { Bot, X, ChevronLeft } from "lucide-react";
 
 export default function Layout({
   children,
@@ -14,7 +16,7 @@ export default function Layout({
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
+  const [isDocked, setIsDocked] = useState(false);
 
   const [messages, setMessages] = useState([
     {
@@ -27,7 +29,7 @@ export default function Layout({
 
   const currentUser = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem("user")) || {};
+      return JSON.parse(sessionStorage.getItem("user")) || {};
     } catch {
       return {};
     }
@@ -46,8 +48,8 @@ export default function Layout({
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
     navigate("/");
   };
 
@@ -101,6 +103,12 @@ export default function Layout({
     }
   };
 
+  const toggleDock = (e) => {
+    e.stopPropagation();
+    setIsDocked(!isDocked);
+    if (isChatOpen) setIsChatOpen(false);
+  };
+
   return (
     <div style={styles.wrapper}>
       <Navbar username={displayUsername} />
@@ -109,7 +117,8 @@ export default function Layout({
         <div style={styles.content}>{children}</div>
       </div>
 
-      {isChatOpen && (
+      {/* Smart Assistant Chatbot window */}
+      {isChatOpen && !isDocked && (
         <div style={styles.chatWindow}>
           <div style={styles.chatHeader}>
             <div>
@@ -121,7 +130,7 @@ export default function Layout({
               style={styles.chatCloseBtn}
               onClick={() => setIsChatOpen(false)}
             >
-              ×
+              <X size={18} />
             </button>
           </div>
 
@@ -154,40 +163,40 @@ export default function Layout({
         </div>
       )}
 
-      <button
-        title="Open Chat"
-        onClick={() => setIsChatOpen((prev) => !prev)}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => {
-          setIsHovered(false);
-          setIsPressed(false);
-        }}
-        onMouseDown={() => setIsPressed(true)}
-        onMouseUp={() => setIsPressed(false)}
+      {/* Floating Chatbot Button (Assistant) */}
+      <div 
         style={{
-          ...styles.chatbotFloatingBtn,
-          ...(isHovered ? styles.chatbotFloatingBtnHover : {}),
-          ...(isPressed ? styles.chatbotFloatingBtnPressed : {}),
+            ...styles.floatingControl,
+            right: isDocked ? "-45px" : "30px",
+            opacity: isDocked ? 0.7 : 1
         }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <span style={styles.chatbotBtnRing}></span>
-        <span style={styles.chatbotPulse}></span>
+        {isHovered && !isDocked && (
+            <button 
+                title="Minimize to side"
+                onClick={toggleDock}
+                style={styles.minimizeBtn}
+            >
+                <X size={12} />
+            </button>
+        )}
 
-        <svg
-          style={styles.chatbotIcon}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
+        <button
+            title={isDocked ? "Show Assistant" : "Open Smart Assistant"}
+            onClick={() => isDocked ? setIsDocked(false) : setIsChatOpen(!isChatOpen)}
+            style={{
+                ...styles.chatbotFloatingBtn,
+                transform: isHovered && !isDocked ? "translateY(-3px) scale(1.04)" : "none",
+            }}
         >
-          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
-          <path d="M8 10h8" />
-          <path d="M8 14h5" />
-        </svg>
-      </button>
+            {isDocked ? <ChevronLeft size={24} style={{ marginRight: '15px' }} /> : <Bot size={28} />}
+        </button>
+      </div>
+
+      {/* New Live Chat System (Staff-to-Staff) */}
+      <ChatHub />
     </div>
   );
 }
@@ -212,55 +221,44 @@ const styles = {
     overflowY: "auto",
     boxSizing: "border-box",
   },
-  chatbotFloatingBtn: {
+  floatingControl: {
     position: "fixed",
-    bottom: "28px",
-    right: "28px",
-    width: "70px",
-    height: "70px",
+    bottom: "105px",
+    display: "flex",
+    alignItems: "center",
+    transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+    zIndex: 1000,
+  },
+  minimizeBtn: {
+    position: "absolute",
+    top: "-10px",
+    left: "-10px",
+    width: "24px",
+    height: "24px",
+    borderRadius: "50%",
+    background: "#314259",
+    color: "white",
+    border: "2px solid white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    zIndex: 1001,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+  },
+  chatbotFloatingBtn: {
+    width: "60px",
+    height: "60px",
     border: "none",
     borderRadius: "50%",
-    background: "linear-gradient(135deg, #4a6a85 0%, #5f7f99 100%)",
+    background: "linear-gradient(135deg, #4a6a85 0%, #314259 100%)",
     color: "#ffffff",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    boxShadow:
-      "0 12px 28px rgba(74, 106, 133, 0.28), 0 4px 10px rgba(0, 0, 0, 0.08)",
-    zIndex: 1000,
+    boxShadow: "0 8px 25px rgba(0, 0, 0, 0.2)",
     transition: "all 0.2s ease",
-  },
-  chatbotFloatingBtnHover: {
-    transform: "translateY(-3px) scale(1.04)",
-    boxShadow:
-      "0 18px 34px rgba(74, 106, 133, 0.34), 0 8px 16px rgba(0, 0, 0, 0.12)",
-    background: "linear-gradient(135deg, #43627c 0%, #597892 100%)",
-  },
-  chatbotFloatingBtnPressed: {
-    transform: "scale(0.96)",
-  },
-  chatbotBtnRing: {
-    position: "absolute",
-    width: "84px",
-    height: "84px",
-    borderRadius: "50%",
-    border: "2px solid rgba(74, 106, 133, 0.14)",
-    pointerEvents: "none",
-  },
-  chatbotPulse: {
-    position: "absolute",
-    width: "92px",
-    height: "92px",
-    borderRadius: "50%",
-    backgroundColor: "rgba(74, 106, 133, 0.08)",
-    pointerEvents: "none",
-  },
-  chatbotIcon: {
-    width: "30px",
-    height: "30px",
-    position: "relative",
-    zIndex: 2,
   },
   chatWindow: {
     position: "fixed",
@@ -306,8 +304,9 @@ const styles = {
     height: "34px",
     borderRadius: "10px",
     cursor: "pointer",
-    fontSize: "22px",
-    lineHeight: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   chatBody: {
     flex: 1,

@@ -23,9 +23,10 @@ export default function Login() {
             if (res.ok) {
                 const user = data.user;
 
-                // Save user data to localStorage
-                localStorage.setItem("user", JSON.stringify(user));
+                // Save user data to sessionStorage
+                sessionStorage.setItem("user", JSON.stringify(user));
 
+<<<<<<< HEAD
                 //  توجيه حسب الرول
                 if (user.role_id === 1) {
                     window.location.href = "/nurse-dashboard";
@@ -41,6 +42,28 @@ export default function Login() {
                     alert("Unknown role");
                 }
 
+=======
+                // Log the user data for debugging
+                console.log("User data from backend:", user);
+
+                // Redirect user based on role_name
+                switch (user.role_name) {
+                    case "nurse":
+                        window.location.href = "/nurse-dashboard";
+                        break;
+                    case "office Secretaries":
+                        window.location.href = "/secretary-dashboard";
+                        break;
+                    case "nursing supervisor":
+                        window.location.href = "/supervisor-dashboard";
+                        break;
+                    case "Associate Director of Nursing - Director of Nursing":
+                        window.location.href = "/director-dashboard";
+                        break;
+                    default:
+                        alert("Unknown role (" + user.role_name + ")");
+                }
+>>>>>>> 37000de (Bushra update)
             } else {
                 alert(data.message);
             }

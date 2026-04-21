@@ -49,15 +49,11 @@ const menuConfig = {
   director: [
     { label: "Dashboard", path: "/director-dashboard", icon: I.dashboard },
     { label: "Staff Directory", path: "/staff", icon: I.staff },
-    { label: "Reports", path: "/reports", icon: I.report },
-    { label: "Calculations", path: "/calculations", icon: I.calc },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   associateDirector: [
     { label: "Dashboard", path: "/director-dashboard", icon: I.dashboard },
     { label: "Staff Directory", path: "/staff", icon: I.staff },
-    { label: "Reports", path: "/reports", icon: I.report },
-    { label: "Calculations", path: "/calculations", icon: I.calc },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   qualityManager: [
@@ -67,7 +63,6 @@ const menuConfig = {
   researchDirector: [
     { label: "Dashboard", path: "/dashboard", icon: I.dashboard },
     { label: "Research", path: "/research", icon: I.research },
-    { label: "Reports", path: "/reports", icon: I.report },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
 };
@@ -129,7 +124,7 @@ const styles = {
   wrapper: {
     width: "210px",
     height: "100%",        // change from 100vh to 100%
-    backgroundColor: "#c8d8e8",
+    backgroundColor: "transparent",
     display: "flex",
     alignItems: "stretch",
     padding: "16px 10px",
@@ -140,8 +135,8 @@ const styles = {
   sidebar: {
     flex: 1,
     overflowY: "auto",
-    backgroundColor: "#b8cad8",
-    borderRadius: "20px",
+    backgroundColor: "var(--bg-card)",
+    borderRadius: "var(--radius-lg)",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -183,19 +178,24 @@ const styles = {
     padding: "6px 8px",
     borderRadius: "30px",
     textDecoration: "none",
-    color: "#2c3e50",
+    color: "var(--text-primary)",
     fontSize: "12.5px",
-    fontWeight: "500",
+    fontWeight: "400",
     transition: "background 0.2s",
   },
   navItemActive: {
-    backgroundColor: "rgba(220,232,242,0.85)",
+    backgroundColor: "#ffffff",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    fontWeight: "600",
+  },
+  navItemHover: {
+    backgroundColor: "rgba(255,255,255,0.5)",
   },
   iconCircle: {
     width: "36px",
     height: "36px",
     borderRadius: "50%",
-    backgroundColor: "#4a6a85",
+    backgroundColor: "var(--accent-blue)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -204,7 +204,7 @@ const styles = {
   label: {
     whiteSpace: "nowrap",
     fontSize: "12.5px",
-    fontWeight: "500",
+    fontWeight: "400",
   },
   logoutBtn: {
     display: "flex",
@@ -216,9 +216,9 @@ const styles = {
     border: "none",
     cursor: "pointer",
     width: "100%",
-    color: "#2c3e50",
+    color: "var(--text-primary)",
     fontSize: "12.5px",
-    fontWeight: "500",
+    fontWeight: "400",
     marginTop: "8px",
   },
 };

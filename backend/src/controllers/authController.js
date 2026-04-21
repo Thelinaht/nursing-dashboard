@@ -30,13 +30,7 @@ exports.login = async (req, res) => {
         }
         res.json({
             message: "Login successful",
-            user: {
-                user_id: user.user_id,
-                email: user.email,
-                role_id: user.role_id,
-                nurse_id: user.nurse_id,
-                full_name: user.full_name
-            }
+            user: user
         });
 
     } catch (e) {

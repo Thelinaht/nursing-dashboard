@@ -34,7 +34,7 @@ export default function Navbar({ username = "User" }) {
 const styles = {
   navbar: {
     height: "64px",
-    backgroundColor: "#f0f4f8",
+    backgroundColor: "var(--bg-card)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -51,22 +51,22 @@ const styles = {
   accentLine: {
     width: "3px",
     height: "32px",
-    backgroundColor: "#6a8faa",
+    backgroundColor: "var(--accent-blue)",
     borderRadius: "4px",
   },
   subtitle: {
     margin: 0,
     fontSize: "10px",
-    fontWeight: "500",
-    color: "#9aacbe",
+    fontWeight: "300",
+    color: "var(--text-muted)",
     letterSpacing: "0.08em",
     textTransform: "uppercase",
   },
   title: {
     margin: 0,
     fontSize: "17px",
-    fontWeight: "700",
-    color: "#2c3e50",
+    fontWeight: "500",
+    color: "var(--text-primary)",
     letterSpacing: "-0.01em",
   },
   right: {
@@ -82,13 +82,13 @@ const styles = {
   },
   time: {
     fontSize: "14px",
-    fontWeight: "600",
+    fontWeight: "500",
     color: "#3d5166",
   },
   date: {
     fontSize: "10px",
     color: "#9aacbe",
-    fontWeight: "500",
+    fontWeight: "300",
   },
   divider: {
     width: "1px",

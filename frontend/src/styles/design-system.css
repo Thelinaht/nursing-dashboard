@@ -1,0 +1,144 @@
+/* Unified Design System for Nursing Dashboard */
+
+:root {
+    /* Colors */
+    --bg-main: #eef1f5;
+    --bg-card: #dce6ef;
+    --bg-gradient: linear-gradient(135deg, #dce6ef, #c8d8e8);
+    --bg-gradient-hover: linear-gradient(135deg, #e3edf6, #d1deed);
+    
+    --text-primary: #314259;
+    --text-secondary: #4a6a85;
+    --text-muted: #8ea2b5;
+    
+    --accent-blue: #4a6a85;
+    --accent-blue-hover: #314259;
+    --accent-red: #e53935;
+    --accent-green: #4caf50;
+    --accent-orange: #ff9800;
+    
+    /* Spacing & Radii */
+    --radius-lg: 20px;
+    --radius-md: 15px;
+    --radius-sm: 10px;
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.1);
+    
+    /* Transitions */
+    --transition-fast: all 0.2s ease;
+}
+
+/* Base Styles */
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+}
+
+/* Utility: Premium Cards (Wavy Cards) */
+.glass-card {
+    background: var(--bg-gradient);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition-fast);
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    background: var(--bg-gradient-hover);
+    box-shadow: var(--shadow-hover);
+}
+
+.glass-card::after {
+    content: "";
+    position: absolute;
+    bottom: -30px;
+    left: -10%;
+    width: 120%;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50% 50% 0 0;
+    z-index: 0; /* Lowered from 1 */
+}
+
+.glass-card p, 
+.glass-card h1 {
+    position: relative;
+    z-index: 1; /* Ensures text is always on top of the wave */
+}
+
+/* Utility: Content Box (Table Container) */
+.content-box {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition-fast);
+}
+
+.content-box:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.content-box-title {
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+/* Utility: Premium Table Rows */
+.premium-row {
+    background: #dce4ed; /* Base row color from supervisor theme */
+    padding: 10px 15px;
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+    cursor: pointer;
+    align-items: center;
+}
+
+.premium-row:hover {
+    background: #d1deed !important;
+    transform: scale(1.005);
+}
+
+/* Utility: Buttons */
+.btn-pill {
+    padding: 6px 15px;
+    border-radius: var(--radius-md);
+    font-size: 11px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.btn-pill:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+/* Utility: Inputs */
+.input-pill {
+    padding: 10px 15px;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(74, 106, 133, 0.2);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition-fast);
+}
+
+.input-pill:focus {
+    border-color: var(--accent-blue);
+    background: white;
+}

@@ -117,7 +117,7 @@ export default function AssignStaff() {
         return acc;
     }, {});
     
-    const userDisplay = JSON.parse(localStorage.getItem("user"))?.full_name || "Supervisor";
+    const userDisplay = JSON.parse(sessionStorage.getItem("user"))?.full_name || "Supervisor";
 
     return (
         <Layout role="supervisor" logoSrc="/logo.png" username={userDisplay}>
