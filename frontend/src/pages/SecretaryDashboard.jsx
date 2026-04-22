@@ -117,6 +117,7 @@ export default function SecretaryDashboard() {
                     </div>
 
 
+
                     <div className="card big glass-card danger-glass" onClick={() => navigate("/licenses")} style={{ cursor: "pointer" }}>
                         <p>Expired License</p>
                         <h1 className="danger-number">{expiredLicenses}</h1>

@@ -164,11 +164,10 @@ export default function SupervisorDashboard() {
                                     <span>Name</span>
                                 </div>
                                 {assignedStaff.length > 0 ? assignedStaff.map(staff => (
-<<<<<<< HEAD
-                                    <div key={staff.id} className="table-row" style={{ gridTemplateColumns: "0.5fr 1.5fr 2fr" }}>
-=======
+
+
                                     <div key={staff.id} className="table-row premium-row">
->>>>>>> 37000de (Bushra update)
+
                                         <span>{staff.id}</span>
                                         <span>{staff.unit}</span>
                                         <span>{staff.name}</span>

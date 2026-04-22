@@ -142,3 +142,58 @@ body {
     border-color: var(--accent-blue);
     background: white;
 }
+
+/* Universal Wave Fix: Ensure all direct children are above the wave */
+.glass-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* --- Universal Status Badges --- */
+
+.status, .tbadge {
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    margin: 0 auto; /* Horizontally centers if container is block/grid */
+    line-height: 1;
+}
+
+/* Green (Active, Completed, Approved) */
+.status.active, .tbadge.completed, .tbadge.complete {
+    background-color: #d4f8e0;
+    color: var(--accent-green);
+}
+
+/* Blue (Pending, Under Review, Terminated) */
+.status.pending, .tbadge.pending, .status.terminated {
+    background-color: #e3edf6;
+    color: var(--accent-blue);
+}
+
+/* Orange/Yellow (In Progress, Warning) */
+.status.inprogress, .tbadge.inprogress {
+    background-color: #fef0c7;
+    color: var(--accent-orange);
+}
+
+/* Red (Overdue, EOC, Danger, on-leave) */
+.status.eoc, .status.suspended, .tbadge.overdue, .status.on-leave {
+    background-color: #ffd6d6;
+    color: var(--accent-red);
+}
+
+/* Gray (Inactive, Unknown) */
+.status.inactive, .tbadge.inactive {
+    background-color: #eeeeee;
+    color: #616161;
+}
+
+

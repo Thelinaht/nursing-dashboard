@@ -1,14 +1,14 @@
 .lt-container {
-    background: #9fb3cc;
-    padding: 30px;
-    border-radius: 25px;
+    padding: 10px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .lt-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
 }
 
 .header-left {
@@ -18,7 +18,8 @@
 }
 
 .lt-header h1 {
-    font-size: 28px;
+    font-size: 26px;
+    font-weight: 700;
     color: #2f3e55;
     margin: 0;
 }
@@ -28,7 +29,6 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 14px;
-    margin-bottom: 20px;
 }
 
 .lt-card {
@@ -36,6 +36,9 @@
     padding: 18px 20px;
     cursor: pointer;
     transition: 0.2s;
+    position: relative;
+    overflow: hidden;
+    height: 100px;
 }
 
 .lt-card:hover {
@@ -46,13 +49,30 @@
     margin: 0 0 6px;
     font-size: 13px;
     font-weight: 500;
+    position: relative;
+    z-index: 1;
 }
 
 .lt-card h2 {
     margin: 0;
     font-size: 32px;
     font-weight: 700;
+    position: relative;
+    z-index: 1;
 }
+
+.lt-card::after {
+    content: "";
+    position: absolute;
+    bottom: -15px;
+    left: -10%;
+    width: 120%;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+}
+
+
 
 .expired-card {
     background: #e8c5c5;
@@ -78,7 +98,6 @@
 .lt-tabs {
     display: flex;
     gap: 8px;
-    margin-bottom: 16px;
 }
 
 .lt-tab {
@@ -104,37 +123,49 @@
 
 /* ── Table ── */
 .lt-table {
-    background: white;
-    border-radius: 20px;
-    padding: 20px;
+    background: c7d5e5;
+    border-radius: 16px;
+    padding: 30px;
 }
 
+/* Header row */
+.lt-row.header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1.2fr 1fr 1fr;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary, #2f3e55);
+    background: #c7d5e5;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    border-bottom: none;
+}
+
+/* Data rows */
 .lt-row {
     display: grid;
     grid-template-columns: 2fr 1fr 1.5fr 1.2fr 1fr 1fr;
     gap: 8px;
     align-items: center;
-    padding: 10px 4px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: white;
+    margin-bottom: 6px;
+    border-bottom: none;
+    transition: 0.2s;
+    cursor: pointer;
 }
 
 .lt-row:last-child {
     border-bottom: none;
 }
 
-.lt-row.header {
-    font-weight: 700;
-    font-size: 12px;
-    color: #5a6f87;
-    text-transform: uppercase;
-    border-bottom: 2px solid #dce6f2;
-    padding-bottom: 12px;
-    margin-bottom: 4px;
-}
-
 .lt-row:not(.header):hover {
-    background: #f5f8fc;
-    border-radius: 8px;
+    background: #f0f5fa;
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(90, 111, 135, 0.1);
 }
 
 .lt-name {

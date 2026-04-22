@@ -42,10 +42,10 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-<<<<<<< HEAD
+
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-=======
+
 // Socket.io Logic
 io.on("connection", (socket) => {
     console.log(`User connected: ${socket.id}`);
@@ -67,7 +67,7 @@ io.on("connection", (socket) => {
         console.log("User disconnected");
     });
 });
->>>>>>> 37000de (Bushra update)
+
 
 // test
 app.get("/", (req, res) => {
@@ -94,7 +94,7 @@ app.use("/api/information", infoRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/uploads", uploadRoutes);
 
-<<<<<<< HEAD
+
 app.use("/api/orientation", orientationRoutes);
 
 app.use("/api/job", jobDocumentRoutes);
@@ -108,8 +108,7 @@ app.use("/api/licenses", licenseRoutes);
 
 
 
-=======
->>>>>>> 37000de (Bushra update)
+
 const PORT = 4000;
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

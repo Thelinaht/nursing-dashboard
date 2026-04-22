@@ -26,7 +26,7 @@ export default function Login() {
                 // Save user data to sessionStorage
                 sessionStorage.setItem("user", JSON.stringify(user));
 
-<<<<<<< HEAD
+
                 //  توجيه حسب الرول
                 if (user.role_id === 1) {
                     window.location.href = "/nurse-dashboard";

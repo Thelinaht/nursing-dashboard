@@ -126,31 +126,33 @@ export default function NurseDashboard() {
 
                         {/* Training History */}
                         <div className="info-card content-box">
-                            <h3>Training History</h3>
-                            <div className="train-header">
+                            <h3 style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", paddingBottom: "10px", marginBottom: "15px" }}>Training History</h3>
+                            <div className="nurse-table-header">
                                 <span>Course Name</span>
                                 <span>Status</span>
                                 <span>Date</span>
                             </div>
-                            {nurse.trainings?.length > 0 ? (
-                                nurse.trainings.map((t, i) => (
-                                    <div className="train-row" key={i}>
-                                        <span className="train-name">{t.training_name}</span>
-                                        <span>
-                                            <span className={`tbadge ${t.status?.toLowerCase().replace(' ', '')}`}>
-                                                {t.status}
+                            <div style={{ marginTop: '10px' }}>
+                                {nurse.trainings?.length > 0 ? (
+                                    nurse.trainings.map((t, i) => (
+                                        <div className="nurse-table-row" key={i}>
+                                            <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{t.training_name}</span>
+                                            <span>
+                                                <span className={`tbadge ${t.status?.toLowerCase().replace(' ', '')}`}>
+                                                    {t.status}
+                                                </span>
                                             </span>
-                                        </span>
-                                        <span className="train-date">
-                                            {t.due_date ? new Date(t.due_date).toLocaleDateString("en-GB") : "–"}
-                                        </span>
-                                    </div>
-                                ))
-                            ) : (
-                                <p style={{ fontSize: 13, color: "#4a6070", marginTop: 8 }}>
-                                    No training records found.
-                                </p>
-                            )}
+                                            <span style={{ color: 'var(--text-secondary)' }}>
+                                                {t.due_date ? new Date(t.due_date).toLocaleDateString("en-GB") : "–"}
+                                            </span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p style={{ fontSize: 13, color: "#4a6070", padding: "10px" }}>
+                                        No training records found.
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
                         {/* License Information */}
