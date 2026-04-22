@@ -192,11 +192,8 @@ export default function StaffQualification() {
     };
 
     return (
-        <Layout
-            role="secretary"
-            logoSrc="/logo.png"
-            username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}
-        >
+        <Layout role="secretary" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}>
+
             <div className="qual-container">
 
                 {/* Header */}

@@ -49,11 +49,8 @@ export default function StaffEvaluation() {
     if (loading) return <p>Loading...</p>;
 
     return (
-        <Layout
-            role="secretary"
-            logoSrc="/logo.png"
-            username={JSON.parse(localStorage.getItem("user"))?.full_name || "Secretary"}
-        >
+        <Layout role="secretary" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}>
+
             <div className="eval-container">
 
                 {/* Header */}

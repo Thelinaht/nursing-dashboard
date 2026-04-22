@@ -131,7 +131,7 @@ export default function QualityManagerDashboard() {
     const badgeClass = (s) => s === "green" ? "badge-green" : s === "amber" ? "badge-amber" : "badge-red";
 
     return (
-        <Layout role="qualityManager" logoSrc="/logo.png" username={user?.full_name || "Quality Manager"}>
+        <Layout role="qualityManager" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Quality Manager"}>
             <div className="qm-container">
 
                 {/* Header */}
