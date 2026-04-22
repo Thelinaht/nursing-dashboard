@@ -94,13 +94,12 @@ export default function JobInformation() {
 
     return (
         <Layout role="secretary" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}>
+            <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
             <div className="job-container">
-
                 {/* Header */}
                 <div className="job-header">
                     <div className="header-left">
-                        <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
                         <h1>Job Information</h1>
                     </div>
                     {!isEditing ? (

@@ -130,10 +130,11 @@ export default function StaffProfile() {
             logoSrc="/logo.png"
             username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}
         >
+            <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
+
             <div className="profile-container">
 
                 <div className="profile-header">
-                    <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
                     <h1>Staff Profile</h1>
                     {!isEditing ? (
                         <button className="edit-btn" onClick={() => setIsEditing(true)}>Edit</button>
@@ -214,7 +215,7 @@ export default function StaffProfile() {
                     ])}
 
                     {renderSelect("Contract Type", "contract_type", [
-                        "KFHU", "SOPHS", "IAUH", "Business Contract", "Government", "SOP"
+                        "KFHU", "SOPHS", "IAUH", "Business Contract"
                     ])}
 
                     {renderInput("Track Care Number", "track_care_number")}

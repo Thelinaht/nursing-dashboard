@@ -6,26 +6,26 @@
     --bg-card: #dce6ef;
     --bg-gradient: linear-gradient(135deg, #dce6ef, #c8d8e8);
     --bg-gradient-hover: linear-gradient(135deg, #e3edf6, #d1deed);
-    
+
     --text-primary: #314259;
     --text-secondary: #4a6a85;
     --text-muted: #8ea2b5;
-    
+
     --accent-blue: #4a6a85;
     --accent-blue-hover: #314259;
     --accent-red: #e53935;
     --accent-green: #4caf50;
     --accent-orange: #ff9800;
-    
+
     /* Spacing & Radii */
     --radius-lg: 20px;
     --radius-md: 15px;
     --radius-sm: 10px;
-    
+
     /* Shadows */
     --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
     --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.1);
-    
+
     /* Transitions */
     --transition-fast: all 0.2s ease;
 }
@@ -62,13 +62,15 @@ body {
     height: 70px;
     background: rgba(255, 255, 255, 0.6);
     border-radius: 50% 50% 0 0;
-    z-index: 0; /* Lowered from 1 */
+    z-index: 0;
+    /* Lowered from 1 */
 }
 
-.glass-card p, 
+.glass-card p,
 .glass-card h1 {
     position: relative;
-    z-index: 1; /* Ensures text is always on top of the wave */
+    z-index: 1;
+    /* Ensures text is always on top of the wave */
 }
 
 /* Utility: Content Box (Table Container) */
@@ -93,7 +95,8 @@ body {
 
 /* Utility: Premium Table Rows */
 .premium-row {
-    background: #dce4ed; /* Base row color from supervisor theme */
+    background: #dce4ed;
+    /* Base row color from supervisor theme */
     padding: 10px 15px;
     border-radius: var(--radius-md);
     transition: var(--transition-fast);
@@ -144,14 +147,15 @@ body {
 }
 
 /* Universal Wave Fix: Ensure all direct children are above the wave */
-.glass-card > * {
+.glass-card>* {
     position: relative;
     z-index: 1;
 }
 
 /* --- Universal Status Badges --- */
 
-.status, .tbadge {
+.status,
+.tbadge {
     padding: 8px 20px;
     border-radius: 30px;
     font-size: 13px;
@@ -162,38 +166,46 @@ body {
     align-items: center;
     justify-content: center;
     border: none;
-    margin: 0 auto; /* Horizontally centers if container is block/grid */
+    margin: 0 auto;
+    /* Horizontally centers if container is block/grid */
     line-height: 1;
 }
 
 /* Green (Active, Completed, Approved) */
-.status.active, .tbadge.completed, .tbadge.complete {
+.status.active,
+.tbadge.completed,
+.tbadge.complete {
     background-color: #d4f8e0;
     color: var(--accent-green);
 }
 
 /* Blue (Pending, Under Review, Terminated) */
-.status.pending, .tbadge.pending, .status.terminated {
+.status.pending,
+.tbadge.pending,
+.status.terminated {
     background-color: #e3edf6;
     color: var(--accent-blue);
 }
 
 /* Orange/Yellow (In Progress, Warning) */
-.status.inprogress, .tbadge.inprogress {
+.status.inprogress,
+.tbadge.inprogress {
     background-color: #fef0c7;
     color: var(--accent-orange);
 }
 
 /* Red (Overdue, EOC, Danger, on-leave) */
-.status.eoc, .status.suspended, .tbadge.overdue, .status.on-leave {
+.status.eoc,
+.status.suspended,
+.tbadge.overdue,
+.status.on-leave {
     background-color: #ffd6d6;
     color: var(--accent-red);
 }
 
 /* Gray (Inactive, Unknown) */
-.status.inactive, .tbadge.inactive {
+.status.inactive,
+.tbadge.inactive {
     background-color: #eeeeee;
     color: #616161;
 }
-
-

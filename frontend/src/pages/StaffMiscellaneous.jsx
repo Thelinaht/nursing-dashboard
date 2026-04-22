@@ -82,13 +82,13 @@ export default function StaffMiscellaneous() {
 
     return (
         <Layout role="secretary" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}>
+            <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
             <div className="misc-container">
 
                 {/* Header */}
                 <div className="misc-header">
                     <div className="header-left">
-                        <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
                         <h1>Miscellaneous</h1>
                     </div>
                 </div>

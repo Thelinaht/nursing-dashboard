@@ -83,11 +83,12 @@ export default function StaffOrientation() {
     return (
         <Layout role="secretary" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}>
 
+            <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
+
             <div className="ori-container">
 
                 <div className="ori-header">
                     <div className="header-left">
-                        <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
                         <h1>Orientation Record</h1>
                     </div>
                     {!isEditing ? (

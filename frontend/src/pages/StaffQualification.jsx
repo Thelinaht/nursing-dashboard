@@ -194,12 +194,13 @@ export default function StaffQualification() {
     return (
         <Layout role="secretary" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}>
 
+            <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
+
             <div className="qual-container">
 
                 {/* Header */}
                 <div className="qual-header">
                     <div className="header-left">
-                        <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
                         <h1>Qualification & Certification</h1>
                     </div>
                     {!isEditing ? (

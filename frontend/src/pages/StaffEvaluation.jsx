@@ -50,13 +50,13 @@ export default function StaffEvaluation() {
 
     return (
         <Layout role="secretary" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}>
+            <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
             <div className="eval-container">
 
                 {/* Header */}
                 <div className="eval-header">
                     <div className="header-left">
-                        <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
                         <h1>Staff Evaluation Record</h1>
                     </div>
                 </div>

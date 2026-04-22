@@ -1,5 +1,5 @@
 .profile-container {
-    background: #9fb3cc;
+    background: #e0eaf2;
     padding: 30px;
     border-radius: 25px;
 }
@@ -96,7 +96,7 @@
 }
 
 .profile-grid input {
-    background: #dce6f2;
+    background: white;
     transition: 0.2s;
 }
 
