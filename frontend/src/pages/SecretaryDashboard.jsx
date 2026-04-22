@@ -117,10 +117,9 @@ export default function SecretaryDashboard() {
                     </div>
 
 
-                    <div className="card big danger" onClick={() => navigate("/licenses")} style={{ cursor: "pointer" }}>
-
+                    <div className="card big glass-card danger-glass" onClick={() => navigate("/licenses")} style={{ cursor: "pointer" }}>
                         <p>Expired License</p>
-                        <h1>{expiredLicenses}</h1>
+                        <h1 className="danger-number">{expiredLicenses}</h1>
                     </div>
 
                     <button
@@ -189,11 +188,10 @@ export default function SecretaryDashboard() {
                         </select>
                     </div>
 
-                    <h2 className="content-box-title">Nurses Informations</h2>
 
                     <div className="list-header">
                         <span>Name</span>
-                        <span>Iqama</span>
+                        <span>ID/Iqama</span>
                         <span>Job Title</span>
                         <span>Position</span>
                         <span>Unit</span>
