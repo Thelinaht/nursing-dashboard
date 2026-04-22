@@ -117,15 +117,21 @@
 .table-header {
     display: grid;
     grid-template-columns: 0.5fr 1fr 1.5fr 1fr;
+    gap: 25px;
     color: var(--text-primary);
     font-weight: 500;
     padding: 0 10px;
     font-size: 12px;
+    text-align: center;
+    align-items: center;
 }
 
 .table-row {
     display: grid;
     grid-template-columns: 0.5fr 1fr 1.5fr 1fr;
+    gap: 25px;
+    text-align: center;
+    align-items: center;
 }
 
 .staffing-header, .staffing-row {
@@ -204,7 +210,7 @@
 }
 
 .ratio-header {
-    color: white;
+    color: var(--text-primary);
     font-size: 14px;
     font-weight: 500;
 }
