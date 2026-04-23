@@ -5,6 +5,7 @@ import "../styles/SupervisorDashboard.css";
 export default function SupervisorDashboard() {
     const [search, setSearch] = useState("");
     const [nurses, setNurses] = useState([]);
+    const [pendingRequests, setPendingRequests] = useState(0);
     const [staffingFilter, setStaffingFilter] = useState("All Units");
     const [assignUnitFilters, setAssignUnitFilters] = useState([]);
     const [showUnitDropdown, setShowUnitDropdown] = useState(false);
@@ -14,6 +15,15 @@ export default function SupervisorDashboard() {
         fetch("http://localhost:4000/api/nurses")
             .then(res => res.json())
             .then(data => setNurses(Array.isArray(data) ? data : []))
+            .catch(err => console.error(err));
+
+        fetch("http://localhost:4000/api/requests")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setPendingRequests(data.filter(r => r.status && r.status.toLowerCase() === 'pending').length);
+                }
+            })
             .catch(err => console.error(err));
     }, []);
 
@@ -89,16 +99,16 @@ export default function SupervisorDashboard() {
                     {/* Top Stats Cards */}
                     <div className="cards-row">
                         <div className="wave-card glass-card">
-                            <p><i>👥</i> Number of Nurses</p>
+                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></i> Number of Nurses</p>
                             <h1>{totalNurses}</h1>
                         </div>
                         <div className="wave-card glass-card">
-                            <p><i>🏥</i> Units</p>
+                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></i> Units</p>
                             <h1>{totalUnits}</h1>
                         </div>
-                        <div className="wave-card glass-card danger-text">
-                            <p><i>⚕️</i> Patient-to-staff Ratio</p>
-                            <h1>3</h1> {/* Mocked since total patients isn't in DB */}
+                        <div className="wave-card glass-card">
+                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="13" r="3"></circle><path d="M12 11v2l1 1"></path></svg></i> Pending Requests</p>
+                            <h1 style={{ color: "var(--accent-orange)" }}>{pendingRequests > 0 ? pendingRequests : 0}</h1>
                         </div>
                     </div>
 
@@ -107,7 +117,7 @@ export default function SupervisorDashboard() {
                         <div className="table-box content-box">
                             <div className="box-header" style={{ flexDirection: 'column', gap: '10px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                    <h2 className="content-box-title">Assign staff</h2>
+                                    <h2 className="content-box-title">Assigned Staff</h2>
                                     <div className="actions">
                                         <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }} onClick={() => {
                                             setSearch("");
@@ -118,7 +128,7 @@ export default function SupervisorDashboard() {
                                 <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
                                     <input
                                         type="text"
-                                        placeholder="🔍 Search name..."
+                                        placeholder="Search name..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         className="input-pill"
@@ -164,10 +174,7 @@ export default function SupervisorDashboard() {
                                     <span>Name</span>
                                 </div>
                                 {assignedStaff.length > 0 ? assignedStaff.map(staff => (
-
-
-                                    <div key={staff.id} className="table-row premium-row">
-
+                                    <div key={staff.id} className="table-row premium-row" style={{ gridTemplateColumns: "0.5fr 1.5fr 2fr" }}>
                                         <span>{staff.id}</span>
                                         <span>{staff.unit}</span>
                                         <span>{staff.name}</span>
@@ -224,7 +231,7 @@ export default function SupervisorDashboard() {
                     <div className="table-box content-box">
                         <div className="box-header">
                             <h2 className="content-box-title">Nurse-to-patient Ratios by Unit</h2>
-                            <div className="actions stack">
+                            <div className="actions" style={{ display: 'flex', gap: '8px' }}>
                                 <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }}>Update Ratio</button>
                                 <button className="btn-pill" style={{ background: 'var(--text-primary)', color: 'white' }}>View All</button>
                             </div>

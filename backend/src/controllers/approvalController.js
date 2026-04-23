@@ -30,10 +30,13 @@ exports.supervisorDecision = async (req, res) => {
         }
 
         if (decision === "Approved") {
-            //  يروح للمرحلة الثانية
-            await approvalModel.createApproval(request_id, "Assistant Director");
+            // Bypass assistant directly to Director
+            await approvalModel.createApproval(request_id, "Director");
+            
+            // Advance the request so it drops into the Director's queue
+            await requestModel.updateRequestStatus(request_id, "Pending");
 
-            return res.json({ message: "Moved to Assistant Director ✅" });
+            return res.json({ message: "Moved to Director ✅" });
         }
 
     } catch (err) {

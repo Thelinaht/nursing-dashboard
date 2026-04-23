@@ -6,11 +6,11 @@ export default function AssignStaff() {
     const today = new Date().toISOString().split('T')[0];
     const [selectedDate, setSelectedDate] = useState(today);
     const [search, setSearch] = useState("");
-    
+
     const [availableNurses, setAvailableNurses] = useState([]);
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Form states
     const [selectedNurse, setSelectedNurse] = useState(null);
     const [targetUnit, setTargetUnit] = useState("");
@@ -24,12 +24,12 @@ export default function AssignStaff() {
                 fetch(`http://localhost:4000/api/nurses/available?date=${date}`),
                 fetch(`http://localhost:4000/api/assignments?date=${date}`)
             ]);
-            
+
             if (!nursesRes.ok || !assignRes.ok) throw new Error("API failed");
-            
+
             const nurses = await nursesRes.json();
             const assigns = await assignRes.json();
-            
+
             setAvailableNurses(nurses);
             setAssignments(assigns);
         } catch (error) {
@@ -72,13 +72,13 @@ export default function AssignStaff() {
             });
 
             if (!res.ok) throw new Error("API failed");
-            
+
             // Refresh tables
             fetchAssignments(selectedDate);
             setSelectedNurse(null);
             setTargetUnit("");
             setConflictWarning("");
-            
+
         } catch (error) {
             console.error("Error updating assignment", error);
         }
@@ -87,10 +87,10 @@ export default function AssignStaff() {
     const handleRemove = async (assignment_id, nurse_id) => {
         try {
             const res = await fetch(`http://localhost:4000/api/assignments/${assignment_id}`, {
-                 method: "DELETE" 
+                method: "DELETE"
             });
             if (!res.ok) throw new Error("API failed");
-            
+
             fetchAssignments(selectedDate);
         } catch (error) {
             console.error("Error removing assignment", error);
@@ -103,7 +103,7 @@ export default function AssignStaff() {
     const unitsCovered = [...new Set(assignments.map(a => a.unit))].length;
 
     // Filter available nurses list
-    const filteredNurses = availableNurses.filter(nurse => 
+    const filteredNurses = availableNurses.filter(nurse =>
         nurse.full_name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -116,14 +116,14 @@ export default function AssignStaff() {
         acc[curr.unit].push(curr);
         return acc;
     }, {});
-    
+
     const userDisplay = JSON.parse(sessionStorage.getItem("user"))?.full_name || "Supervisor";
 
     return (
         <Layout role="supervisor" logoSrc="/logo.png" username={userDisplay}>
             <div className="main">
                 <div className="supervisor-container">
-                    
+
                     {/* Header and Top Stats */}
                     <div className="box-header" style={{ marginBottom: "20px" }}>
                         <div>
@@ -134,9 +134,9 @@ export default function AssignStaff() {
                         </div>
                         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                             <span style={{ fontSize: "14px", fontWeight: "bold", color: "#2f3e55" }}>📅 Select Date:</span>
-                            <input 
-                                type="date" 
-                                value={selectedDate} 
+                            <input
+                                type="date"
+                                value={selectedDate}
                                 onChange={e => setSelectedDate(e.target.value)}
                                 className="search-input filter-select"
                                 style={{ padding: "8px 12px", background: "#fff" }}
@@ -145,71 +145,71 @@ export default function AssignStaff() {
                     </div>
 
                     <div className="cards-row">
-                        <div className="wave-card">
-                            <p><i>✅</i> Total Assigned Today</p>
+                        <div className="wave-card glass-card">
+                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg></i> Total Assigned Today</p>
                             <h1>{loading ? "-" : totalAssigned}</h1>
                         </div>
-                        <div className="wave-card danger-text">
-                            <p><i>⚠️</i> Unassigned Nurses</p>
+                        <div className="wave-card glass-card danger-text">
+                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="17" y1="11" x2="23" y2="11"></line></svg></i> Unassigned Nurses</p>
                             <h1>{loading ? "-" : totalUnassigned}</h1>
                         </div>
-                        <div className="wave-card">
-                            <p><i>🏥</i> Units Covered</p>
+                        <div className="wave-card glass-card">
+                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></i> Units Covered</p>
                             <h1>{loading ? "-" : unitsCovered}</h1>
                         </div>
                     </div>
 
-                    <div className="middle-section" style={{ gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-                        
+                    <div className="middle-section" style={{ gridTemplateColumns: "1.3fr 1fr", gap: "20px" }}>
+
                         {/* Left Panel: Available Nurses */}
-                        <div className="table-box" style={{ display: "flex", flexDirection: "column" }}>
-                            <div className="box-header">
+                        <div className="table-box content-box" style={{ display: "flex", flexDirection: "column" }}>
+                            <div className="box-header" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '10px' }}>
                                 <h2 className="table-title">Available Nurses</h2>
                                 <input
                                     type="text"
-                                    placeholder="🔍 Search name..."
+                                    placeholder="Search name..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="search-input"
-                                    style={{ width: "150px", padding: "6px 12px", borderRadius: "10px", border: "none", outline: "none", background: "#dce4ed", color: "#2f3e55", fontSize: "12px" }}
+                                    style={{ width: "100%", padding: "6px 12px", borderRadius: "10px", border: "none", outline: "none", background: "#dce4ed", color: "#2f3e55", fontSize: "12px" }}
                                 />
                             </div>
-                            
+
                             <div className="custom-table" style={{ flex: 1, maxHeight: "350px", overflowY: "auto", borderBottom: "1px solid #c7d5e5" }}>
-                                <div className="table-header">
+                                <div className="table-header" style={{ fontWeight: "bold" }}>
                                     <span>#</span>
                                     <span>Unit</span>
                                     <span>Name</span>
                                     <span>Status</span>
                                 </div>
-                                {loading ? <div style={{padding: "10px", color: "#44596f"}}>Loading...</div> : 
-                                 filteredNurses.length > 0 ? filteredNurses.map(nurse => (
-                                    <div 
-                                        key={nurse.nurse_id} 
-                                        className="table-row" 
-                                        style={{ 
-                                            cursor: "pointer", 
-                                            background: selectedNurse?.nurse_id === nurse.nurse_id ? "#b7c9dc" : undefined
-                                        }}
-                                        onClick={() => {
-                                            setSelectedNurse(nurse);
-                                            setTargetUnit(nurse.home_unit || (availableUnits.length > 0 ? availableUnits[0] : ""));
-                                            setConflictWarning("");
-                                        }}
-                                    >
-                                        <span>{nurse.nurse_id}</span>
-                                        <span>{nurse.home_unit || "Unassigned"}</span>
-                                        <span>{nurse.full_name}</span>
-                                        <span>
-                                            {nurse.assigned_unit 
-                                                ? <span style={{ color: "#bd8300", fontWeight: "bold" }}>Assigned ({nurse.assigned_unit})</span>
-                                                : <span style={{ color: "#2a733e", fontWeight: "bold" }}>Available</span>
-                                            }
-                                        </span>
-                                    </div>
-                                )) : <div style={{padding: "10px", color: "#44596f"}}>No matching nurses found.</div>}
+                                {loading ? <div style={{ padding: "10px", color: "#44596f" }}>Loading...</div> :
+                                    filteredNurses.length > 0 ? filteredNurses.map(nurse => (
+                                        <div
+                                            key={nurse.nurse_id}
+                                            className="table-row"
+                                            style={{
+                                                cursor: "pointer",
+                                                background: selectedNurse?.nurse_id === nurse.nurse_id ? "#b7c9dc" : undefined
+                                            }}
+                                            onClick={() => {
+                                                setSelectedNurse(nurse);
+                                                setTargetUnit(nurse.home_unit || (availableUnits.length > 0 ? availableUnits[0] : ""));
+                                                setConflictWarning("");
+                                            }}
+                                        >
+                                            <span>{nurse.nurse_id}</span>
+                                            <span>{nurse.home_unit || "Unassigned"}</span>
+                                            <span>{nurse.full_name}</span>
+                                            <span>
+                                                {nurse.assigned_unit
+                                                    ? <span style={{ background: "#fff3cd", color: "#856404", padding: "4px 12px", borderRadius: "15px", fontWeight: "bold", fontSize: "12px", display: "inline-block" }}>Assigned ({nurse.assigned_unit})</span>
+                                                    : <span style={{ background: "#d1ead6", color: "#4caf50", padding: "4px 12px", borderRadius: "15px", fontWeight: "bold", fontSize: "12px", display: "inline-block" }}>Available</span>
+                                                }
+                                            </span>
+                                        </div>
+                                    )) : <div style={{ padding: "10px", color: "#44596f" }}>No matching nurses found.</div>}
                             </div>
-                            
+
                             {/* Assigment Form */}
                             <div style={{ padding: "15px", background: "#f2f6fa", borderRadius: "0 0 15px 15px" }}>
                                 {selectedNurse ? (
@@ -218,7 +218,7 @@ export default function AssignStaff() {
                                             Assigning: <span style={{ fontWeight: "bold" }}>{selectedNurse.full_name}</span>
                                         </h3>
                                         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                                            <select 
+                                            <select
                                                 className="filter-select"
                                                 value={targetUnit}
                                                 onChange={e => {
@@ -230,8 +230,8 @@ export default function AssignStaff() {
                                                 <option value="" disabled>Select Unit</option>
                                                 {availableUnits.map(u => <option key={u} value={u}>{u}</option>)}
                                             </select>
-                                            
-                                            <select 
+
+                                            <select
                                                 className="filter-select"
                                                 value={targetShift}
                                                 onChange={e => {
@@ -244,8 +244,8 @@ export default function AssignStaff() {
                                                 <option value="Evening">Evening</option>
                                                 <option value="Night">Night</option>
                                             </select>
-                                            
-                                            <button className="btn-small dark" onClick={handleAssign}>
+
+                                            <button className="btn-pill" style={{ background: "var(--accent-blue)", color: "white", padding: "10px 24px", fontWeight: "bold" }} onClick={handleAssign}>
                                                 {conflictWarning ? "Confirm Reassign" : "Assign"}
                                             </button>
                                         </div>
@@ -264,46 +264,46 @@ export default function AssignStaff() {
                         </div>
 
                         {/* Right Panel: Today's Assignments */}
-                        <div className="table-box">
+                        <div className="table-box content-box">
                             <div className="box-header">
                                 <h2 className="table-title">Assignments for {selectedDate}</h2>
                             </div>
-                            
+
                             <div style={{ maxHeight: "450px", overflowY: "auto", padding: "0 10px 10px 10px" }}>
-                                {loading ? <div style={{padding: "10px", color: "#44596f"}}>Loading...</div> :
-                                 Object.keys(groupedAssignments).length > 0 ? (
-                                    Object.keys(groupedAssignments).map(unit => (
-                                        <div key={unit} style={{ marginBottom: "20px" }}>
-                                            <h3 style={{ fontSize: "13px", background: "#dce4ed", padding: "8px 12px", borderRadius: "8px", color: "#2f3e55", marginBottom: "8px", textTransform: "uppercase" }}>
-                                                🏥 {unit} ({groupedAssignments[unit].length})
-                                            </h3>
-                                            <div className="custom-table" style={{ background: "transparent" }}>
-                                                <div className="table-header" style={{ padding: "5px 12px", gridTemplateColumns: "1.5fr 1fr 1fr" }}>
-                                                    <span>Name</span>
-                                                    <span>Shift</span>
-                                                    <span style={{ textAlign: "right" }}>Actions</span>
-                                                </div>
-                                                {groupedAssignments[unit].map(assign => (
-                                                    <div key={assign.assignment_id} className="table-row" style={{ padding: "8px 12px", fontSize: "12px", gridTemplateColumns: "1.5fr 1fr 1fr" }}>
-                                                        <span style={{ fontWeight: "bold" }}>{assign.full_name}</span>
-                                                        <span>{assign.shift}</span>
-                                                        <span style={{ textAlign: "right" }}>
-                                                            <button 
-                                                                style={{ border: "none", background: "none", color: "#d9534f", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}
-                                                                onClick={() => handleRemove(assign.assignment_id, assign.nurse_id)}
-                                                            >
-                                                                Remove
-                                                            </button>
-                                                        </span>
+                                {loading ? <div style={{ padding: "10px", color: "#44596f" }}>Loading...</div> :
+                                    Object.keys(groupedAssignments).length > 0 ? (
+                                        Object.keys(groupedAssignments).map(unit => (
+                                            <div key={unit} style={{ marginBottom: "20px" }}>
+                                                <h3 style={{ fontSize: "13px", background: "#dce4ed", padding: "8px 12px", borderRadius: "8px", color: "#2f3e55", marginBottom: "8px", textTransform: "uppercase" }}>
+                                                    🏥 {unit} ({groupedAssignments[unit].length})
+                                                </h3>
+                                                <div className="custom-table" style={{ background: "transparent" }}>
+                                                    <div className="table-header" style={{ padding: "5px 12px", gridTemplateColumns: "1.5fr 1fr 1fr", fontWeight: "bold" }}>
+                                                        <span>Name</span>
+                                                        <span>Shift</span>
+                                                        <span style={{ textAlign: "right" }}>Actions</span>
                                                     </div>
-                                                ))}
+                                                    {groupedAssignments[unit].map(assign => (
+                                                        <div key={assign.assignment_id} className="table-row" style={{ padding: "8px 12px", fontSize: "12px", gridTemplateColumns: "1.5fr 1fr 1fr" }}>
+                                                            <span style={{ fontWeight: "bold" }}>{assign.full_name}</span>
+                                                            <span>{assign.shift}</span>
+                                                            <span style={{ textAlign: "right" }}>
+                                                                <button
+                                                                    style={{ border: "none", background: "none", color: "#d9534f", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}
+                                                                    onClick={() => handleRemove(assign.assignment_id, assign.nurse_id)}
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
-                                ) : <div style={{padding: "10px", color: "#44596f"}}>No assignments made for this date yet.</div>}
+                                        ))
+                                    ) : <div style={{ padding: "10px", color: "#44596f" }}>No assignments made for this date yet.</div>}
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
