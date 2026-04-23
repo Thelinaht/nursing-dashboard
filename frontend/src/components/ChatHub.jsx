@@ -17,6 +17,7 @@ export default function ChatHub() {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const [notifications, setNotifications] = useState({}); // {userId: count}
+    const [search, setSearch] = useState(""); // Restored missing state
     
     // Docking state
     const [isDocked, setIsDocked] = useState(false);

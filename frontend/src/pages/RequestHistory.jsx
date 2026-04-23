@@ -16,7 +16,7 @@ export default function RequestHistory() {
     const rowsPerPage = 15;
 
     useEffect(() => {
-        const user = JSON.parse(sessionStorage.getItem("user")) || JSON.parse(localStorage.getItem("user"));
+        const user = JSON.parse(sessionStorage.getItem("user"));
         const targetId = user?.nurse_id || user?.user_id;
         if (!targetId) return;
 

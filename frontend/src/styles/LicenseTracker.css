@@ -123,7 +123,7 @@
 
 /* ── Table ── */
 .lt-table {
-    background: #dce6ef;
+    background: var(--bg-card, #dce6ef);
     border-radius: 16px;
     padding: 30px;
 }

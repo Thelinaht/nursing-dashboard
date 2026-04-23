@@ -13,8 +13,10 @@ export default function TrainingRequest() {
 
     useEffect(() => {
         const user = JSON.parse(sessionStorage.getItem("user"));
-        if (!user?.nurse_id) return;
-        fetch(`http://localhost:4000/api/nurses/${user.nurse_id}`)
+        const targetId = user?.nurse_id || user?.user_id;
+        if (!targetId) return;
+
+        fetch(`http://localhost:4000/api/nurses/${targetId}`)
             .then(res => res.json())
             .then(data => setNurse(data))
             .catch(err => console.error(err));
