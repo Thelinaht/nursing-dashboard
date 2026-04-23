@@ -140,36 +140,34 @@
 }
 
 .badge {
-    background: white;
-    padding: 5px 0;
+    padding: 6px 14px;
     border-radius: 20px;
     font-weight: 500;
-    width: 60px;
+    font-size: 12px;
+    width: fit-content;
     margin: 0 auto;
 }
-
-.badge.critical { color: var(--accent-red); border: 1px solid var(--accent-red); }
-.badge.high-risk { color: var(--accent-orange); border: 1px solid var(--accent-orange); }
-.badge.safe { color: var(--accent-green); border: 1px solid var(--accent-green); }
-.badge.low-risk { color: #fbc02d; border: 1px solid #fbc02d; }
 
 .legend {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    gap: 12px;
     margin-top: 15px;
 }
+
 .legend-item {
-    font-size: 9px;
-    padding: 4px 10px;
-    border-radius: 12px;
-    background: white;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 20px;
 }
-.legend-item.critical { color: var(--accent-red); border: 1px solid var(--accent-red); }
-.legend-item.high-risk { color: #ffb300; border: 1px solid #ffb300; }
-.legend-item.low-risk { color: #fbc02d; border: 1px solid #fbc02d; }
-.legend-item.safe { color: var(--accent-green); border: 1px solid var(--accent-green); }
-.legend-item.overstaffed { color: #03a9f4; border: 1px solid #03a9f4; }
+
+/* Consolidated badge and legend styling for absolute consistency */
+.badge.critical, .legend-item.critical { color: #c62828; background: #ffebee; border: 1px solid #ef5350; }
+.badge.high-risk, .legend-item.high-risk { color: #e65100; background: #fff3e0; border: 1px solid #ff9800; }
+.badge.low-risk, .legend-item.low-risk { color: #f57f17; background: #fffde7; border: 1px solid #fdd835; }
+.badge.safe, .legend-item.safe { color: #2e7d32; background: #e8f5e9; border: 1px solid #66bb6a; }
+.badge.overstaffed, .legend-item.overstaffed { color: #0277bd; background: #e1f5fe; border: 1px solid #29b6f6; }
 
 /* Bottom Section */
 .warning-banner {

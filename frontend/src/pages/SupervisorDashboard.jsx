@@ -117,7 +117,7 @@ export default function SupervisorDashboard() {
                         <div className="table-box content-box">
                             <div className="box-header" style={{ flexDirection: 'column', gap: '10px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                    <h2 className="content-box-title">Assign staff</h2>
+                                    <h2 className="content-box-title">Assigned Staff</h2>
                                     <div className="actions">
                                         <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }} onClick={() => {
                                             setSearch("");
@@ -231,7 +231,7 @@ export default function SupervisorDashboard() {
                     <div className="table-box content-box">
                         <div className="box-header">
                             <h2 className="content-box-title">Nurse-to-patient Ratios by Unit</h2>
-                            <div className="actions stack">
+                            <div className="actions" style={{ display: 'flex', gap: '8px' }}>
                                 <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }}>Update Ratio</button>
                                 <button className="btn-pill" style={{ background: 'var(--text-primary)', color: 'white' }}>View All</button>
                             </div>
