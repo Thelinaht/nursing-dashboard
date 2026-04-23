@@ -39,7 +39,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 }
 
 .leave-header-icon {
@@ -54,117 +54,43 @@
 }
 
 .leave-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     color: #2f3e55;
     margin: 0;
 }
 
-/* Form Grid */
-.form-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 14px;
-}
-
-.form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.form-label {
-    font-size: 12px;
+.leave-description-label {
+    font-size: 13px;
     font-weight: 600;
     color: #2f3e55;
+    margin-bottom: 10px;
 }
 
-.form-value {
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 13px;
-    color: #2f3e55;
-    font-weight: 600;
+.leave-textarea-wrapper {
+    background: white;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.form-input {
-    background: rgba(255, 255, 255, 0.6);
-    border: none;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 13px;
-    color: #2f3e55;
-    outline: none;
-    font-family: "Segoe UI", sans-serif;
-}
-
-.form-textarea {
-    background: rgba(255, 255, 255, 0.6);
-    border: none;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 13px;
-    color: #2f3e55;
-    outline: none;
-    font-family: "Segoe UI", sans-serif;
-    resize: none;
-    min-height: 80px;
+.leave-textarea {
     width: 100%;
-    box-sizing: border-box;
-}
-
-/* Toggle */
-.leave-type-toggle {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
-}
-
-.toggle-btn {
-    flex: 1;
-    padding: 10px;
+    min-height: 120px;
     border: none;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.3);
-    color: #2f3e55;
-    transition: 0.2s;
+    outline: none;
+    resize: none;
+    font-size: 14px;
+    color: #4a6070;
+    font-family: "Segoe UI", sans-serif;
+    background: transparent;
 }
 
-.toggle-btn.active {
-    background: #5a6f87;
-    color: white;
+.leave-textarea::placeholder {
+    color: #a0b0c0;
 }
 
-/* Section */
-.leave-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-/* Checkbox Group */
-.checkbox-group {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.checkbox-group label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: #2f3e55;
-    cursor: pointer;
-}
-
-/* Actions */
 .leave-actions {
     display: flex;
     align-items: center;

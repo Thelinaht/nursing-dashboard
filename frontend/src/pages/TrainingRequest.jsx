@@ -1,106 +1,99 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import "../styles/TrainingPage.css";
+import "../styles/RequestForm.css";
 
-export default function TrainingPage() {
+export default function TrainingRequest() {
+    const navigate = useNavigate();
     const [nurse, setNurse] = useState(null);
-    const [trainings, setTrainings] = useState([]);
-    const [statusFilter, setStatusFilter] = useState("All");
-    const [actionFilter, setActionFilter] = useState("All");
-    const [searchName, setSearchName] = useState("");
-    const [searchDate, setSearchDate] = useState("");
+    const [message, setMessage] = useState("");
+    const [reason, setReason] = useState("");
+    const [uploadedFiles, setUploadedFiles] = useState([]);
+    const fileInputRef = useRef();
 
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (!user?.user_id) return;
-
-        fetch(`http://localhost:4000/api/nurses/${user.user_id}`)
+        const user = JSON.parse(sessionStorage.getItem("user"));
+        if (!user?.nurse_id) return;
+        fetch(`http://localhost:4000/api/nurses/${user.nurse_id}`)
             .then(res => res.json())
-            .then(data => setNurse(data));
-
-        fetch(`http://localhost:4000/api/training/${user.user_id}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data?.rows) setTrainings(data.rows);
-            })
+            .then(data => setNurse(data))
             .catch(err => console.error(err));
     }, []);
 
-    const getAction = (status) => {
-        if (status === "Completed") return "View";
-        if (status === "Overdue") return "Start";
-        if (status === "In Progress") return "Continue";
-        return "Start";
+    const handleFileUpload = (e) => {
+        const files = Array.from(e.target.files);
+        setUploadedFiles(prev => [...prev, ...files.map(f => f.name)]);
     };
 
-    const statusClass = (s) => {
-        if (s === "Completed") return "tbadge complete";
-        if (s === "Overdue") return "tbadge overdue";
-        if (s === "In Progress") return "tbadge inprogress";
-        return "tbadge pending";
+    const handleSubmit = async () => {
+        if (!message.trim()) {
+            alert("Please write your request before submitting.");
+            return;
+        }
+        try {
+            const res = await fetch("http://localhost:4000/api/requests", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    nurse_id: nurse?.nurse_id,
+                    request_type: "Training Request",
+                    title: message,
+                    description: reason,
+                }),
+            });
+            if (res.ok) {
+                alert("Request submitted successfully!");
+                navigate("/request");
+            } else {
+                alert("Failed to submit request.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Server error.");
+        }
     };
-
-    const filtered = trainings.filter(t =>
-        (statusFilter === "All" || t.status === statusFilter) &&
-        (actionFilter === "All" || getAction(t.status) === actionFilter) &&
-        (searchName === "" || t.training_name?.toLowerCase().includes(searchName.toLowerCase())) &&
-        (searchDate === "" || t.due_date?.includes(searchDate))
-    );
-
-    const statuses = ["All", "Completed", "Pending", "Overdue", "In Progress"];
-    const actions = ["All", "View", "Start", "Continue"];
-
-    const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-GB") : "–";
 
     return (
         <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
-            <div className="main">
-                <h2>Training</h2>
-
-                <div className="tr-table-box">
-                    {/* Header / Filters */}
-                    <div className="tr-header">
-                        <div className="tr-col">
-                            <span className="tr-col-title">Course Name</span>
-                            <input className="tr-search" placeholder="Search" value={searchName} onChange={e => setSearchName(e.target.value)} />
+            <div className="leave-main">
+                <button className="back-btn" onClick={() => navigate("/request")}>← Back</button>
+                <div className="leave-form-card">
+                    <div className="leave-header">
+                        <div className="leave-header-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                            </svg>
                         </div>
-                        <div className="tr-col">
-                            <span className="tr-col-title">Status ⇅</span>
-                            <select className="tr-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-                                {statuses.map(s => <option key={s}>{s}</option>)}
-                            </select>
-                        </div>
-                        <div className="tr-col">
-                            <span className="tr-col-title">Due Date</span>
-                            <input className="tr-search" placeholder="Search" value={searchDate} onChange={e => setSearchDate(e.target.value)} />
-                        </div>
-                        <div className="tr-col">
-                            <span className="tr-col-title">Action ⇅</span>
-                            <select className="tr-select" value={actionFilter} onChange={e => setActionFilter(e.target.value)}>
-                                {actions.map(a => <option key={a}>{a}</option>)}
-                            </select>
-                        </div>
+                        <h2 className="leave-title">Training Request</h2>
                     </div>
 
-                    {/* Rows */}
-                    {filtered.length > 0 ? filtered.map((t, i) => (
-                        <div className="tr-row" key={i}>
-                            <div className="tr-cell">{t.training_name}</div>
-                            <div className="tr-cell">
-                                <span className={statusClass(t.status)}>{t.status}</span>
-                            </div>
-                            <div className="tr-cell">
-                                <span className="date-badge">{formatDate(t.due_date)}</span>
-                            </div>
-                            <div className="tr-cell">
-                                <button className="action-btn">{getAction(t.status)}</button>
-                            </div>
-                        </div>
-                    )) : (
-                        <div style={{ padding: "20px", textAlign: "center", color: "#4a6070", fontSize: 14 }}>
-                            No training records found.
-                        </div>
-                    )}
+                    <p className="leave-description-label">Staff Request</p>
+                    <div className="leave-textarea-wrapper">
+                        <textarea className="leave-textarea" placeholder="Click here to enter your request." value={message} onChange={(e) => setMessage(e.target.value)} />
+                    </div>
+
+                    <p className="leave-description-label">Reason</p>
+                    <div className="leave-textarea-wrapper">
+                        <textarea className="leave-textarea" placeholder="Click here to enter the reason." value={reason} onChange={(e) => setReason(e.target.value)} />
+                    </div>
+
+                    <div className="leave-actions">
+                        <button className="leave-submit-btn" onClick={handleSubmit}>Submit</button>
+                        <button className="leave-upload-btn" onClick={() => fileInputRef.current.click()}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="16" />
+                                <line x1="8" y1="12" x2="16" y2="12" />
+                            </svg>
+                            Upload Files
+                        </button>
+                        <input type="file" ref={fileInputRef} style={{ display: "none" }} multiple onChange={handleFileUpload} />
+                    </div>
+
+                    <div className="leave-uploaded-bar">
+                        {uploadedFiles.length > 0 ? uploadedFiles.join(", ") : "Uploaded Files...."}
+                    </div>
                 </div>
             </div>
         </Layout>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import "../styles/LeaveRequest.css";
+import "../styles/RequestForm.css";
 
 export default function GeneralRequest() {
     const navigate = useNavigate();
@@ -12,7 +12,7 @@ export default function GeneralRequest() {
     const fileInputRef = useRef();
 
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem("user"));
+        const user = JSON.parse(sessionStorage.getItem("user"));
         if (!user?.nurse_id) return;
         fetch(`http://localhost:4000/api/nurses/${user.nurse_id}`)
             .then(res => res.json())
@@ -28,7 +28,7 @@ export default function GeneralRequest() {
     const handleSubmit = async () => {
         if (!message.trim()) { alert("Please write your request before submitting."); return; }
         try {
-            const user = JSON.parse(localStorage.getItem("user"));
+            const user = JSON.parse(sessionStorage.getItem("user"));
             const res = await fetch("http://localhost:4000/api/requests", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

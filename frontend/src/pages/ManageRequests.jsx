@@ -80,7 +80,7 @@ export default function ManageRequests() {
     };
 
     return (
-        <Layout role="supervisor" logoSrc="/logo.png" username={JSON.parse(localStorage.getItem("user"))?.full_name || "Supervisor"}>
+        <Layout role="supervisor" logoSrc="/logo.png" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Supervisor"}>
             <div className="main">
                 <h2>Manage Requests</h2>
 

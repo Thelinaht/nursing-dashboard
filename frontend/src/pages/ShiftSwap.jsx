@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import "../styles/LeaveRequest.css";
+import "../styles/RequestForm.css";
 
 export default function ShiftSwap() {
     const navigate = useNavigate();
@@ -12,7 +12,7 @@ export default function ShiftSwap() {
     const fileInputRef = useRef();
 
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem("user"));
+        const user = JSON.parse(sessionStorage.getItem("user"));
         if (!user?.user_id) return;
 
         fetch(`http://localhost:4000/api/nurses/${user.user_id}`)
@@ -33,7 +33,7 @@ export default function ShiftSwap() {
         }
 
         try {
-            const user = JSON.parse(localStorage.getItem("user"));
+            const user = JSON.parse(sessionStorage.getItem("user"));
 
             const res = await fetch("http://localhost:4000/api/requests", {
                 method: "POST",

@@ -38,7 +38,7 @@ export default function Layout({
   let displayUsername = username;
   if (!username || username === "User") {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const user = JSON.parse(sessionStorage.getItem("user"));
       if (user && user.full_name) {
         displayUsername = user.full_name;
       }

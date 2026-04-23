@@ -16,14 +16,15 @@ export default function RequestHistory() {
     const rowsPerPage = 15;
 
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (!user?.user_id) return;
+        const user = JSON.parse(sessionStorage.getItem("user")) || JSON.parse(localStorage.getItem("user"));
+        const targetId = user?.nurse_id || user?.user_id;
+        if (!targetId) return;
 
-        fetch(`http://localhost:4000/api/nurses/${user.user_id}`)
+        fetch(`http://localhost:4000/api/nurses/${user?.user_id || targetId}`)
             .then(res => res.json())
             .then(data => setNurse(data));
 
-        fetch(`http://localhost:4000/api/requests/nurse/${user.user_id}`)
+        fetch(`http://localhost:4000/api/requests/nurse/${targetId}`)
             .then(res => res.json())
             .then(data => setRequests(Array.isArray(data) ? data : []))
             .catch(err => console.error(err));
@@ -148,18 +149,46 @@ export default function RequestHistory() {
                             </span>
                         </div>
 
-                        {selectedRequest.description && (
-                            <div className="popup-section">
-                                <span className="popup-label">Staff Request</span>
-                                <p className="popup-text">{selectedRequest.description}</p>
-                            </div>
-                        )}
-
-                        {selectedRequest.title && (
-                            <div className="popup-section">
-                                <span className="popup-label">Reason</span>
-                                <p className="popup-text">{selectedRequest.title}</p>
-                            </div>
+                        {selectedRequest.request_type === "Leave Request" ? (
+                            <>
+                                {selectedRequest.title && (
+                                    <div className="popup-section">
+                                        <span className="popup-label" style={{ display: "block", marginBottom: 8 }}>Leave Type</span>
+                                        <p className="popup-text">{selectedRequest.title}</p>
+                                    </div>
+                                )}
+                                {selectedRequest.description && (
+                                    <div className="popup-section">
+                                        <span className="popup-label" style={{ display: "block", marginBottom: 8 }}>Details</span>
+                                        {selectedRequest.description.split(", ").map((item, i) => {
+                                            const parts = item.split(": ");
+                                            const key = parts[0];
+                                            const val = parts.slice(1).join(": ");
+                                            return (
+                                                <div className="popup-row" key={i}>
+                                                    <span className="popup-label">{key}</span>
+                                                    <span className="popup-val">{val}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                {selectedRequest.description && (
+                                    <div className="popup-section">
+                                        <span className="popup-label">Staff Request</span>
+                                        <p className="popup-text">{selectedRequest.description}</p>
+                                    </div>
+                                )}
+                                {selectedRequest.title && (
+                                    <div className="popup-section">
+                                        <span className="popup-label">Reason</span>
+                                        <p className="popup-text">{selectedRequest.title}</p>
+                                    </div>
+                                )}
+                            </>
                         )}
 
                         <button className="popup-close-btn" onClick={() => setSelectedRequest(null)}>

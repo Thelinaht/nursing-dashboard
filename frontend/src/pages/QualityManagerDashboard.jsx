@@ -99,7 +99,7 @@ const doughnutOpts = {
 };
 
 export default function QualityManagerDashboard() {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(sessionStorage.getItem("user"));
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("overview");
 
