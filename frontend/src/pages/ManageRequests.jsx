@@ -1,26 +1,50 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
+import { FileText } from "lucide-react";
 import "../styles/RequestHistory.css";
+// We use the same styles that the Director Dashboard uses for consistency
+import "../styles/SupervisorDashboard.css";
 
 export default function ManageRequests() {
     const [requests, setRequests] = useState([]);
-    const [statusFilter, setStatusFilter] = useState("Pending");
-    const [typeFilter, setTypeFilter] = useState("All");
-    const [searchId, setSearchId] = useState("");
-    const [searchDate, setSearchDate] = useState("");
-    const [page, setPage] = useState(1);
-    const rowsPerPage = 15;
+    const [showAllHistory, setShowAllHistory] = useState(false);
 
     // Modal state
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [selectedRequestId, setSelectedRequestId] = useState(null);
     const [rejectNotes, setRejectNotes] = useState("");
 
-    const fetchRequests = () => {
-        fetch(`http://localhost:4000/api/requests`)
-            .then(res => res.json())
-            .then(data => setRequests(Array.isArray(data) ? data : []))
-            .catch(err => console.error(err));
+    const fetchRequests = async () => {
+        try {
+            const [reqRes, appRes] = await Promise.all([
+                fetch("http://localhost:4000/api/requests"),
+                fetch("http://localhost:4000/api/approvals")
+            ]);
+            
+            const reqData = await reqRes.json();
+            const appData = await appRes.json();
+
+            if (Array.isArray(reqData)) {
+                // Map the localized supervisor decision into the request object for visual clarity on this dashboard
+                const mappedData = reqData.map(req => {
+                    const supervisorApproval = Array.isArray(appData) 
+                        ? appData.find(a => a.request_id === req.request_id && a.approver_role === "Supervisor") 
+                        : null;
+                    
+                    if (supervisorApproval && supervisorApproval.decision === "Approved") {
+                        return { ...req, current_status: "Approved" };
+                    }
+                    if (req.current_status === "Pending") {
+                        return { ...req, current_status: "Pending Final Approval" };
+                    }
+                    return req;
+                });
+                
+                setRequests(mappedData);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     useEffect(() => {
@@ -60,108 +84,85 @@ export default function ManageRequests() {
         .catch(err => console.error("Reject error", err));
     };
 
-    const filtered = requests.filter(r =>
-        (statusFilter === "All" || r.current_status === statusFilter) &&
-        (typeFilter === "All" || r.request_type === typeFilter) &&
-        (searchId === "" || r.request_id?.toString().includes(searchId)) &&
-        (searchDate === "" || r.submission_date?.includes(searchDate))
-    );
-
-    const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-    const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-
-    const statuses = ["All", "Pending", "Approved", "Rejected"];
-    const types = ["All", "Leave Request", "Shift Swap", "Document Update", "Unit Transfer", "Training Request", "General Request"];
-
-    const statusClass = (s) => {
-        if (s === "Approved") return "badge approved";
-        if (s === "Rejected") return "badge rejected";
-        return "badge pending";
-    };
+    // Filter requests based on toggle
+    const filtered = showAllHistory 
+        ? requests 
+        : requests.filter(r => r.current_status === "Pending Supervisor");
 
     return (
         <Layout role="supervisor" logoSrc="/logo.png" username={JSON.parse(localStorage.getItem("user"))?.full_name || "Supervisor"}>
             <div className="main">
-                <h2>Manage Requests</h2>
-
-                <div className="rh-table-box">
-                    <div className="rh-header-sup">
-                        <div className="rh-col">
-                            <span className="rh-col-title">Request ID</span>
-                            <input className="rh-search" placeholder="Search" value={searchId} onChange={e => { setSearchId(e.target.value); setPage(1); }} />
-                        </div>
-                        <div className="rh-col">
-                            <span className="rh-col-title">Nurse Name</span>
-                        </div>
-                        <div className="rh-col">
-                            <span className="rh-col-title">Status ⇅</span>
-                            <select className="rh-select" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
-                                {statuses.map(s => <option key={s}>{s}</option>)}
-                            </select>
-                        </div>
-                        <div className="rh-col">
-                            <span className="rh-col-title">Type ⇅</span>
-                            <select className="rh-select" value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); }}>
-                                {types.map(t => <option key={t}>{t}</option>)}
-                            </select>
-                        </div>
-                        <div className="rh-col">
-                            <span className="rh-col-title">Date</span>
-                            <input className="rh-search" placeholder="Search" value={searchDate} onChange={e => { setSearchDate(e.target.value); setPage(1); }} />
-                        </div>
-                        <div className="rh-col">
-                            <span className="rh-col-title">Attachment</span>
-                        </div>
-                        <div className="rh-col">
-                            <span className="rh-col-title">Action</span>
-                        </div>
+                
+                <div className="table-box content-box" style={{ flex: 1, marginTop: '20px' }}>
+                    <div className="box-header">
+                        <h2 className="content-box-title">{showAllHistory ? "All Requests" : "Pending Requests Management"}</h2>
+                        <button
+                            className="btn-pill"
+                            style={{ background: 'var(--accent-blue)', color: 'white', gap: '5px', display: 'flex', alignItems: 'center' }}
+                            onClick={() => setShowAllHistory(!showAllHistory)}
+                        >
+                            <FileText size={14} />
+                            {showAllHistory ? "Show Pending Only" : "View All History"}
+                        </button>
                     </div>
+                    
+                    <div className="custom-table" style={{ marginTop: '10px' }}>
+                        <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1.5fr' }}>
+                            <span>Staff Name</span>
+                            <span>Request Type</span>
+                            <span>Submitted On</span>
+                            <span style={{ textAlign: "center" }}>Attachment</span>
+                            <span style={{ textAlign: "center" }}>{showAllHistory ? "Status / Actions" : "Actions"}</span>
+                        </div>
+                        
+                        <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                            {filtered.length > 0 ? filtered.map((req) => (
+                                <div className="table-row premium-row" key={req.request_id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1.5fr', padding: '12px 15px', marginBottom: '8px' }}>
+                                    <span style={{ fontWeight: 500 }}>{req.nurse_name || req.full_name || `Nurse #${req.nurse_id}`}</span>
+                                    <span style={{ color: 'var(--text-secondary)' }}>{req.request_type}</span>
+                                    <span style={{ fontSize: '11px' }}>{req.submission_date ? new Date(req.submission_date).toLocaleDateString() : '–'}</span>
 
-                    {paginated.length > 0 ? paginated.map((r, i) => (
-                        <div className="rh-row-sup" key={i}>
-                            <div className="rh-cell">REQ-{String(r.request_id).padStart(3, "0")}</div>
-                            <div className="rh-cell" style={{fontWeight: "bold"}}>{r.nurse_name || r.full_name || "Unknown"}</div>
-                            <div className="rh-cell">
-                                <span className={statusClass(r.current_status)}>{r.current_status}</span>
-                            </div>
-                            <div className="rh-cell">{r.request_type}</div>
-                            <div className="rh-cell">
-                                {r.submission_date ? new Date(r.submission_date).toLocaleDateString("en-GB") : "–"}
-                            </div>
-                            <div className="rh-cell">
-                                <button 
-                                    title="View Attachment" 
-                                    className="action-btn" 
-                                    style={{ background: "#637b95", padding: "6px 10px", fontSize: "14px", display: "flex", margin: "auto" }} 
-                                    onClick={() => alert("Attachment preview coming soon!")}
-                                >
-                                    📎
-                                </button>
-                            </div>
-                            <div className="rh-cell">
-                                {r.current_status === "Pending" && (
-                                    <div className="action-btns">
-                                        <button className="action-btn approve-btn" onClick={() => handleApprove(r.request_id)}>Approve</button>
-                                        <button className="action-btn reject-btn" onClick={() => handleRejectClick(r.request_id)}>Reject</button>
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <button 
+                                            title="View Attachment" 
+                                            className="action-btn" 
+                                            style={{ background: "#e2e8f0", color: "#4a6a85", padding: "4px 8px", fontSize: "14px", borderRadius: "6px" }} 
+                                            onClick={() => alert("Attachment preview coming soon! (Backend upload handling required)")}
+                                        >
+                                            📎 View
+                                        </button>
                                     </div>
-                                )}
-                            </div>
-                        </div>
-                    )) : (
-                        <div style={{ padding: "20px", textAlign: "center", color: "#4a6070", fontSize: 14 }}>
-                            No requests found.
-                        </div>
-                    )}
 
-                    <div className="rh-pagination">
-                        <div className="rh-pages">
-                            <button className="pg-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>‹</button>
-                            <span className="pg-info">{page} / {totalPages}</span>
-                            <button className="pg-btn" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>›</button>
-                        </div>
-                        <div className="rh-rows-per">
-                            <span>Rows per page</span>
-                            <span className="rows-badge">{rowsPerPage}</span>
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
+                                        {req.current_status === "Pending Supervisor" ? (
+                                            <>
+                                                <button
+                                                    className="btn-pill"
+                                                    style={{ backgroundColor: 'var(--accent-green)', color: 'white' }}
+                                                    onClick={() => handleApprove(req.request_id)}
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    className="btn-pill"
+                                                    style={{ backgroundColor: 'var(--accent-red)', color: 'white' }}
+                                                    onClick={() => handleRejectClick(req.request_id)}
+                                                >
+                                                    Deny
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <span className={`status ${req.current_status?.toLowerCase().replace(" ", "-")}`} style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                {req.current_status}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )) : (
+                                <div style={{ textAlign: 'center', padding: '40px', color: '#8ea2b5' }}>
+                                    No requests found.
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -39,7 +39,7 @@ export default function RequestHistory() {
     const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
     const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
-    const statuses = ["All", "Approved", "Rejected", "Pending"];
+    const statuses = ["All", "Approved", "Rejected", "Pending", "Pending Supervisor"];
     const types = ["All", "Leave Request", "Shift Swap", "Document Update", "Unit Transfer", "Training Request", "General Request"];
 
     const statusClass = (s) => {
