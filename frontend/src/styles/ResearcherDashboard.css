@@ -1,0 +1,393 @@
+.qm-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 4px 0;
+}
+
+/* Header */
+.qm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.qm-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2f3e55;
+    margin: 0 0 4px;
+}
+
+.qm-header p {
+    font-size: 13px;
+    color: #5a6f87;
+    margin: 0;
+}
+
+/* Tabs */
+.qm-tabs {
+    display: flex;
+    gap: 8px;
+}
+
+.qm-tab {
+    background: #dce6f2;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2f3e55;
+    transition: 0.2s;
+}
+
+.qm-tab:hover {
+    background: #c8d9ed;
+}
+
+.qm-tab.active {
+    background: #5a6f87;
+    color: white;
+}
+
+/* KPI grid */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.kpi-card {
+    background: #dce6f2;
+    border-radius: 20px;
+    padding: 18px;
+}
+
+.kpi-label {
+    font-size: 12px;
+    color: #5a6f87;
+    font-weight: 500;
+    margin: 0 0 8px;
+}
+
+.kpi-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #2f3e55;
+    margin: 0 0 4px;
+}
+
+.kpi-unit {
+    font-size: 11px;
+    color: #5a6f87;
+    margin: 0 0 4px;
+}
+
+.kpi-note {
+    font-size: 11px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.note-up {
+    color: #e74c3c;
+}
+
+.note-down {
+    color: #27ae60;
+}
+
+/* Charts grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.chart-card {
+    background: white;
+    border: 1.5px solid #dce6f2;
+    border-radius: 20px;
+    padding: 18px 20px;
+}
+
+.chart-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2f3e55;
+    margin: 0 0 10px;
+}
+
+/* Legend */
+.legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: #5a6f87;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* Satisfaction */
+.sat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.sat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sat-label {
+    width: 120px;
+    font-size: 13px;
+    color: #2f3e55;
+    flex-shrink: 0;
+}
+
+.sat-bar-bg {
+    flex: 1;
+    background: #f0f4f9;
+    border-radius: 8px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.sat-bar {
+    height: 10px;
+    border-radius: 8px;
+    transition: width 0.4s;
+}
+
+.sat-val {
+    width: 40px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2f3e55;
+}
+
+/* Compliance */
+.compliance-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.compliance-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.compliance-name {
+    width: 140px;
+    font-size: 13px;
+    color: #2f3e55;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.compliance-bar-bg {
+    flex: 1;
+    background: #f0f4f9;
+    border-radius: 8px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.compliance-bar {
+    height: 10px;
+    border-radius: 8px;
+    transition: width 0.4s;
+}
+
+/* Badges */
+.badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+}
+
+.badge-green {
+    background: #d4f8e0;
+    color: #1a6b3a;
+}
+
+.badge-amber {
+    background: #fff3cd;
+    color: #7d5a00;
+}
+
+.badge-red {
+    background: #fde8e8;
+    color: #922b21;
+}
+
+/* ── Staffing Calculator ── */
+.staffing-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.staffing-tab {
+    background: #dce6f2;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: #2f3e55;
+    transition: 0.2s;
+}
+
+.staffing-tab:hover {
+    background: #c8d9ed;
+}
+
+.staffing-tab.active {
+    background: #5a6f87;
+    color: white;
+}
+
+.staffing-formula-box {
+    background: #f0f4f9;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #2f3e55;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.staffing-formula-box strong {
+    color: #2f3e55;
+    font-weight: 700;
+}
+
+.formula-note {
+    font-size: 11px;
+    color: #5a6f87;
+}
+
+.staffing-inputs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.staffing-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.staffing-field label {
+    font-size: 12px;
+    color: #5a6f87;
+    font-weight: 500;
+}
+
+.staffing-field input {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #dce6f2;
+    font-size: 14px;
+    color: #2f3e55;
+    background: white;
+    outline: none;
+    width: 100%;
+}
+
+.staffing-field input:focus {
+    border-color: #5a6f87;
+}
+
+.staffing-result {
+    background: white;
+    border: 1.5px solid #dce6f2;
+    border-radius: 20px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: center;
+}
+
+.result-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.result-label {
+    font-size: 13px;
+    color: #5a6f87;
+    margin: 0;
+}
+
+.result-number {
+    font-size: 52px;
+    font-weight: 800;
+    color: #2f3e55;
+    margin: 0;
+    line-height: 1;
+}
+
+.result-unit {
+    font-size: 13px;
+    color: #5a6f87;
+    margin: 0;
+}
+
+.result-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-left: 1.5px solid #dce6f2;
+    padding-left: 24px;
+}
+
+.brow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.brow span:first-child {
+    color: #5a6f87;
+}
+
+.brow span:last-child {
+    font-weight: 700;
+    color: #2f3e55;
+}

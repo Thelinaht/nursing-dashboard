@@ -15,7 +15,7 @@ export default function ShiftSwap() {
         const user = JSON.parse(sessionStorage.getItem("user"));
         if (!user?.user_id) return;
 
-        fetch(`http://localhost:4000/api/nurses/${user.user_id}`)
+        fetch(`http://localhost:4000/api/nurses/user/${user.user_id}`)
             .then(res => res.json())
             .then(data => setNurse(data))
             .catch(err => console.error(err));

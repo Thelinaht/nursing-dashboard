@@ -22,6 +22,8 @@ import LicenseTracker from "./pages/LicenseTracker";
 import AddNurse from "./pages/AddNurse";
 import DirectorDashboard from "./pages/DirectorDashboard";
 import QualityManagerDashboard from "./pages/QualityManagerDashboard";
+import ResearcherDashboard from "./pages/ResearcherDashboard";
+import PatientServicesDashboard from "./pages/PatientServicesDashboard";
 
 // requests system
 import LeaveRequest from "./pages/LeaveRequest";
@@ -48,6 +50,8 @@ function App() {
                                 <Route path="/supervisor/manage-requests" element={<ManageRequests />} />
                                 <Route path="/director-dashboard" element={<DirectorDashboard />} />
                                 <Route path="/quality-manager-dashboard" element={<QualityManagerDashboard />} />
+                                <Route path="/researcher-dashboard" element={<ResearcherDashboard />} />
+                                <Route path="/patient-services-dashboard" element={<PatientServicesDashboard />} />
                                 <Route path="/add-nurse" element={<AddNurse />} />
 
                                 {/* staff */}

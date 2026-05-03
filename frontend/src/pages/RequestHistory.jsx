@@ -20,7 +20,7 @@ export default function RequestHistory() {
         const targetId = user?.nurse_id || user?.user_id;
         if (!targetId) return;
 
-        fetch(`http://localhost:4000/api/nurses/${user?.user_id || targetId}`)
+        fetch(`http://localhost:4000/api/nurses/${targetId === user?.user_id ? 'user/' + targetId : targetId}`)
             .then(res => res.json())
             .then(data => setNurse(data));
 

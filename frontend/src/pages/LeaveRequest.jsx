@@ -27,8 +27,8 @@ export default function LeaveRequest() {
 
     useEffect(() => {
         const user = JSON.parse(sessionStorage.getItem("user"));
-        if (!user?.nurse_id) return;
-        fetch(`http://localhost:4000/api/nurses/${user.nurse_id}`)
+        if (!user?.user_id) return;
+        fetch(`http://localhost:4000/api/nurses/user/${user.user_id}`)
             .then(res => res.json())
             .then(data => setNurse(data))
             .catch(err => console.error(err));

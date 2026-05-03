@@ -13,7 +13,7 @@ export default function NurseDashboard() {
         if (!user?.user_id) return;
 
 
-        fetch(`http://localhost:4000/api/nurses/${user.user_id}`)
+        fetch(`http://localhost:4000/api/nurses/user/${user.user_id}`)
             .then(res => res.json())
             .then(async (nurseData) => {
                 try {
