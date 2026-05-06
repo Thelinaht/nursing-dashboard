@@ -65,6 +65,11 @@ const menuConfig = {
     { label: "Research", path: "/research", icon: I.research },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
+  trainingDirector: [
+    { label: "Dashboard", path: "/training-director-dashboard", icon: I.dashboard },
+    { label: "Staff Directory", path: "/training-staff", icon: I.staff },
+    { label: "Notifications", path: "/notifications", icon: I.bell },
+  ],
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────

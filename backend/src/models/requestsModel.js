@@ -38,7 +38,7 @@ exports.createRequest = async (data) => {
 
     const [result] = await pool.query(
         `INSERT INTO Request (nurse_id, request_type, title, description, submission_date, current_status)
-     VALUES (?, ?, ?, ?, CURDATE(), 'Pending Supervisor')`,
+     VALUES (?, ?, ?, ?, CURDATE(), 'Pending')`,
         [nurse_id, request_type, title, description]
     );
 

@@ -13,8 +13,9 @@ export default function UnitTransfer() {
 
     useEffect(() => {
         const user = JSON.parse(sessionStorage.getItem("user"));
-        if (!user?.nurse_id) return;
-        fetch(`http://localhost:4000/api/nurses/${user.nurse_id}`)
+        const targetId = user?.nurse_id || user?.user_id || user?.id;
+        if (!targetId) return;
+        fetch(`http://localhost:4000/api/nurses/${targetId}`)
             .then(res => res.json())
             .then(data => setNurse(data))
             .catch(err => console.error(err));
@@ -33,7 +34,7 @@ export default function UnitTransfer() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    nurse_id: user.nurse_id,
+                    nurse_id: user?.nurse_id || user?.user_id || user?.id,
                     request_type: "Unit Transfer",
                     title: reason,
                     description: message

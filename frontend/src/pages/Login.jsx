@@ -38,6 +38,8 @@ export default function Login() {
                     window.location.href = "/director-dashboard";
                 } else if (user.role_id === 5) {
                     window.location.href = "/quality-manager-dashboard";
+                } else if (user.role_id === 6) {
+                    window.location.href = "/training-director-dashboard";
                 } else {
                     alert("Unknown role");
                 }

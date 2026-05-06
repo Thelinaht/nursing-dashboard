@@ -15,6 +15,17 @@ export default function StaffDirectory() {
     const [nurses, setNurses] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const user = JSON.parse(sessionStorage.getItem("user")) || {};
+    const roleMap = {
+        1: "nurse",
+        2: "secretary",
+        3: "supervisor",
+        4: "director",
+        5: "qualityManager",
+        6: "trainingDirector"
+    };
+    const currentRole = roleMap[user.role_id] || "director";
+
     // search and filters
     const [search, setSearch] = useState("");
     const [filters, setFilters] = useState({
@@ -79,9 +90,9 @@ export default function StaffDirectory() {
 
     return (
         <Layout
-            role="director"
+            role={currentRole}
             logoSrc="/logo.png"
-            username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Director"}
+            username={user.full_name || "Director"}
         >
             <div className="main" style={{ padding: '0 20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
