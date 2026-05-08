@@ -28,20 +28,24 @@ export default function Login() {
 
 
                 //  توجيه حسب الرول
-                if (user.role_id === 1) {
+                if (user.role_id === 1 || user.role_name === "nurse") {
                     window.location.href = "/nurse-dashboard";
-                } else if (user.role_id === 2) {
+                } else if (user.role_id === 2 || user.role_name === "secretary") {
                     window.location.href = "/secretary-dashboard";
-                } else if (user.role_id === 3) {
+                } else if (user.role_id === 3 || user.role_name === "supervisor") {
                     window.location.href = "/supervisor-dashboard";
-                } else if (user.role_id === 4) {
+                } else if (user.role_id === 4 || user.role_name === "director") {
                     window.location.href = "/director-dashboard";
-                } else if (user.role_id === 5) {
+                } else if (user.role_id === 5 || user.role_name === "quality_manager") {
                     window.location.href = "/quality-manager-dashboard";
-                } else if (user.role_id === 6) {
+                } else if (user.role_id === 6 || user.role_name === "training_director") {
                     window.location.href = "/training-director-dashboard";
+                } else if (user.role_name === "patient_services") {
+                    window.location.href = "/patient-services-dashboard";
+                } else if (user.role_name === "researcher") {
+                    window.location.href = "/researcher-dashboard";
                 } else {
-                    alert("Unknown role");
+                    alert("Unknown role: " + user.role_name);
                 }
 
 

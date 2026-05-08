@@ -24,6 +24,8 @@ import AddNurse from "./pages/AddNurse";
 import DirectorDashboard from "./pages/DirectorDashboard";
 import QualityManagerDashboard from "./pages/QualityManagerDashboard";
 import TrainingDirectorDashboard from "./pages/TrainingDirectorDashboard";
+import PatientServicesDashboard from "./pages/PatientServicesDashboard";
+import ResearcherDashboard from "./pages/ResearcherDashboard";
 
 // requests system
 import LeaveRequest from "./pages/LeaveRequest";
@@ -51,6 +53,8 @@ function App() {
                                 <Route path="/director-dashboard" element={<DirectorDashboard />} />
                                 <Route path="/quality-manager-dashboard" element={<QualityManagerDashboard />} />
                                 <Route path="/training-director-dashboard" element={<TrainingDirectorDashboard />} />
+                                <Route path="/patient-services-dashboard" element={<PatientServicesDashboard />} />
+                                <Route path="/researcher-dashboard" element={<ResearcherDashboard />} />
                                 <Route path="/training-staff" element={<TrainingStaffDirectory />} />
                                 <Route path="/add-nurse" element={<AddNurse />} />
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import "../styles/SupervisorDashboard.css";
+import { io } from "socket.io-client";
 
 export default function SupervisorDashboard() {
     const [search, setSearch] = useState("");
