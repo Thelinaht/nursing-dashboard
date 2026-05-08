@@ -86,7 +86,11 @@ export default function DirectorDashboard() {
     socket.on("new_incident", (newIncident) => {
       setIncidents((prev) => [newIncident, ...prev].slice(0, 5)); // Keep latest 5
     });
-    return () => socket.off("new_incident");
+    socket.on("request_updated", fetchRequests);
+    return () => {
+        socket.off("new_incident");
+        socket.off("request_updated");
+    };
   }, []);
 
   const fetchRequests = async () => {
@@ -97,7 +101,7 @@ export default function DirectorDashboard() {
       if (showAllHistory) {
         setRequests(data);
       } else {
-        setRequests(data.filter(r => r.current_status === "Pending"));
+        setRequests(data.filter(r => r.current_status === "Pending_Director"));
       }
       setLoading(false);
     } catch (err) {
@@ -366,7 +370,7 @@ export default function DirectorDashboard() {
                       <span style={{ fontSize: '11px' }}>{new Date(req.submission_date).toLocaleDateString()}</span>
 
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        {req.current_status === "Pending" ? (
+                        {req.current_status === "Pending_Director" ? (
                           <>
                             <button
                               className="btn-pill"
@@ -384,8 +388,8 @@ export default function DirectorDashboard() {
                             </button>
                           </>
                         ) : (
-                          <span className={`status ${req.current_status?.toLowerCase().replace(" ", "-")}`} style={{ fontSize: '11px', padding: '4px 10px' }}>
-                            {req.current_status}
+                          <span className={`status ${req.current_status?.toLowerCase().replace("_", "-")}`} style={{ fontSize: '11px', padding: '4px 10px' }}>
+                            {req.current_status === "Pending" ? "Pending Supervisor" : (req.current_status === "Pending_Director" ? "Pending Director" : req.current_status)}
                           </span>
                         )}
                       </div>

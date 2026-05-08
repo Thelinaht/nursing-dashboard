@@ -37,6 +37,11 @@ exports.create = async (req, res) => {
 
         await approvalModel.createApproval(request_id, "Supervisor");
 
+        // Trigger real-time live reload on all dashboards
+        if (req.app.get("io")) {
+            req.app.get("io").emit("request_updated");
+        }
+
         res.json(result);
 
     } catch (e) {

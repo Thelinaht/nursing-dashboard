@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const chatRoutes = require("./routes/chatRoutes");
 const liveChatRoutes = require("./routes/liveChatRoutes");
 const nursesRoutes = require("./routes/nursesRoutes");
 const requestsRoutes = require("./routes/requestsRoutes");
@@ -43,6 +42,9 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
+// Make socket universally available to all routes and controllers!
+app.set("io", io);
+
 
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -75,7 +77,6 @@ app.get("/", (req, res) => {
     res.send("Server is working ✅");
 });
 
-app.use("/api/chat", chatRoutes);
 app.use("/api/live-chat", liveChatRoutes);
 // nurses API
 app.get("/api/nurses/available", assignmentController.getAvailableNurses);

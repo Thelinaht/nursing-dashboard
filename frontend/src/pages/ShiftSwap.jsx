@@ -39,7 +39,7 @@ export default function ShiftSwap() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    nurse_id: nurse?.nurse_id,
+                    nurse_id: nurse?.nurse_id || user?.nurse_id || user?.user_id || user?.id,
                     request_type: "Shift Swap",
                     title: message,
                     description: reason,

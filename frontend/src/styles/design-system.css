@@ -174,13 +174,15 @@ body {
 /* Green (Active, Completed, Approved) */
 .status.active,
 .tbadge.completed,
-.tbadge.complete {
+.tbadge.complete,
+.status.approved {
     background-color: #d4f8e0;
     color: var(--accent-green);
 }
 
 /* Blue (Pending, Under Review, Terminated) */
 .status.pending,
+.status.pending-director,
 .tbadge.pending,
 .status.terminated {
     background-color: #e3edf6;
@@ -198,7 +200,8 @@ body {
 .status.eoc,
 .status.suspended,
 .tbadge.overdue,
-.status.on-leave {
+.status.on-leave,
+.status.rejected {
     background-color: #ffd6d6;
     color: var(--accent-red);
 }

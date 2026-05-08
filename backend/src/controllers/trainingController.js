@@ -67,3 +67,25 @@ exports.uploadCertificate = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// GET all dashboard data (KPIs, mandatory, competencies, etc.)
+exports.getDashboardData = async (req, res) => {
+    try {
+        const result = await model.getDashboardData();
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// GET all trainees for directory
+exports.getTrainees = async (req, res) => {
+    try {
+        const result = await model.getTrainees();
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};

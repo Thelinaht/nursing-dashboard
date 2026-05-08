@@ -26,6 +26,7 @@ exports.supervisorDecision = async (req, res) => {
             //  ينتهي الطلب
             await requestModel.updateRequestStatus(request_id, "Rejected");
 
+            if (req.app.get("io")) req.app.get("io").emit("request_updated");
             return res.json({ message: "Request rejected by Supervisor ❌" });
         }
 
@@ -34,8 +35,9 @@ exports.supervisorDecision = async (req, res) => {
             await approvalModel.createApproval(request_id, "Director");
             
             // Advance the request so it drops into the Director's queue
-            await requestModel.updateRequestStatus(request_id, "Pending");
+            await requestModel.updateRequestStatus(request_id, "Pending_Director");
 
+            if (req.app.get("io")) req.app.get("io").emit("request_updated");
             return res.json({ message: "Moved to Director ✅" });
         }
 
@@ -53,12 +55,14 @@ exports.assistantDecision = async (req, res) => {
 
         if (decision === "Rejected") {
             await requestModel.updateRequestStatus(request_id, "Rejected");
+            if (req.app.get("io")) req.app.get("io").emit("request_updated");
             return res.json({ message: "Request rejected by Assistant Director ❌" });
         }
 
         if (decision === "Approved") {
             // Move to final stage: Director
             await approvalModel.createApproval(request_id, "Director");
+            if (req.app.get("io")) req.app.get("io").emit("request_updated");
             return res.json({ message: "Moved to Director ✅" });
         }
 
@@ -77,6 +81,7 @@ exports.directorDecision = async (req, res) => {
         // Final decision applied to the request
         await requestModel.updateRequestStatus(request_id, decision);
 
+        if (req.app.get("io")) req.app.get("io").emit("request_updated");
         res.json({ message: `Final decision (${decision}) applied by Director ✅` });
 
     } catch (err) {

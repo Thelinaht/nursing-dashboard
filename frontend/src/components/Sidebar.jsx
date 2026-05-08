@@ -65,12 +65,9 @@ const menuConfig = {
     { label: "Research", path: "/research", icon: I.research },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
-  researcher: [
-    { label: "Dashboard", path: "/researcher-dashboard", icon: I.dashboard },
-    { label: "Notifications", path: "/notifications", icon: I.bell },
-  ],
-  patient_services: [
-    { label: "Dashboard", path: "/patient-services-dashboard", icon: I.dashboard },
+  trainingDirector: [
+    { label: "Dashboard", path: "/training-director-dashboard", icon: I.dashboard },
+    { label: "Staff Directory", path: "/training-staff", icon: I.staff },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
 };

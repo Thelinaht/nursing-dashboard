@@ -40,13 +40,13 @@ export default function RequestHistory() {
     const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
     const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
-    const statuses = ["All", "Approved", "Rejected", "Pending", "Pending Supervisor"];
+    const statuses = ["All", "Approved", "Rejected", "Pending", "Pending_Director"];
     const types = ["All", "Leave Request", "Shift Swap", "Document Update", "Unit Transfer", "Training Request", "General Request"];
 
     const statusClass = (s) => {
-        if (s === "Approved") return "badge approved";
-        if (s === "Rejected") return "badge rejected";
-        return "badge pending";
+        if (s === "Approved") return "status approved";
+        if (s === "Rejected") return "status rejected";
+        return `status ${s.toLowerCase().replace("_", "-")}`;
     };
 
     return (
@@ -89,7 +89,9 @@ export default function RequestHistory() {
                         <div className="rh-row" key={i}>
                             <div className="rh-cell">REQ-{String(r.request_id).padStart(3, "0")}</div>
                             <div className="rh-cell">
-                                <span className={statusClass(r.current_status)}>{r.current_status}</span>
+                                <span className={statusClass(r.current_status)}>
+                                    {r.current_status === "Pending_Director" ? "Pending Director" : (r.current_status === "Pending" ? "Pending Supervisor" : r.current_status)}
+                                </span>
                             </div>
                             <div className="rh-cell">{r.request_type}</div>
                             <div className="rh-cell">
@@ -136,7 +138,7 @@ export default function RequestHistory() {
                             <span className="popup-label">Status</span>
                             <div style={{ display: "flex", justifyContent: "flex-end", flex: 1 }}>
                                 <span className={statusClass(selectedRequest.current_status)}>
-                                    {selectedRequest.current_status}
+                                    {selectedRequest.current_status === "Pending_Director" ? "Pending Director" : (selectedRequest.current_status === "Pending" ? "Pending Supervisor" : selectedRequest.current_status)}
                                 </span>
                             </div>
                         </div>

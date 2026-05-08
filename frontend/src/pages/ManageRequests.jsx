@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { FileText } from "lucide-react";
+import io from "socket.io-client";
 import "../styles/RequestHistory.css";
 // We use the same styles that the Director Dashboard uses for consistency
 import "../styles/SupervisorDashboard.css";
@@ -25,22 +26,7 @@ export default function ManageRequests() {
             const appData = await appRes.json();
 
             if (Array.isArray(reqData)) {
-                // Map the localized supervisor decision into the request object for visual clarity on this dashboard
-                const mappedData = reqData.map(req => {
-                    const supervisorApproval = Array.isArray(appData) 
-                        ? appData.find(a => a.request_id === req.request_id && a.approver_role === "Supervisor") 
-                        : null;
-                    
-                    if (supervisorApproval && supervisorApproval.decision === "Approved") {
-                        return { ...req, current_status: "Approved" };
-                    }
-                    if (req.current_status === "Pending") {
-                        return { ...req, current_status: "Pending Final Approval" };
-                    }
-                    return req;
-                });
-                
-                setRequests(mappedData);
+                setRequests(reqData);
             }
         } catch (err) {
             console.error(err);
@@ -49,6 +35,12 @@ export default function ManageRequests() {
 
     useEffect(() => {
         fetchRequests();
+        const socket = io("http://localhost:4000");
+        socket.on("request_updated", fetchRequests);
+        return () => {
+            socket.off("request_updated");
+            socket.disconnect();
+        };
     }, []);
 
     const handleApprove = (requestId) => {
@@ -87,7 +79,7 @@ export default function ManageRequests() {
     // Filter requests based on toggle
     const filtered = showAllHistory 
         ? requests 
-        : requests.filter(r => r.current_status === "Pending Supervisor");
+        : requests.filter(r => r.current_status === "Pending");
 
     return (
         <Layout role="supervisor" logoSrc="/logo.png" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Supervisor"}>
@@ -134,7 +126,7 @@ export default function ManageRequests() {
                                     </div>
 
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
-                                        {req.current_status === "Pending Supervisor" ? (
+                                        {req.current_status === "Pending" ? (
                                             <>
                                                 <button
                                                     className="btn-pill"
@@ -152,8 +144,8 @@ export default function ManageRequests() {
                                                 </button>
                                             </>
                                         ) : (
-                                            <span className={`status ${req.current_status?.toLowerCase().replace(" ", "-")}`} style={{ fontSize: '11px', padding: '4px 10px' }}>
-                                                {req.current_status}
+                                            <span className={`status ${req.current_status?.toLowerCase().replace("_", "-")}`} style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                {req.current_status === "Pending" ? "Pending Supervisor" : (req.current_status === "Pending_Director" ? "Pending Director" : req.current_status)}
                                             </span>
                                         )}
                                     </div>

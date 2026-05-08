@@ -10,6 +10,17 @@ export default function SupervisorDashboard() {
     const [assignUnitFilters, setAssignUnitFilters] = useState([]);
     const [showUnitDropdown, setShowUnitDropdown] = useState(false);
 
+    const fetchRequests = () => {
+        fetch("http://localhost:4000/api/requests")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setPendingRequests(data.filter(r => r.current_status && r.current_status === 'Pending').length);
+                }
+            })
+            .catch(err => console.error(err));
+    };
+
     // Fetch data from backend
     useEffect(() => {
         fetch("http://localhost:4000/api/nurses")
@@ -17,14 +28,13 @@ export default function SupervisorDashboard() {
             .then(data => setNurses(Array.isArray(data) ? data : []))
             .catch(err => console.error(err));
 
-        fetch("http://localhost:4000/api/requests")
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) {
-                    setPendingRequests(data.filter(r => r.status && r.status.toLowerCase() === 'pending').length);
-                }
-            })
-            .catch(err => console.error(err));
+        fetchRequests();
+        const socket = io("http://localhost:4000");
+        socket.on("request_updated", fetchRequests);
+        return () => {
+            socket.off("request_updated");
+            socket.disconnect();
+        };
     }, []);
 
     // Calculate Top Stats
