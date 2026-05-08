@@ -1,0 +1,236 @@
+.notifications-page-container {
+  min-height: 100vh;
+  background-color: #dce3ed;
+  display: flex;
+  flex-direction: column;
+}
+
+.notifications-content {
+  padding: 30px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.notifications-title-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #2c3e6b;
+}
+
+.notifications-title-area h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.mark-read-btn {
+  background-color: #3b4c6e;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.mark-read-btn:hover {
+  opacity: 0.9;
+}
+
+.notifications-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #4a5568;
+  font-weight: 600;
+}
+
+.filter-select {
+  width: 100%;
+  background-color: #3b4c6e;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px top 50%;
+  background-size: 12px auto;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notification-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  background-color: white;
+  border-left: 5px solid transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s;
+  cursor: pointer;
+  position: relative;
+}
+
+.notification-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.notification-card.read {
+  opacity: 0.6;
+}
+
+/* Success Type */
+.notification-card.type-success {
+  background-color: #e8f5e9;
+  border-left-color: #4caf50;
+}
+
+.notification-card.type-success .icon-circle {
+  background-color: #4caf50;
+}
+
+/* Error Type */
+.notification-card.type-error {
+  background-color: #fce4ec;
+  border-left-color: #e53935;
+}
+
+.notification-card.type-error .icon-circle {
+  background-color: #e53935;
+}
+
+/* Warning Type */
+.notification-card.type-warning {
+  background-color: #fff8e1;
+  border-left-color: #ff9800;
+}
+
+.notification-card.type-warning .icon-circle {
+  background-color: #ff9800;
+}
+
+/* Info Type */
+.notification-card.type-info {
+  background-color: #e8eaf6;
+  border-left-color: #5c6bc0;
+}
+
+.notification-card.type-info .icon-circle {
+  background-color: #5c6bc0;
+}
+
+.icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-content-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notification-title {
+  color: #1a202c;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.notification-desc {
+  color: #4a5568;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.notification-time {
+  align-self: flex-end;
+  color: #718096;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 60px;
+  color: #718096;
+  text-align: center;
+}
+
+.empty-state svg {
+  opacity: 0.3;
+  margin-bottom: 16px;
+}
+
+.empty-state p {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.priority-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 20px;
+  align-self: flex-start;
+  white-space: nowrap;
+}
+
+.priority-low {
+  background-color: #e0e0e0;
+  color: #555;
+}
+
+.priority-medium {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.priority-high {
+  background-color: #ffedd5;
+  color: #c2410c;
+}
+
+.priority-critical {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}

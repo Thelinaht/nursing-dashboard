@@ -19,24 +19,17 @@ exports.supervisorDecision = async (req, res) => {
     const { request_id, decision } = req.body;
 
     try {
-        //  قرار السوبرفايزر
         await approvalModel.makeDecision(request_id, "Supervisor", decision);
 
         if (decision === "Rejected") {
-            //  ينتهي الطلب
             await requestModel.updateRequestStatus(request_id, "Rejected");
-
             if (req.app.get("io")) req.app.get("io").emit("request_updated");
             return res.json({ message: "Request rejected by Supervisor ❌" });
         }
 
         if (decision === "Approved") {
-            // Bypass assistant directly to Director
             await approvalModel.createApproval(request_id, "Director");
-            
-            // Advance the request so it drops into the Director's queue
             await requestModel.updateRequestStatus(request_id, "Pending_Director");
-
             if (req.app.get("io")) req.app.get("io").emit("request_updated");
             return res.json({ message: "Moved to Director ✅" });
         }
@@ -60,7 +53,6 @@ exports.assistantDecision = async (req, res) => {
         }
 
         if (decision === "Approved") {
-            // Move to final stage: Director
             await approvalModel.createApproval(request_id, "Director");
             if (req.app.get("io")) req.app.get("io").emit("request_updated");
             return res.json({ message: "Moved to Director ✅" });
@@ -78,7 +70,6 @@ exports.directorDecision = async (req, res) => {
     try {
         await approvalModel.makeDecision(request_id, "Director", decision);
 
-        // Final decision applied to the request
         await requestModel.updateRequestStatus(request_id, decision);
 
         if (req.app.get("io")) req.app.get("io").emit("request_updated");
