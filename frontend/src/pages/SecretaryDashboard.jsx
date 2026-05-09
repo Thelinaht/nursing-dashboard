@@ -190,9 +190,10 @@ export default function SecretaryDashboard() {
                     </div>
 
 
-                    <div className="list-header">
+                    <div className="list-header" style={{ gridTemplateColumns: "repeat(7, 1fr)" }}>
                         <span>Name</span>
                         <span>ID/Iqama</span>
+                        <span>Payroll No.</span>
                         <span>Job Title</span>
                         <span>Position</span>
                         <span>Unit</span>
@@ -204,18 +205,18 @@ export default function SecretaryDashboard() {
                             <div
                                 key={nurse.user_id}
                                 className="nurse-card premium-row"
+                                style={{ gridTemplateColumns: "repeat(7, 1fr)" }}
                                 onClick={() => navigate(`/nurse/${nurse.user_id}`)}
                             >
                                 <div>{nurse.full_name}</div>
                                 <div>{nurse.national_id_iqama}</div>
+                                <div>{nurse.payroll_number || "—"}</div>
                                 <div>{nurse.job_title}</div>
                                 <div>{nurse.position_title}</div>
                                 <div>{nurse.unit}</div>
-
                                 <span className={`status ${nurse.status?.toLowerCase().replace(" ", "-")}`}>
                                     {nurse.status}
                                 </span>
-
                             </div>
                         ))}
                     </div>
