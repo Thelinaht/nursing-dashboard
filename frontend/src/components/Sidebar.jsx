@@ -40,7 +40,7 @@ const menuConfig = {
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   assistantDirector: [
-    { label: "Dashboard", path: "/dashboard", icon: I.dashboard },
+    { label: "Dashboard", path: "/patient-services-dashboard", icon: I.dashboard },
     { label: "Manage Requests", path: "/requests", icon: I.request },
     { label: "Patient Care", path: "/patient-care", icon: I.patient },
     { label: "Staffing", path: "/staffing", icon: I.staffing },
@@ -61,7 +61,7 @@ const menuConfig = {
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   researchDirector: [
-    { label: "Dashboard", path: "/dashboard", icon: I.dashboard },
+    { label: "Dashboard", path: "/researcher-dashboard", icon: I.dashboard },
     { label: "Research", path: "/research", icon: I.research },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],

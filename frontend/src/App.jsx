@@ -37,6 +37,7 @@ import GeneralRequest from "./pages/GeneralRequest";
 import RequestHistory from "./pages/RequestHistory";
 import TrainingPage from "./pages/TrainingPage";
 import StaffDirectory from "./pages/StaffDirectory";
+import NotificationsPage from "./pages/NotificationsPage";
 
 function App() {
         return (
@@ -84,6 +85,9 @@ function App() {
                                 {/* training */}
                                 <Route path="/training" element={<TrainingPage />} />
                                 <Route path="/staff" element={<StaffDirectory />} />
+
+                                {/* notifications */}
+                                <Route path="/notifications" element={<NotificationsPage />} />
                         </Routes>
                 </Router>
         );

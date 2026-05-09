@@ -28,24 +28,24 @@ export default function Login() {
 
 
                 //  توجيه حسب الرول
-                if (user.role_id === 1 || user.role_name === "nurse") {
+                if (user.role_id === 1) { // nurse
                     window.location.href = "/nurse-dashboard";
-                } else if (user.role_id === 2 || user.role_name === "secretary") {
+                } else if (user.role_id === 2) { // office Secretaries
                     window.location.href = "/secretary-dashboard";
-                } else if (user.role_id === 3 || user.role_name === "supervisor") {
+                } else if (user.role_id === 3) { // nursing supervisor
                     window.location.href = "/supervisor-dashboard";
-                } else if (user.role_id === 4 || user.role_name === "director") {
+                } else if (user.role_id === 4) { // Director of Nursing
                     window.location.href = "/director-dashboard";
-                } else if (user.role_id === 5 || user.role_name === "quality_manager") {
+                } else if (user.role_id === 5) { // Nursing Manager for Quality
                     window.location.href = "/quality-manager-dashboard";
-                } else if (user.role_id === 6 || user.role_name === "training_director") {
+                } else if (user.role_id === 6) { // Training Director
                     window.location.href = "/training-director-dashboard";
-                } else if (user.role_name === "patient_services") {
-                    window.location.href = "/patient-services-dashboard";
-                } else if (user.role_name === "researcher") {
+                } else if (user.role_id === 7) { // researcher
                     window.location.href = "/researcher-dashboard";
+                } else if (user.role_id === 8) { // patient_services
+                    window.location.href = "/patient-services-dashboard";
                 } else {
-                    alert("Unknown role: " + user.role_name);
+                    alert("Unknown role ID: " + user.role_id);
                 }
 
 

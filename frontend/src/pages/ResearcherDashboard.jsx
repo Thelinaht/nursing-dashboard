@@ -64,7 +64,7 @@ export default function ResearcherDashboard() {
     };
 
     return (
-        <Layout role="researcher" username={user?.full_name || JSON.parse(sessionStorage.getItem("user"))?.full_name || "Research User"}>
+        <Layout role="researchDirector" username={user?.full_name || JSON.parse(sessionStorage.getItem("user"))?.full_name || "Research User"}>
             <div className="qm-container">
                 {/* Header */}
                 <div className="qm-header">

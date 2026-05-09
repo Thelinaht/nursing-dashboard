@@ -121,8 +121,34 @@ export default function NotificationsPage() {
     }
   };
 
+  const roleMap = {
+    1: "nurse",
+    2: "secretary",
+    3: "supervisor",
+    4: "director",
+    5: "qualityManager",
+    6: "trainingDirector",
+    7: "researchDirector",
+    8: "assistantDirector"
+  };
+  
+  const titleMap = {
+    1: "Nurse",
+    2: "Secretary",
+    3: "Supervisor",
+    4: "Director",
+    5: "Quality Manager",
+    6: "Training Director",
+    7: "Researcher",
+    8: "Patient Services"
+  };
+
+  const layoutRole = user && user.role_id ? roleMap[user.role_id] : "nurse";
+  const fallbackName = user && user.role_id ? titleMap[user.role_id] : "User";
+  const displayUsername = user?.full_name || fallbackName;
+
   return (
-    <Layout logoSrc="/logo.png">
+    <Layout logoSrc="/logo.png" role={layoutRole} username={displayUsername}>
       <div className="notifications-page-container">
         <div className="notifications-content">
 
