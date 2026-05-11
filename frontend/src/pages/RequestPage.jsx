@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import "../styles/RequestPage.css";
@@ -89,20 +89,28 @@ export default function RequestPage() {
         <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
 
             <div className="main">
-                <h2>Requests</h2>
+                <button className="back-btn" onClick={() => navigate("/nurse-dashboard")}>
+                    &larr; Back
+                </button>
+                <h2 style={{ marginTop: 0 }}>Requests</h2>
 
                 <p className="section-title">New Request</p>
 
                 <div className="request-grid">
                     {requests.map((req) => (
-                        <button
+                        <div
                             key={req.label}
-                            className="request-btn"
+                            className="wave-card glass-card"
                             onClick={() => navigate(req.path)}
+                            style={{ background: '#dce6f2', cursor: 'pointer', padding: '15px', minHeight: '130px', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}
                         >
-                            <div className="req-icon">{req.icon}</div>
-                            <span className="req-label">{req.label}</span>
-                        </button>
+                            <i style={{ background: '#2f3e55', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', padding: '6px', zIndex: 2, margin: 0 }}>
+                                {React.cloneElement(req.icon, { width: 20, height: 20, stroke: 'white' })}
+                            </i>
+                            <span style={{ color: '#2f3e55', fontWeight: 600, zIndex: 2, fontSize: '15px', textAlign: 'center' }}>
+                                {req.label}
+                            </span>
+                        </div>
                     ))}
                 </div>
 

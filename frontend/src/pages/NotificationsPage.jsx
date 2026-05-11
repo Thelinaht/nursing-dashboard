@@ -97,6 +97,7 @@ export default function NotificationsPage() {
 
       if (res.ok) {
         setNotifications(prev => prev.map(n => n.notification_id === id ? { ...n, is_read: 1 } : n));
+        window.dispatchEvent(new Event("notifications_updated"));
       }
     } catch (err) {
       console.error("Failed to mark as read:", err);
@@ -115,6 +116,7 @@ export default function NotificationsPage() {
 
       if (res.ok) {
         setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
+        window.dispatchEvent(new Event("notifications_updated"));
       }
     } catch (err) {
       console.error("Failed to mark all as read:", err);
@@ -131,7 +133,7 @@ export default function NotificationsPage() {
     7: "researchDirector",
     8: "assistantDirector"
   };
-  
+
   const titleMap = {
     1: "Nurse",
     2: "Secretary",
@@ -215,9 +217,6 @@ export default function NotificationsPage() {
                 </div>
                 <div className="notification-time">
                   {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
-                </div>
-                <div className={`priority-badge priority-${notif.priority || 'medium'}`}>
-                  {notif.priority || 'medium'}
                 </div>
               </div>
             ))}

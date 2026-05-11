@@ -1,5 +1,6 @@
 const approvalModel = require("../models/approvalModel");
 const requestModel = require("../models/requestsModel");
+const notificationController = require("./notificationController");
 
 
 
@@ -14,6 +15,7 @@ exports.getAll = async (req, res) => {
 
 
 
+
 // Supervisor decision
 exports.supervisorDecision = async (req, res) => {
     const { request_id, decision } = req.body;
@@ -24,6 +26,19 @@ exports.supervisorDecision = async (req, res) => {
         if (decision === "Rejected") {
             await requestModel.updateRequestStatus(request_id, "Rejected");
             if (req.app.get("io")) req.app.get("io").emit("request_updated");
+
+            // Notify the nurse
+            const reqData = await requestModel.getRequestById(request_id);
+            if (reqData && reqData.nurse_id) {
+                await notificationController.createNotification({
+                    user_id: reqData.nurse_id,
+                    title: "Request Rejected",
+                    message: `Your request #${request_id} has been rejected by the Supervisor.`,
+                    notification_type: "error",
+                    priority: "high"
+                });
+            }
+
             return res.json({ message: "Request rejected by Supervisor ❌" });
         }
 
@@ -31,6 +46,16 @@ exports.supervisorDecision = async (req, res) => {
             await approvalModel.createApproval(request_id, "Director");
             await requestModel.updateRequestStatus(request_id, "Pending_Director");
             if (req.app.get("io")) req.app.get("io").emit("request_updated");
+
+            // Notify Director (User ID 36)
+            await notificationController.createNotification({
+                user_id: 36,
+                title: "New Approval Required",
+                message: `Request #${request_id} has been approved by the Supervisor and awaits your final decision.`,
+                notification_type: "warning",
+                priority: "high"
+            });
+
             return res.json({ message: "Moved to Director ✅" });
         }
 

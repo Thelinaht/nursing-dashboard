@@ -203,12 +203,12 @@ export default function TrainingDirectorDashboard() {
                 {(dashboardData?.mandatoryTrainings || []).map((t) => (
                   <div className="table-row premium-row" key={t.id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1fr 1fr 1fr 0.5fr', padding: '10px 5px', fontSize: '11px' }}>
                     <span style={{ fontWeight: 600, color: t.isRed ? '#e53935' : 'inherit' }}>{t.name}</span>
-                    <span style={{ color: t.isRed && t.saudiCouncil.includes('2024') ? '#e53935' : 'inherit' }}>{t.saudiCouncil}</span>
-                    <span style={{ color: t.isRed && t.bls.includes('2024') ? '#e53935' : 'inherit' }}>{t.bls}</span>
-                    <span style={{ color: t.isRed && t.fireSafety.includes('2024') ? '#e53935' : 'inherit' }}>{t.fireSafety}</span>
-                    <span style={{ color: t.isRed && t.infectionControl.includes('2024') ? '#e53935' : 'inherit' }}>{t.infectionControl}</span>
-                    <span style={{ color: t.isRed && t.medicationSafety.includes('2024') ? '#e53935' : 'inherit' }}>{t.medicationSafety}</span>
-                    <span style={{ color: t.isRed && t.biscl.includes('2024') ? '#e53935' : 'inherit' }}>{t.biscl}</span>
+                    <span style={{ color: t.isRed && t.saudiCouncil?.includes('2024') ? '#e53935' : 'inherit' }}>{t.saudiCouncil || '—'}</span>
+                    <span style={{ color: t.isRed && t.bls?.includes('2024') ? '#e53935' : 'inherit' }}>{t.bls || '—'}</span>
+                    <span style={{ color: t.isRed && t.fireSafety?.includes('2024') ? '#e53935' : 'inherit' }}>{t.fireSafety || '—'}</span>
+                    <span style={{ color: t.isRed && t.infectionControl?.includes('2024') ? '#e53935' : 'inherit' }}>{t.infectionControl || '—'}</span>
+                    <span style={{ color: t.isRed && t.medicationSafety?.includes('2024') ? '#e53935' : 'inherit' }}>{t.medicationSafety || '—'}</span>
+                    <span style={{ color: t.isRed && t.biscl?.includes('2024') ? '#e53935' : 'inherit' }}>{t.biscl || '—'}</span>
                     <span>{t.fms}</span>
                   </div>
                 ))}

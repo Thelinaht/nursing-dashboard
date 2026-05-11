@@ -54,9 +54,15 @@ exports.getByUserId = async (userId) => {
             sl.license_number,
             sl.issue_date,
             sl.expiry_date,
+            sl.expiry_date AS license_expiry_date,
             sl.issuing_authority,
             sl.certificate_file_path,
-            DATEDIFF(sl.expiry_date, CURDATE()) AS days_remaining
+            DATEDIFF(sl.expiry_date, CURDATE()) AS days_remaining,
+            CASE
+                WHEN sl.expiry_date < CURDATE() THEN 'Expired'
+                WHEN sl.expiry_date < DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 'Expiring Soon'
+                ELSE 'Valid'
+            END AS license_status
         FROM Staff_license sl
         JOIN Nursing_staff ns ON sl.nurse_id = ns.nurse_id
         WHERE ns.user_id = ?

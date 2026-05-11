@@ -12,7 +12,7 @@
 }
 
 .rh-table-box {
-    background: linear-gradient(135deg, #b3c4d8, #9fb3cc);
+    background: white;
     border-radius: 20px;
     padding: 0;
     overflow: hidden;
@@ -23,7 +23,7 @@
 .rh-header {
     display: grid;
     grid-template-columns: 1.5fr 1fr 1.5fr 1fr 0.8fr;
-    background: #8fa8c0;
+    background: #c7d5e5;
     padding: 12px 20px;
     gap: 10px;
 }
@@ -70,7 +70,8 @@
     padding: 14px 20px;
     gap: 10px;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     transition: 0.2s;
 }
 
@@ -79,7 +80,7 @@
 }
 
 .rh-row:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: #f0f5fa;
 }
 
 .rh-cell {
@@ -139,8 +140,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    background: white;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .rh-pages {
@@ -154,7 +155,7 @@
     height: 28px;
     border-radius: 50%;
     border: none;
-    background: rgba(255, 255, 255, 0.4);
+    background: #c7d5e5;
     color: #2f3e55;
     font-size: 16px;
     cursor: pointer;
@@ -165,7 +166,7 @@
 }
 
 .pg-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.6);
+    background: #a9bed4;
 }
 
 .pg-btn:disabled {
@@ -188,7 +189,7 @@
 }
 
 .rows-badge {
-    background: rgba(255, 255, 255, 0.4);
+    background: #c7d5e5;
     padding: 4px 12px;
     border-radius: 8px;
     font-weight: 600;
@@ -200,7 +201,7 @@
 .rh-header-sup {
     display: grid;
     grid-template-columns: 1fr 1.5fr 1fr 1.5fr 1fr 0.5fr 1.5fr;
-    background: #8fa8c0;
+    background: #c7d5e5;
     padding: 12px 20px;
     gap: 10px;
 }
@@ -211,7 +212,8 @@
     padding: 14px 20px;
     gap: 10px;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     transition: 0.2s;
 }
 
@@ -220,7 +222,7 @@
 }
 
 .rh-row-sup:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: #f0f5fa;
 }
 
 /* Action Buttons */
@@ -324,7 +326,7 @@
 }
 
 .popup-card {
-    background: linear-gradient(135deg, #b3c4d8, #9fb3cc);
+    background: #dce6f2;
     border-radius: 20px;
     padding: 24px 28px;
     width: 100%;

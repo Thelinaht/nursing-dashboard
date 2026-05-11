@@ -219,30 +219,27 @@ export default function AssignStaff() {
                                         </h3>
                                         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                                             <select
-                                                className="filter-select"
                                                 value={targetUnit}
                                                 onChange={e => {
                                                     setTargetUnit(e.target.value);
                                                     setConflictWarning("");
                                                 }}
-                                                style={{ flex: 1 }}
+                                                style={{ flex: 1, padding: "8px 12px", borderRadius: "8px", border: "1px solid #3b4c6e", background: "#3b4c6e", color: "#ffffff", outline: "none", fontWeight: "500", cursor: "pointer" }}
                                             >
-                                                <option value="" disabled>Select Unit</option>
-                                                {availableUnits.map(u => <option key={u} value={u}>{u}</option>)}
+                                                <option value="" disabled style={{ color: "#2f3e55", backgroundColor: "#fff" }}>Select Unit</option>
+                                                {availableUnits.map(u => <option key={u} value={u} style={{ color: "#2f3e55", backgroundColor: "#fff" }}>{u}</option>)}
                                             </select>
 
                                             <select
-                                                className="filter-select"
                                                 value={targetShift}
                                                 onChange={e => {
                                                     setTargetShift(e.target.value);
                                                     setConflictWarning("");
                                                 }}
-                                                style={{ width: "100px" }}
+                                                style={{ width: "100px", padding: "8px 12px", borderRadius: "8px", border: "1px solid #3b4c6e", background: "#3b4c6e", color: "#ffffff", outline: "none", fontWeight: "500", cursor: "pointer" }}
                                             >
-                                                <option value="Day">Day</option>
-                                                <option value="Evening">Evening</option>
-                                                <option value="Night">Night</option>
+                                                <option value="Day" style={{ color: "#2f3e55", backgroundColor: "#fff" }}>Day</option>
+                                                <option value="Night" style={{ color: "#2f3e55", backgroundColor: "#fff" }}>Night</option>
                                             </select>
 
                                             <button className="btn-pill" style={{ background: "var(--accent-blue)", color: "white", padding: "10px 24px", fontWeight: "bold" }} onClick={handleAssign}>

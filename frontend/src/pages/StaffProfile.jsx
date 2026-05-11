@@ -46,6 +46,16 @@ export default function StaffProfile() {
         return `${year}-${month}-${day}`;
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return "—";
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "—";
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
     const handleSave = async () => {
         try {
             // Clean date fields — strip time portion before sending to MySQL
@@ -190,13 +200,16 @@ export default function StaffProfile() {
                     {/* Birth dates */}
                     <div>
                         <label>Birth Date Gregorian</label>
-                        <input
-                            type="date"
-                            value={formData.birth_date_gregorian?.split("T")[0] || ""}
-                            onChange={e => setFormData(p => ({ ...p, birth_date_gregorian: e.target.value }))}
-                            disabled={!isEditing}
-                            className={isEditing ? "editing" : ""}
-                        />
+                        {!isEditing ? (
+                            <input value={formatDate(formData.birth_date_gregorian)} disabled />
+                        ) : (
+                            <input
+                                type="date"
+                                value={formData.birth_date_gregorian?.split("T")[0] || ""}
+                                onChange={e => setFormData(p => ({ ...p, birth_date_gregorian: e.target.value }))}
+                                className="editing"
+                            />
+                        )}
                     </div>
                     <div>
                         <label>Birth Date Hijri</label>
@@ -223,13 +236,16 @@ export default function StaffProfile() {
                     {/* Contract dates */}
                     <div>
                         <label>Contract Date Gregorian</label>
-                        <input
-                            type="date"
-                            value={formData.contract_date_gregorian?.split("T")[0] || ""}
-                            onChange={e => setFormData(p => ({ ...p, contract_date_gregorian: e.target.value }))}
-                            disabled={!isEditing}
-                            className={isEditing ? "editing" : ""}
-                        />
+                        {!isEditing ? (
+                            <input value={formatDate(formData.contract_date_gregorian)} disabled />
+                        ) : (
+                            <input
+                                type="date"
+                                value={formData.contract_date_gregorian?.split("T")[0] || ""}
+                                onChange={e => setFormData(p => ({ ...p, contract_date_gregorian: e.target.value }))}
+                                className="editing"
+                            />
+                        )}
                     </div>
                     <div>
                         <label>Contract Date Hijri</label>
@@ -243,13 +259,16 @@ export default function StaffProfile() {
 
                     <div>
                         <label>Hire Date</label>
-                        <input
-                            type="date"
-                            value={formData.hire_date?.split("T")[0] || ""}
-                            onChange={e => setFormData(p => ({ ...p, hire_date: e.target.value }))}
-                            disabled={!isEditing}
-                            className={isEditing ? "editing" : ""}
-                        />
+                        {!isEditing ? (
+                            <input value={formatDate(formData.hire_date)} disabled />
+                        ) : (
+                            <input
+                                type="date"
+                                value={formData.hire_date?.split("T")[0] || ""}
+                                onChange={e => setFormData(p => ({ ...p, hire_date: e.target.value }))}
+                                className="editing"
+                            />
+                        )}
                     </div>
 
                     {renderInput("Mobile Number", "mobile_number")}

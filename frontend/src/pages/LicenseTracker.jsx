@@ -112,7 +112,7 @@ export default function LicenseTracker() {
                                 <span className="lt-name">{l.full_name}</span>
                                 <span>{l.unit || "—"}</span>
                                 <span>{l.license_number}</span>
-                                <span>{l.expiry_date?.split("T")[0]}</span>
+                                <span>{l.expiry_date ? new Date(l.expiry_date).toLocaleDateString("en-GB") : "—"}</span>
                                 <span className={`days-badge days-${cls}`}>
                                     {days < 0 ? `${Math.abs(days)} days ago` : `${days} days`}
                                 </span>

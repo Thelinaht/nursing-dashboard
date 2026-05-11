@@ -212,7 +212,11 @@ export default function ChatHub() {
                 className="chat-bubble" 
                 onClick={handleBubbleClick}
             >
-                {totalNotifications > 0 && <span className="notification-dot-bubble"></span>}
+                {totalNotifications > 0 && !isOpen && (
+                    <div className="chat-notification-badge">
+                        {totalNotifications > 9 ? "9+" : totalNotifications}
+                    </div>
+                )}
                 {isDocked ? <ChevronLeft size={24} style={{ marginRight: '15px' }} /> : (isOpen ? <X size={24} /> : <MessageSquare size={24} />)}
             </div>
 

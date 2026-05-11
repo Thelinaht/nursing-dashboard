@@ -26,6 +26,16 @@ export default function StaffQualification() {
     const [activeCategory, setActiveCategory] = useState("Mandatory");
     const fileRefs = useRef({});
     const saudiFileRef = useRef();
+    
+    const formatDate = (dateString) => {
+        if (!dateString) return "—";
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "—";
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
 
     // Saudi Council state
     const [saudiLicense, setSaudiLicense] = useState(null);
@@ -266,13 +276,16 @@ export default function StaffQualification() {
 
 
                             {/* Expiry */}
-                            <input
-                                type="date"
-                                value={item.expiry_date?.split("T")[0] || ""}
-                                onChange={e => handleChange(item.training_id, "expiry_date", e.target.value)}
-                                disabled={!isEditing}
-                                className={isEditing ? "editing" : ""}
-                            />
+                            {!isEditing ? (
+                                <input value={formatDate(item.expiry_date)} disabled />
+                            ) : (
+                                <input
+                                    type="date"
+                                    value={item.expiry_date?.split("T")[0] || ""}
+                                    onChange={e => handleChange(item.training_id, "expiry_date", e.target.value)}
+                                    className="editing"
+                                />
+                            )}
 
 
                             {/* Status */}
@@ -350,13 +363,16 @@ export default function StaffQualification() {
 
                             <div className="saudi-field">
                                 <label>Expiry Date</label>
-                                <input
-                                    type="date"
-                                    value={saudiLicense?.expiry_date?.split("T")[0] || ""}
-                                    onChange={e => setSaudiLicense(prev => ({ ...prev, expiry_date: e.target.value }))}
-                                    disabled={!saudiEditing}
-                                    className={saudiEditing ? "editing" : ""}
-                                />
+                                {!saudiEditing ? (
+                                    <input value={formatDate(saudiLicense?.expiry_date)} disabled />
+                                ) : (
+                                    <input
+                                        type="date"
+                                        value={saudiLicense?.expiry_date?.split("T")[0] || ""}
+                                        onChange={e => setSaudiLicense(prev => ({ ...prev, expiry_date: e.target.value }))}
+                                        className="editing"
+                                    />
+                                )}
                             </div>
 
                             <div className="saudi-field">

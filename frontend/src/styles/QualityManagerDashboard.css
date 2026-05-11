@@ -109,8 +109,8 @@
 }
 
 .chart-card {
-    background: white;
-    border: 1.5px solid #dce6f2;
+    background: #dce6f2;
+    border: none;
     border-radius: 20px;
     padding: 18px 20px;
 }
@@ -333,8 +333,8 @@
 }
 
 .staffing-result {
-    background: white;
-    border: 1.5px solid #dce6f2;
+    background: #dce6f2;
+    border: none;
     border-radius: 20px;
     padding: 24px;
     display: grid;
@@ -390,4 +390,8 @@
 .brow span:last-child {
     font-weight: 700;
     color: #2f3e55;
+}
+
+.chart-card canvas {
+    border-radius: 8px;
 }

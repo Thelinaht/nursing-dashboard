@@ -23,9 +23,7 @@ const I = {
 // ─── Menu Config ──────────────────────────────────────────────────────────────
 const menuConfig = {
   nurse: [
-    { label: "Nurse Info", path: "/nurse-info", icon: I.person },
-    { label: "Request", path: "/request", icon: I.request },
-    { label: "Training", path: "/training", icon: I.training },
+    { label: "Dashboard", path: "/nurse-dashboard", icon: I.dashboard },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   secretary: [
@@ -73,7 +71,7 @@ const menuConfig = {
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function Sidebar({ role = "nurse", onLogout, logoSrc }) {
+export default function Sidebar({ role = "nurse", onLogout, logoSrc, unreadCount = 0 }) {
   const menuItems = menuConfig[role] || menuConfig.nurse;
 
   return (
@@ -102,7 +100,12 @@ export default function Sidebar({ role = "nurse", onLogout, logoSrc }) {
                 ...(isActive ? styles.navItemActive : {}),
               })}
             >
-              <div style={styles.iconCircle}>{item.icon}</div>
+              <div style={styles.iconCircle}>
+                {item.icon}
+                {item.label === "Notifications" && unreadCount > 0 && (
+                  <div style={styles.badge}>{unreadCount > 9 ? "9+" : unreadCount}</div>
+                )}
+              </div>
               <span style={styles.label}>{item.label}</span>
             </NavLink>
           ))}
@@ -205,6 +208,23 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+    position: "relative", // Add relative positioning for the badge
+  },
+  badge: {
+    position: "absolute",
+    top: "-4px",
+    right: "-4px",
+    backgroundColor: "#e74c3c",
+    color: "white",
+    fontSize: "10px",
+    fontWeight: "bold",
+    borderRadius: "50%",
+    width: "18px",
+    height: "18px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "2px solid var(--bg-card)",
   },
   label: {
     whiteSpace: "nowrap",

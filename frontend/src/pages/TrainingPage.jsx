@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import "../styles/TrainingPage.css";
 
 export default function TrainingPage() {
+    const navigate = useNavigate();
     const [nurse, setNurse] = useState(null);
     const [trainings, setTrainings] = useState([]);
     const [statusFilter, setStatusFilter] = useState("All");
@@ -57,7 +59,10 @@ export default function TrainingPage() {
     return (
         <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
             <div className="main">
-                <h2>Training</h2>
+                <button className="back-btn" onClick={() => navigate("/nurse-dashboard")}>
+                    &larr; Back
+                </button>
+                <h2 style={{ marginTop: 0 }}>Training</h2>
 
                 <div className="tr-table-box">
                     {/* Header / Filters */}

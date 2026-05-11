@@ -28,7 +28,12 @@ exports.getByUserId = async (userId) => {
             st.certificate_file_path,
             st.preceptor_name,
             st.recommendation_action_plan,
-            COALESCE(st.status, 'Pending') AS status
+            CASE
+                WHEN st.status = 'Completed' AND st.expiry_date < CURDATE() THEN 'Expired'
+                WHEN (st.status = 'Pending' OR st.status = 'In Progress' OR st.status IS NULL) 
+                     AND st.due_date IS NOT NULL AND st.due_date < CURDATE() THEN 'Overdue'
+                ELSE COALESCE(st.status, 'Pending')
+            END AS status
         FROM Training_program tp
         LEFT JOIN Staff_training st 
             ON tp.training_id = st.training_id AND st.nurse_id = ?
@@ -159,12 +164,12 @@ exports.getDashboardData = async () => {
         const isExpired = record.status === 'Expired' || record.status === 'Overdue';
         if (isExpired) n.isRed = true;
 
-        if (record.course === 'Saudi Council') n.saudiCouncil = record.expiry;
-        if (record.course === 'BLS') n.bls = record.expiry;
-        if (record.course === 'Fire and Safety') n.fireSafety = record.expiry;
-        if (record.course === 'Infection Control') n.infectionControl = record.expiry;
-        if (record.course === 'Medication Safety Program') n.medicationSafety = record.expiry;
-        if (record.course === 'BISCL') n.biscl = record.expiry;
+        if (record.course === 'Saudi Council') n.saudiCouncil = record.expiry || '-';
+        if (record.course === 'BLS') n.bls = record.expiry || '-';
+        if (record.course === 'Fire and Safety') n.fireSafety = record.expiry || '-';
+        if (record.course === 'Infection Control') n.infectionControl = record.expiry || '-';
+        if (record.course === 'Medication Safety Program') n.medicationSafety = record.expiry || '-';
+        if (record.course === 'BISCL') n.biscl = record.expiry || '-';
         if (record.course === 'FMS') {
              n.fms = '✓'; // FMS is usually a checkmark
              n.isFMSCheck = true;

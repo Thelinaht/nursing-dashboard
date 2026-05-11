@@ -4,6 +4,27 @@
     overflow-y: auto;
 }
 
+.back-btn {
+    align-self: flex-start;
+    margin-bottom: 12px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: #5a6f87;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.back-btn:hover {
+    color: #2f3e55;
+    text-decoration: underline;
+    background: transparent;
+    transform: none;
+}
+
+
 .main h2 {
     font-size: 22px;
     font-weight: bold;

@@ -29,7 +29,7 @@
 .leave-form-card {
     width: 100%;
     max-width: 620px;
-    background: linear-gradient(135deg, #b3c4d8, #9fb3cc);
+    background: #dce6f2;
     border-radius: 24px;
     padding: 28px 32px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);

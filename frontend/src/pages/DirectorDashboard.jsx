@@ -367,7 +367,7 @@ export default function DirectorDashboard() {
                     <div className="table-row premium-row" key={req.request_id} style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1.5fr', padding: '12px 15px', marginBottom: '8px' }}>
                       <span style={{ fontWeight: 500 }}>{req.full_name || `Nurse #${req.nurse_id}`}</span>
                       <span style={{ color: 'var(--text-secondary)' }}>{req.request_type}</span>
-                      <span style={{ fontSize: '11px' }}>{new Date(req.submission_date).toLocaleDateString()}</span>
+                      <span style={{ fontSize: '11px' }}>{new Date(req.submission_date).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
 
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {req.current_status === "Pending_Director" ? (

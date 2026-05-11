@@ -13,6 +13,16 @@ export default function StaffOrientation() {
     const [nurseId, setNurseId] = useState(null);
     const [saving, setSaving] = useState(false);
     const fileRefs = useRef({});
+    
+    const formatDate = (dateString) => {
+        if (!dateString) return "—";
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "—";
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
 
     useEffect(() => {
         fetch(`${BASE_URL}/api/orientation/${id}`)
@@ -113,13 +123,16 @@ export default function StaffOrientation() {
 
                             <span className="ori-name">{item.item_name}</span>
 
-                            <input
-                                type="date"
-                                value={item.expiry_date?.split("T")[0] || ""}
-                                onChange={e => handleChange(item.item_id, "expiry_date", e.target.value)}
-                                disabled={!isEditing}
-                                className={isEditing ? "editing" : ""}
-                            />
+                            {!isEditing ? (
+                                <input value={formatDate(item.expiry_date)} disabled />
+                            ) : (
+                                <input
+                                    type="date"
+                                    value={item.expiry_date?.split("T")[0] || ""}
+                                    onChange={e => handleChange(item.item_id, "expiry_date", e.target.value)}
+                                    className="editing"
+                                />
+                            )}
 
                             <div className="cert-cell">
                                 {item.file_path ? (

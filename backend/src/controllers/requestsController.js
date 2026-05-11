@@ -1,5 +1,6 @@
 const model = require("../models/requestsModel");
 const approvalModel = require("../models/approvalModel");
+const notificationController = require("./notificationController");
 
 exports.getAll = async (req, res) => {
     try {
@@ -41,6 +42,17 @@ exports.create = async (req, res) => {
         if (req.app.get("io")) {
             req.app.get("io").emit("request_updated");
         }
+
+        // Notify Supervisor (User ID 20 based on previous DB check)
+        // Note: In production, query the actual supervisor ID dynamically
+        await notificationController.createNotification({
+            user_id: 20, 
+            title: "New Request Submitted",
+            message: `A new ${req.body.type} request has been submitted and is pending your review.`,
+            notification_type: "info",
+            priority: "medium",
+            category: "Requests"
+        });
 
         res.json(result);
 

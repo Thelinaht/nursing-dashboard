@@ -4,6 +4,27 @@
     overflow-y: auto;
 }
 
+.back-btn {
+    align-self: flex-start;
+    margin-bottom: 12px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: #5a6f87;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.back-btn:hover {
+    color: #2f3e55;
+    text-decoration: underline;
+    background: transparent;
+    transform: none;
+}
+
+
 .main h2 {
     font-size: 22px;
     font-weight: bold;
@@ -27,40 +48,45 @@
 }
 
 .request-btn {
-    background: linear-gradient(135deg, #b3c4d8, #9fb3cc);
+    background: #dce6f2;
     border-radius: 16px;
-    padding: 22px 16px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    align-items: flex-start;
+    justify-content: space-between;
+    min-height: 130px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transition: 0.2s;
     border: none;
 }
 
 .request-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .req-icon {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    background: #2f3e55;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+.req-icon svg {
+    stroke: white !important;
+}
+
 .req-label {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 600;
     color: #2f3e55;
-    text-align: center;
+    text-align: left;
+    margin-top: 15px;
 }
 
 /* History Button */
