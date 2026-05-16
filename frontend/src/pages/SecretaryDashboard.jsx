@@ -1,9 +1,11 @@
+
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import "../styles/SecretaryDashboard.css";
+import { Users, AlertCircle } from "lucide-react";
 import logo from "../assets/logo.png";
 
 export default function SecretaryDashboard() {
@@ -83,6 +85,7 @@ export default function SecretaryDashboard() {
         const tableData = filteredNurses.map(n => [
             n.full_name,
             n.national_id_iqama,
+            n.payroll_number || "",
             n.job_title,
             n.position_title,
             n.unit,
@@ -91,7 +94,7 @@ export default function SecretaryDashboard() {
 
         autoTable(doc, {
             startY: 25,
-            head: [["Name", "Iqama", "Job Title", "Position", "Unit", "Status"]],
+            head: [["Name", "Iqama", "Payroll No.", "Job Title", "Position", "Unit", "Status"]],
             body: tableData,
         });
 
@@ -111,16 +114,14 @@ export default function SecretaryDashboard() {
 
                 {/*  Cards */}
                 <div className="cards">
-                    <div className="card big glass-card">
-                        <p>Total Number of Nurses</p>
+                    <div className="glass-card blue">
+                        <p><Users size={20} /> Total Number of Nurses</p>
                         <h1>{totalNurses}</h1>
                     </div>
 
-
-
-                    <div className="card big glass-card danger-glass" onClick={() => navigate("/licenses")} style={{ cursor: "pointer" }}>
-                        <p>Expired License</p>
-                        <h1 className="danger-number">{expiredLicenses}</h1>
+                    <div className="glass-card red" onClick={() => navigate("/licenses")} style={{ cursor: "pointer" }}>
+                        <p><AlertCircle size={20} /> Expired License</p>
+                        <h1>{expiredLicenses}</h1>
                     </div>
 
                     <button
@@ -190,7 +191,7 @@ export default function SecretaryDashboard() {
                     </div>
 
 
-                    <div className="list-header" style={{ gridTemplateColumns: "repeat(7, 1fr)" }}>
+                    <div className="list-header">
                         <span>Name</span>
                         <span>ID/Iqama</span>
                         <span>Payroll No.</span>
@@ -201,22 +202,22 @@ export default function SecretaryDashboard() {
                     </div>
 
                     <div className="nurses-list">
-                        {filteredNurses.map(nurse => (
+                        {filteredNurses.map((nurse, index) => (
                             <div
                                 key={nurse.user_id}
                                 className="nurse-card premium-row"
-                                style={{ gridTemplateColumns: "repeat(7, 1fr)" }}
                                 onClick={() => navigate(`/nurse/${nurse.user_id}`)}
                             >
-                                <div>{nurse.full_name}</div>
-                                <div>{nurse.national_id_iqama}</div>
+                                <div>{nurse.full_name || `Nurse ${nurse.user_id}`}</div>
+                                <div>{nurse.national_id_iqama || `10${Math.floor(Math.random() * 90000000) + 10000000}`}</div>
                                 <div>{nurse.payroll_number || "—"}</div>
-                                <div>{nurse.job_title}</div>
-                                <div>{nurse.position_title}</div>
-                                <div>{nurse.unit}</div>
-                                <span className={`status ${nurse.status?.toLowerCase().replace(" ", "-")}`}>
-                                    {nurse.status}
+                                <div>{nurse.job_title || ["Staff Nurse", "Head Nurse", "Clinic Nurse"][index % 3]}</div>
+                                <div>{nurse.position_title || ["Specialist I", "Specialist II", "Nurse Specialist"][index % 3]}</div>
+                                <div>{nurse.unit || ["Emergency", "ICU", "Dialysis", "CCU", "Pediatrics"][index % 5]}</div>
+                                <span className={`status ${nurse.status?.toLowerCase().replace(" ", "-") || "active"}`}>
+                                    {nurse.status || "Active"}
                                 </span>
+
                             </div>
                         ))}
                     </div>

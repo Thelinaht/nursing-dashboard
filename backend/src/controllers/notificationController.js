@@ -3,16 +3,34 @@ const pool = require("../db");
 /**
  * Internal function to create a notification
  * @param {Object} data - { user_id, title, message, notification_type, priority, category }
+<<<<<<< HEAD
  */
 const createNotification = async (data) => {
+=======
+ * @param {Object} io - Optional socket.io instance for real-time delivery
+ */
+const createNotification = async (data, io = null) => {
+>>>>>>> 6e3f2e2 (last updates)
   const { user_id, title, message, notification_type = "info", priority = "medium", category = "System" } = data;
   try {
     await pool.query(
       "INSERT INTO Notification (user_id, title, message, notification_type, priority, category) VALUES (?, ?, ?, ?, ?, ?)",
       [user_id, title, message, notification_type, priority, category]
     );
+<<<<<<< HEAD
     // Note: If you want real-time push, you could emit a Socket.io event here
     // e.g., io.to(`user_${user_id}`).emit("new_notification", data);
+=======
+    
+    // Real-time push if io is provided
+    if (io) {
+      io.to(`user_${user_id}`).emit("new_notification", {
+        ...data,
+        is_read: 0,
+        created_at: new Date()
+      });
+    }
+>>>>>>> 6e3f2e2 (last updates)
   } catch (error) {
     console.error("Failed to create notification:", error);
   }

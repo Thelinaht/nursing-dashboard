@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import logo from "../assets/logo.png";
 import "../styles/login.css";
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -70,17 +72,21 @@ export default function Login() {
 
             {/* Right */}
             <div className="login__right">
-                <div className="login__card">
-                    <h2 className="login__title">Login</h2>
+                <div className="login__container">
+                    <div className="login__header">
+                        <p className="login__tagline">Nursing Services Management System</p>
+                        <div className="login__accent" />
+                        <h2 className="login__title">Login</h2>
+                    </div>
 
                     <form className="login__form" onSubmit={onSubmit}>
                         <div className="login__field">
-                            <label htmlFor="email" className="login__label">Email</label>
+                            <label htmlFor="email" className="login__label">Email Address</label>
                             <input
                                 id="email"
                                 className="login__input"
                                 type="email"
-                                placeholder="Enter your email here..."
+                                placeholder="name@kuh.edu.sa"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -89,29 +95,44 @@ export default function Login() {
 
                         <div className="login__field">
                             <label htmlFor="password" className="login__label">Password</label>
-                            <input
-                                id="password"
-                                className="login__input"
-                                type="password"
-                                placeholder="Enter your password here..."
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
+                            <div className="login__input-wrapper">
+                                <input
+                                    id="password"
+                                    className="login__input login__input--password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="login__password-toggle"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
-                        <button className="login__btn" type="submit">
-                            Login
-                        </button>
+                        <div className="login__actions">
+                            <button className="login__btn" type="submit">
+                                Login <ArrowRight size={18} className="login__btn-icon" />
+                            </button>
 
-                        <button
-                            className="login__link"
-                            type="button"
-                            onClick={() => alert("Later: Forgot password flow")}
-                        >
-                            Forget Password?
-                        </button>
+                            <button
+                                className="login__forgot"
+                                type="button"
+                                onClick={() => alert("Later: Forgot password flow")}
+                            >
+                                Forget Password?
+                            </button>
+                        </div>
                     </form>
+                </div>
+
+                <div className="login__footer">
+                    © 2025 King Fahd University Hospital – IAU AMC
                 </div>
             </div>
         </div>

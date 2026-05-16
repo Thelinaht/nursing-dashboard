@@ -64,33 +64,25 @@ export default function PatientServicesDashboard() {
 
                 {/* 1. Summary Cards */}
                 <div className="psd-summary-grid">
-                    <div className="glass-card psd-summary-card">
-                        <div className="psd-summary-card-title">Patient Satisfaction Score</div>
-                        <div className="psd-summary-card-value">91%</div>
-                        <div className="psd-summary-card-trend psd-trend-up">
-                            <TrendingUp size={16} /> +2.5% from last month
-                        </div>
+                    <div className="glass-card green">
+                        <p><TrendingUp size={20} /> Patient Satisfaction Score</p>
+                        <h1>91%</h1>
+                        <div style={{ fontSize: '12px', opacity: 0.9 }}></div>
                     </div>
-                    <div className="glass-card psd-summary-card">
-                        <div className="psd-summary-card-title">Monthly Complaints</div>
-                        <div className="psd-summary-card-value">12</div>
-                        <div className="psd-summary-card-trend psd-trend-down">
-                            <TrendingDown size={16} /> -4 compared to last month
-                        </div>
+                    <div className="glass-card red">
+                        <p><AlertTriangle size={20} /> Monthly Complaints</p>
+                        <h1>12</h1>
+                        <div style={{ fontSize: '12px', opacity: 0.9 }}></div>
                     </div>
-                    <div className="glass-card psd-summary-card">
-                        <div className="psd-summary-card-title">Average Length of Stay</div>
-                        <div className="psd-summary-card-value">4.2 Days</div>
-                        <div className="psd-summary-card-trend psd-trend-down">
-                            <TrendingDown size={16} /> -0.3 days from average
-                        </div>
+                    <div className="glass-card yellow">
+                        <p><Clock size={20} /> Average Length of Stay</p>
+                        <h1>4.2 <span style={{ fontSize: '16px' }}>Days</span></h1>
+                        <div style={{ fontSize: '12px', opacity: 0.9 }}></div>
                     </div>
-                    <div className="glass-card psd-summary-card">
-                        <div className="psd-summary-card-title">Care Quality Score</div>
-                        <div className="psd-summary-card-value">4.8/5</div>
-                        <div className="psd-summary-card-trend psd-trend-up">
-                            <TrendingUp size={16} /> Consistently high
-                        </div>
+                    <div className="glass-card blue">
+                        <p><Award size={20} /> Care Quality Score</p>
+                        <h1>4.8/5</h1>
+                        <div style={{ fontSize: '12px', opacity: 0.9 }}></div>
                     </div>
                 </div>
 
@@ -102,7 +94,7 @@ export default function PatientServicesDashboard() {
                         <p style={{ color: "var(--text-secondary)", fontSize: "14px", marginBottom: "20px" }}>
                             Breakdown of patient feedback over the last 30 days.
                         </p>
-                        
+
                         <div className="psd-stacked-bar-container">
                             <div className="psd-stacked-bar-wrapper">
                                 <div className="psd-stacked-segment" style={{ width: `${satisfactionRates.positive}%`, backgroundColor: "var(--accent-green)" }}>
@@ -115,7 +107,7 @@ export default function PatientServicesDashboard() {
                                     {satisfactionRates.negative}%
                                 </div>
                             </div>
-                            
+
                             <div className="psd-stacked-legend">
                                 <div className="psd-legend-item">
                                     <div className="psd-legend-dot" style={{ backgroundColor: "var(--accent-green)" }}></div>
@@ -140,15 +132,15 @@ export default function PatientServicesDashboard() {
                             <ResponsiveContainer>
                                 <LineChart data={outcomeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-                                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#8ea2b5', fontSize: 12}} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#8ea2b5', fontSize: 12}} />
-                                    <RechartsTooltip 
+                                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#8ea2b5', fontSize: 12 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#8ea2b5', fontSize: 12 }} />
+                                    <RechartsTooltip
                                         contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                     />
                                     <Legend iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }} />
-                                    <Line type="monotone" dataKey="fallRate" name="Fall Rate (%)" stroke="var(--accent-orange)" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
-                                    <Line type="monotone" dataKey="medErrors" name="Medication Errors (%)" stroke="var(--accent-red)" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
-                                    <Line type="monotone" dataKey="pressureInjuries" name="Pressure Injuries (%)" stroke="var(--accent-blue)" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+                                    <Line type="monotone" dataKey="fallRate" name="Fall Rate (%)" stroke="var(--accent-orange)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="medErrors" name="Medication Errors (%)" stroke="var(--accent-red)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="pressureInjuries" name="Pressure Injuries (%)" stroke="var(--accent-blue)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
@@ -160,7 +152,7 @@ export default function PatientServicesDashboard() {
                     {/* Staffing & Training */}
                     <div className="content-box psd-staffing-overview">
                         <h2 className="content-box-title">Staffing Overview</h2>
-                        
+
                         <div className="psd-kpi-row">
                             <div className="psd-kpi-box">
                                 <div className="psd-kpi-label">Understaffed Units</div>
@@ -180,9 +172,9 @@ export default function PatientServicesDashboard() {
                             <ResponsiveContainer>
                                 <BarChart data={staffingData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#8ea2b5', fontSize: 11}} dy={5} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#8ea2b5', fontSize: 11}} />
-                                    <RechartsTooltip cursor={{fill: '#f0f5fa'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#8ea2b5', fontSize: 11 }} dy={5} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#8ea2b5', fontSize: 11 }} />
+                                    <RechartsTooltip cursor={{ fill: '#f0f5fa' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                                     <Bar dataKey="staff" name="Nurses Assigned" fill="var(--accent-blue)" radius={[4, 4, 0, 0]} barSize={30} />
                                 </BarChart>
                             </ResponsiveContainer>

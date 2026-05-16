@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
-import ChatHub from "./ChatHub";
+import ChatHub, { socket } from "./ChatHub";
 import logo from "../assets/logo.png";
 
 export default function Layout({
@@ -12,8 +12,6 @@ export default function Layout({
   username = "User",
 }) {
   const navigate = useNavigate();
-
-
 
   const currentUser = useMemo(() => {
     try {
@@ -25,13 +23,8 @@ export default function Layout({
 
   let displayUsername = username;
   if (!username || username === "User") {
-    try {
-      const user = JSON.parse(sessionStorage.getItem("user"));
-      if (user && user.full_name) {
-        displayUsername = user.full_name;
-      }
-    } catch (err) {
-      console.error("Failed to parse user from localStorage", err);
+    if (currentUser && currentUser.full_name) {
+      displayUsername = currentUser.full_name;
     }
   }
 
@@ -41,13 +34,11 @@ export default function Layout({
     navigate("/");
   };
 
-
-
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchUnreadCount = async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem("user")) || JSON.parse(localStorage.getItem("user"));
+      const user = JSON.parse(sessionStorage.getItem("user"));
       if (!user || (!user.user_id && !user.id)) return;
       const activeUserId = user.user_id || user.id;
 
@@ -58,7 +49,6 @@ export default function Layout({
       });
       if (res.ok) {
         const data = await res.json();
-        // Count unread (where is_read is 0 or false)
         const unread = data.filter(n => !n.is_read).length;
         setUnreadCount(unread);
       }
@@ -69,14 +59,25 @@ export default function Layout({
 
   useEffect(() => {
     fetchUnreadCount();
-    
-    // Listen for custom event when notifications are read on the NotificationsPage
+
+    const activeUserId = currentUser.user_id || currentUser.id;
+    if (activeUserId) {
+      socket.emit("join_user_room", activeUserId);
+    }
+
+    const handleNewNotification = () => {
+      fetchUnreadCount();
+      // Optional: Show a UI toast here if desired
+    };
+
+    socket.on("new_notification", handleNewNotification);
     window.addEventListener("notifications_updated", fetchUnreadCount);
-    
+
     return () => {
+      socket.off("new_notification", handleNewNotification);
       window.removeEventListener("notifications_updated", fetchUnreadCount);
     };
-  }, []);
+  }, [currentUser.user_id, currentUser.id]);
 
   return (
     <div style={styles.wrapper}>

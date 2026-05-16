@@ -1,43 +1,107 @@
-.details-container {
-    background: #dce6ef;
-    padding: 40px;
-    border-radius: 25px;
-    margin-top: 20px;
+.main {
+    flex: 1;
+    padding: 24px 40px;
+    overflow-y: auto;
 }
 
-.nurse-title {
-    text-align: center;
-    font-size: 36px;
-    color: #2f3e55;
+.back-btn {
+    align-self: flex-start;
+    margin-bottom: 8px;
+    padding: 4px 0;
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    opacity: 0.8;
+}
+
+.back-btn:hover {
+    opacity: 1;
+    color: var(--text-primary);
+    transform: translateX(-4px);
+}
+
+.main h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 10px;
     margin-bottom: 40px;
+    letter-spacing: -0.02em;
 }
 
-/* grid */
+.section-header {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-left: 4px;
+}
+
+/* Grid */
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
+    gap: 24px;
+    margin-bottom: 48px;
 }
 
-/* card */
+/* Card */
 .detail-card {
-    background: white;
-    padding: 40px 20px;
-    border-radius: 20px;
-    text-align: center;
-
-    font-size: 18px;
-    font-weight: 500;
-    color: #2f3e55;
-
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
     cursor: pointer;
-    transition: 0.25s;
-
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border-top: 4px solid var(--accent-blue);
 }
 
-/* hover */
 .detail-card:hover {
-    transform: translateY(-5px);
-    background: #cfdced;
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    background: linear-gradient(to bottom, #ffffff, #f8fafc);
 }
+
+.req-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    transition: var(--transition-fast);
+    background-color: var(--bg-main);
+    color: var(--accent-blue);
+}
+
+.detail-card:hover .req-icon-wrapper {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.req-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.req-subtitle {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+    line-height: 1.4;
+}

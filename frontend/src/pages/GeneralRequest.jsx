@@ -1,12 +1,19 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
+import { 
+    AlertCircle, 
+    ChevronLeft, 
+    Upload, 
+    X, 
+    FileText 
+} from "lucide-react";
 import "../styles/RequestForm.css";
 
 export default function GeneralRequest() {
     const navigate = useNavigate();
     const [nurse, setNurse] = useState(null);
-    const [message, setMessage] = useState("");
+    const [request, setRequest] = useState("");
     const [reason, setReason] = useState("");
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const fileInputRef = useRef();
@@ -26,61 +33,100 @@ export default function GeneralRequest() {
         setUploadedFiles(prev => [...prev, ...files.map(f => f.name)]);
     };
 
+    const removeFile = (fileName) => {
+        setUploadedFiles(prev => prev.filter(f => f !== fileName));
+    };
+
     const handleSubmit = async () => {
-        if (!message.trim()) { alert("Please write your request before submitting."); return; }
+        if (!request.trim() || !reason.trim()) {
+            alert("Please fill in all fields.");
+            return;
+        }
         try {
-            const user = JSON.parse(sessionStorage.getItem("user"));
             const res = await fetch("http://localhost:4000/api/requests", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    nurse_id: user?.nurse_id || user?.user_id || user?.id,
+                    nurse_id: nurse?.nurse_id || JSON.parse(sessionStorage.getItem("user"))?.nurse_id || JSON.parse(sessionStorage.getItem("user"))?.user_id || JSON.parse(sessionStorage.getItem("user"))?.id,
                     request_type: "General Request",
-                    title: reason,
-                    description: message
+                    title: "General Request",
+                    description: `Request: ${request}\nReason: ${reason}`,
                 }),
             });
-            if (res.ok) { alert("Request submitted successfully!"); navigate("/request"); }
-            else { alert("Failed to submit request."); }
-        } catch (err) { console.error(err); alert("Server error."); }
+            if (res.ok) {
+                alert("Request submitted successfully!");
+                navigate("/request");
+            } else {
+                alert("Failed to submit request.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Server error.");
+        }
     };
 
     return (
         <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
-            <div className="leave-main">
-                <button className="back-btn" onClick={() => navigate(-1)}>
-                    ← Back
+            <div className="form-main-container">
+                <button className="form-back-btn" onClick={() => navigate("/request")}>
+                    <ChevronLeft size={18} /> Back to Requests
                 </button>
-                <div className="leave-form-card">
-                    <div className="leave-header">
-                        <div className="leave-header-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="12" y1="8" x2="12" y2="12" />
-                                <line x1="12" y1="16" x2="12.01" y2="16" />
-                            </svg>
+
+                <div className="form-card-premium">
+                    <div className="form-header-premium">
+                        <div className="form-icon-circle">
+                            <AlertCircle size={28} />
                         </div>
-                        <h2 className="leave-title">General Request</h2>
+                        <h2 className="form-title-premium">General Request</h2>
                     </div>
-                    <p className="leave-description-label">Staff Request</p>
-                    <div className="leave-textarea-wrapper">
-                        <textarea className="leave-textarea" placeholder="Click here to enter your request." value={message} onChange={(e) => setMessage(e.target.value)} />
+
+                    <div className="form-content">
+                        <div className="form-group-premium">
+                            <label className="form-label-premium">Staff Request</label>
+                            <textarea 
+                                className="form-textarea-premium" 
+                                value={request} 
+                                onChange={(e) => setRequest(e.target.value)} 
+                                placeholder="Detail your general request here..." 
+                            />
+                        </div>
+
+                        <div className="form-group-premium">
+                            <label className="form-label-premium">Reason</label>
+                            <textarea 
+                                className="form-textarea-premium" 
+                                value={reason} 
+                                onChange={(e) => setReason(e.target.value)} 
+                                placeholder="Explain the reason for this request..." 
+                            />
+                        </div>
                     </div>
-                    <p className="leave-description-label">Reason</p>
-                    <div className="leave-textarea-wrapper">
-                        <textarea className="leave-textarea" placeholder="Click here to enter the reason." value={reason} onChange={(e) => setReason(e.target.value)} />
-                    </div>
-                    <div className="leave-actions">
-                        <button className="leave-submit-btn" onClick={handleSubmit}>Submit</button>
-                        <button className="leave-upload-btn" onClick={() => fileInputRef.current.click()}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-                                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
-                            </svg>
-                            Upload Files
-                        </button>
+
+                    <div className="form-section-title">Supporting Documents</div>
+                    <div className="upload-dropzone-premium" onClick={() => fileInputRef.current.click()}>
+                        <div className="upload-icon-wrapper">
+                            <Upload size={32} />
+                        </div>
+                        <div className="upload-text-main">Click to upload files</div>
+                        <div className="upload-text-sub">Maximum file size: 5MB</div>
                         <input type="file" ref={fileInputRef} style={{ display: "none" }} multiple onChange={handleFileUpload} />
                     </div>
-                    <div className="leave-uploaded-bar">{uploadedFiles.length > 0 ? uploadedFiles.join(", ") : "Uploaded Files...."}</div>
+
+                    <div className="file-chips-container">
+                        {uploadedFiles.map((fileName, idx) => (
+                            <div key={idx} className="file-chip">
+                                <FileText size={14} />
+                                <span>{fileName}</span>
+                                <X size={14} className="file-chip-remove" onClick={(e) => { e.stopPropagation(); removeFile(fileName); }} />
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="form-actions-premium">
+                        <button className="btn-submit-premium" onClick={handleSubmit}>
+                            Submit Request
+                        </button>
+                    </div>
                 </div>
             </div>
         </Layout>

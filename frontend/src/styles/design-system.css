@@ -7,27 +7,28 @@
     --bg-gradient: linear-gradient(135deg, #dce6ef, #c8d8e8);
     --bg-gradient-hover: linear-gradient(135deg, #e3edf6, #d1deed);
 
-    --text-primary: #314259;
-    --text-secondary: #4a6a85;
-    --text-muted: #8ea2b5;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
 
-    --accent-blue: #4a6a85;
-    --accent-blue-hover: #314259;
-    --accent-red: #e53935;
-    --accent-green: #4caf50;
-    --accent-orange: #ff9800;
+    --accent-blue: #334155;
+    --accent-blue-hover: #1e293b;
+    --accent-red: #dc2626;
+    --accent-green: #16a34a;
+    --accent-orange: #d97706;
 
     /* Spacing & Radii */
-    --radius-lg: 20px;
-    --radius-md: 15px;
-    --radius-sm: 10px;
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
 
     /* Shadows */
-    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.1);
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-premium: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-hover: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
     /* Transitions */
-    --transition-fast: all 0.2s ease;
+    --transition-fast: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Base Styles */
@@ -38,39 +39,112 @@ body {
 
 /* Utility: Premium Cards (Wavy Cards) */
 .glass-card {
-    background: var(--bg-gradient);
     border-radius: var(--radius-lg);
-    padding: 20px;
+    padding: 24px;
     position: relative;
     overflow: hidden;
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--shadow-premium);
     transition: var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    min-height: 120px;
+}
+
+.cards-row .glass-card,
+.kpi-grid .glass-card {
+    flex: 1;
 }
 
 .glass-card:hover {
     transform: translateY(-5px);
-    background: var(--bg-gradient-hover);
     box-shadow: var(--shadow-hover);
 }
 
 .glass-card::after {
     content: "";
     position: absolute;
-    bottom: -30px;
+    bottom: -35px;
     left: -10%;
     width: 120%;
-    height: 70px;
+    height: 80px;
     background: rgba(255, 255, 255, 0.6);
     border-radius: 50% 50% 0 0;
     z-index: 0;
-    /* Lowered from 1 */
 }
 
-.glass-card p,
-.glass-card h1 {
+/* Ensure all children are above the wave */
+.glass-card>* {
     position: relative;
     z-index: 1;
-    /* Ensures text is always on top of the wave */
+}
+
+/* Card Titles and Values */
+.glass-card p {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+}
+
+.glass-card h1 {
+    width: 100%;
+    text-align: center;
+    font-size: 40px;
+    margin: 0;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+/* Color Variants */
+.glass-card.blue {
+    background: #e3edf6;
+    border: 1px solid rgba(74, 106, 133, 0.15);
+}
+
+.glass-card.yellow {
+    background: #fef0c7;
+    border: 1px solid rgba(255, 152, 0, 0.15);
+}
+
+.glass-card.yellow p,
+.glass-card.yellow h1 {
+    color: var(--accent-orange);
+}
+
+.glass-card.red {
+    background: #fef2f2;
+    border: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+.glass-card.red p,
+.glass-card.red h1 {
+    color: var(--accent-red);
+}
+
+.glass-card.green {
+    background: #d4f8e0;
+    border: 1px solid rgba(22, 163, 74, 0.15);
+}
+
+.glass-card.green p,
+.glass-card.green h1 {
+    color: var(--accent-green);
+}
+
+.glass-card.purple {
+    background: #f3e8ff;
+    border: 1px solid rgba(126, 87, 194, 0.15);
+}
+
+.glass-card.purple p,
+.glass-card.purple h1 {
+    color: #7e57c2;
 }
 
 /* Utility: Content Box (Table Container) */
@@ -156,8 +230,8 @@ body {
 
 .status,
 .tbadge {
-    padding: 8px 20px;
-    border-radius: 30px;
+    padding: 6px 16px;
+    border-radius: 50px;
     font-size: 13px;
     font-weight: 600;
     text-align: center;
@@ -166,9 +240,8 @@ body {
     align-items: center;
     justify-content: center;
     border: none;
-    margin: 0 auto;
-    /* Horizontally centers if container is block/grid */
-    line-height: 1;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
 }
 
 /* Green (Active, Completed, Approved) */
@@ -202,7 +275,7 @@ body {
 .tbadge.overdue,
 .status.on-leave,
 .status.rejected {
-    background-color: #ffd6d6;
+    background-color: #fef2f2;
     color: var(--accent-red);
 }
 

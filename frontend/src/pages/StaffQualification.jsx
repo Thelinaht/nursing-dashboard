@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import Layout from "../components/Layout";
@@ -26,7 +27,7 @@ export default function StaffQualification() {
     const [activeCategory, setActiveCategory] = useState("Mandatory");
     const fileRefs = useRef({});
     const saudiFileRef = useRef();
-    
+
     const formatDate = (dateString) => {
         if (!dateString) return "—";
         const date = new Date(dateString);

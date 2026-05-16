@@ -61,38 +61,6 @@
     gap: 12px;
 }
 
-.kpi-card {
-    background: #dce6f2;
-    border-radius: 20px;
-    padding: 18px;
-}
-
-.kpi-label {
-    font-size: 12px;
-    color: #5a6f87;
-    font-weight: 500;
-    margin: 0 0 8px;
-}
-
-.kpi-value {
-    font-size: 28px;
-    font-weight: 800;
-    color: #2f3e55;
-    margin: 0 0 4px;
-}
-
-.kpi-unit {
-    font-size: 11px;
-    color: #5a6f87;
-    margin: 0 0 4px;
-}
-
-.kpi-note {
-    font-size: 11px;
-    font-weight: 600;
-    margin: 0;
-}
-
 .note-up {
     color: #e74c3c;
 }

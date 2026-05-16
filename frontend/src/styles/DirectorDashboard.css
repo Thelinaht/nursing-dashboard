@@ -10,6 +10,7 @@
   margin-top: 10px;
   box-shadow: none !important;
   border: none !important;
+  width: 100%;
 }
 
 .view-all {
@@ -101,11 +102,23 @@
 }
 
 .calc-result-area {
-  background: rgba(74, 106, 133, 0.05);
+  background: rgba(74, 106, 133, 0.08);
   border-radius: var(--radius-md);
-  padding: 15px;
+  padding: 20px;
   margin-top: 10px;
-  border-left: 4px solid var(--accent-blue);
+  border-left: 6px solid #1E3A5F; /* Standard Navy accent */
+}
+
+.content-box-title {
+  font-weight: 700 !important;
+  font-size: 18px !important;
+  color: #1E3A5F !important;
+}
+
+/* Ensure blue glass cards have the correct theme */
+.glass-card.blue p,
+.glass-card.blue h1 {
+  color: #1E3A5F !important;
 }
 
 .table-box {

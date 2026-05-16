@@ -1,7 +1,17 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import "../styles/LeaveRequest.css";
+import { 
+    Calendar, 
+    ChevronLeft, 
+    Upload, 
+    X, 
+    FileText, 
+    CheckCircle, 
+    Clock,
+    AlertCircle
+} from "lucide-react";
+import "../styles/RequestForm.css";
 
 export default function LeaveRequest() {
     const navigate = useNavigate();
@@ -11,7 +21,7 @@ export default function LeaveRequest() {
     const fileInputRef = useRef();
 
     // Planned Leave
-    const [plannedType, setPlannedType] = useState("");
+    const [plannedType, setPlannedType] = useState("Annual Leave");
     const [plannedDays, setPlannedDays] = useState("");
     const [plannedStartDate, setPlannedStartDate] = useState("");
     const [plannedCtBefore, setPlannedCtBefore] = useState("");
@@ -19,7 +29,7 @@ export default function LeaveRequest() {
     const [plannedJoiningDate, setPlannedJoiningDate] = useState("");
 
     // Unplanned Leave
-    const [unplannedType, setUnplannedType] = useState("");
+    const [unplannedType, setUnplannedType] = useState("Annual Leave");
     const [unplannedReason, setUnplannedReason] = useState("");
     const [unplannedDays, setUnplannedDays] = useState("");
     const [unplannedStartDate, setUnplannedStartDate] = useState("");
@@ -40,10 +50,22 @@ export default function LeaveRequest() {
         setUploadedFiles(prev => [...prev, ...files.map(f => f.name)]);
     };
 
+    const removeFile = (fileName) => {
+        setUploadedFiles(prev => prev.filter(f => f !== fileName));
+    };
+
     const handleSubmit = async () => {
+        if (leaveType === "planned" && (!plannedType || !plannedStartDate || !plannedDays)) {
+            alert("Please fill in all mandatory fields.");
+            return;
+        }
+        if (leaveType === "unplanned" && (!unplannedType || !unplannedStartDate || !unplannedDays || !unplannedReason)) {
+            alert("Please fill in all mandatory fields.");
+            return;
+        }
+
         try {
             const isPlanned = leaveType === "planned";
-
             const title = isPlanned
                 ? `Planned Leave - ${plannedType} - ${plannedDays} days`
                 : `Unplanned Leave - ${unplannedType} - ${unplannedDays} days`;
@@ -77,129 +99,163 @@ export default function LeaveRequest() {
 
     return (
         <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
-            <div className="leave-main">
-                <button className="back-btn" onClick={() => navigate("/request")}>← Back</button>
+            <div className="form-main-container">
+                <button className="form-back-btn" onClick={() => navigate("/request")}>
+                    <ChevronLeft size={18} /> Back to Requests
+                </button>
 
-                <div className="leave-form-card">
-                    <div className="leave-header">
-                        <div className="leave-header-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
-                                <rect x="3" y="4" width="18" height="18" rx="2" />
-                                <line x1="16" y1="2" x2="16" y2="6" />
-                                <line x1="8" y1="2" x2="8" y2="6" />
-                                <line x1="3" y1="10" x2="21" y2="10" />
-                            </svg>
+                <div className="form-card-premium">
+                    <div className="form-header-premium">
+                        <div className="form-icon-circle">
+                            <Calendar size={28} />
                         </div>
-                        <h2 className="leave-title">Staff Leave Application</h2>
+                        <h2 className="form-title-premium">Staff Leave Application</h2>
                     </div>
 
-                    {/* Leave Type Toggle */}
-                    <div className="leave-type-toggle">
+                    {/* Tabs */}
+                    <div className="form-toggle-group">
                         <button
-                            className={`toggle-btn ${leaveType === "planned" ? "active" : ""}`}
+                            className={`toggle-item-premium ${leaveType === "planned" ? "active" : ""}`}
                             onClick={() => setLeaveType("planned")}
                         >
                             Planned Leave
                         </button>
                         <button
-                            className={`toggle-btn ${leaveType === "unplanned" ? "active" : ""}`}
+                            className={`toggle-item-premium ${leaveType === "unplanned" ? "active" : ""}`}
                             onClick={() => setLeaveType("unplanned")}
                         >
                             Unplanned Leave
                         </button>
                     </div>
 
-                    {/* Planned Leave */}
-                    {leaveType === "planned" && (
-                        <div className="leave-section">
-                            <div className="form-field">
-                                <label className="form-label">Type of Leave</label>
-                                <div className="checkbox-group">
-                                    <label><input type="radio" name="plannedType" value="Annual Leave" onChange={e => setPlannedType(e.target.value)} /> Annual Leave</label>
-                                    <label><input type="radio" name="plannedType" value="Comp time" onChange={e => setPlannedType(e.target.value)} /> Comp time</label>
-                                    <label><input type="radio" name="plannedType" value="Other" onChange={e => setPlannedType(e.target.value)} /> Other</label>
+                    {/* Form Body */}
+                    <div className="form-content">
+                        {leaveType === "planned" ? (
+                            <div className="form-section">
+                                <div className="form-group-premium">
+                                    <label className="form-label-premium">Type of Leave</label>
+                                    <div className="radio-pill-group">
+                                        {["Annual Leave", "Comp time", "Other"].map(type => (
+                                            <div key={type}>
+                                                <input 
+                                                    type="radio" 
+                                                    id={`planned-${type}`}
+                                                    name="plannedType" 
+                                                    value={type} 
+                                                    className="radio-pill-input"
+                                                    checked={plannedType === type}
+                                                    onChange={e => setPlannedType(e.target.value)} 
+                                                />
+                                                <label htmlFor={`planned-${type}`} className="radio-pill-label">{type}</label>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="form-grid-2">
-                                <div className="form-field">
-                                    <label className="form-label">No. of Days</label>
-                                    <input className="form-input" type="number" value={plannedDays} onChange={e => setPlannedDays(e.target.value)} placeholder="0" />
+                                <div className="form-grid-premium">
+                                    <div className="form-group-premium">
+                                        <label className="form-label-premium">No. of Days</label>
+                                        <input className="form-input-premium" type="number" value={plannedDays} onChange={e => setPlannedDays(e.target.value)} placeholder="Enter number of days" />
+                                    </div>
+                                    <div className="form-group-premium">
+                                        <label className="form-label-premium">Starting Date</label>
+                                        <input className="form-input-premium" type="date" value={plannedStartDate} onChange={e => setPlannedStartDate(e.target.value)} />
+                                    </div>
+                                    
+                                    {plannedType === "Comp time" && (
+                                        <>
+                                            <div className="form-group-premium">
+                                                <label className="form-label-premium">No. of CT Before Leave</label>
+                                                <input className="form-input-premium" type="number" value={plannedCtBefore} onChange={e => setPlannedCtBefore(e.target.value)} placeholder="0" />
+                                            </div>
+                                            <div className="form-group-premium">
+                                                <label className="form-label-premium">No. of CT After Leave</label>
+                                                <input className="form-input-premium" type="number" value={plannedCtAfter} onChange={e => setPlannedCtAfter(e.target.value)} placeholder="0" />
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
-                                <div className="form-field">
-                                    <label className="form-label">Starting Date</label>
-                                    <input className="form-input" type="date" value={plannedStartDate} onChange={e => setPlannedStartDate(e.target.value)} />
-                                </div>
-                                <div className="form-field">
-                                    <label className="form-label">No. of CT Before Leave</label>
-                                    <input className="form-input" type="number" value={plannedCtBefore} onChange={e => setPlannedCtBefore(e.target.value)} placeholder="0" />
-                                </div>
-                                <div className="form-field">
-                                    <label className="form-label">No. of CT After Leave</label>
-                                    <input className="form-input" type="number" value={plannedCtAfter} onChange={e => setPlannedCtAfter(e.target.value)} placeholder="0" />
-                                </div>
-                                <div className="form-field">
-                                    <label className="form-label">Joining Date</label>
-                                    <input className="form-input" type="date" value={plannedJoiningDate} onChange={e => setPlannedJoiningDate(e.target.value)} />
+                                <div className="form-group-premium">
+                                    <label className="form-label-premium">Joining Date</label>
+                                    <input className="form-input-premium" type="date" value={plannedJoiningDate} onChange={e => setPlannedJoiningDate(e.target.value)} />
                                 </div>
                             </div>
+                        ) : (
+                            <div className="form-section">
+                                <div className="form-group-premium">
+                                    <label className="form-label-premium">Type of Leave</label>
+                                    <div className="radio-pill-group">
+                                        {["Annual Leave", "Comp time", "Other"].map(type => (
+                                            <div key={type}>
+                                                <input 
+                                                    type="radio" 
+                                                    id={`unplanned-${type}`}
+                                                    name="unplannedType" 
+                                                    value={type} 
+                                                    className="radio-pill-input"
+                                                    checked={unplannedType === type}
+                                                    onChange={e => setUnplannedType(e.target.value)} 
+                                                />
+                                                <label htmlFor={`unplanned-${type}`} className="radio-pill-label">{type}</label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="form-group-premium">
+                                    <label className="form-label-premium">Reason</label>
+                                    <textarea className="form-textarea-premium" value={unplannedReason} onChange={e => setUnplannedReason(e.target.value)} placeholder="Please explain the reason for your unplanned leave..." />
+                                </div>
+
+                                <div className="form-grid-premium">
+                                    <div className="form-group-premium">
+                                        <label className="form-label-premium">No. of Days</label>
+                                        <input className="form-input-premium" type="number" value={unplannedDays} onChange={e => setUnplannedDays(e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div className="form-group-premium">
+                                        <label className="form-label-premium">Starting Date</label>
+                                        <input className="form-input-premium" type="date" value={unplannedStartDate} onChange={e => setUnplannedStartDate(e.target.value)} />
+                                    </div>
+                                </div>
+                                <div className="form-group-premium">
+                                    <label className="form-label-premium">Joining Date</label>
+                                    <input className="form-input-premium" type="date" value={unplannedJoiningDate} onChange={e => setUnplannedJoiningDate(e.target.value)} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* File Upload Dropzone */}
+                    <div className="form-section-title">Supporting Documents</div>
+                    <div className="upload-dropzone-premium" onClick={() => fileInputRef.current.click()}>
+                        <div className="upload-icon-wrapper">
+                            <Upload size={32} />
                         </div>
-                    )}
-
-                    {/* Unplanned Leave */}
-                    {leaveType === "unplanned" && (
-                        <div className="leave-section">
-                            <div className="form-field">
-                                <label className="form-label">Type of Leave</label>
-                                <div className="checkbox-group">
-                                    <label><input type="radio" name="unplannedType" value="Annual Leave" onChange={e => setUnplannedType(e.target.value)} /> Annual Leave</label>
-                                    <label><input type="radio" name="unplannedType" value="Comp time" onChange={e => setUnplannedType(e.target.value)} /> Comp time</label>
-                                    <label><input type="radio" name="unplannedType" value="Other" onChange={e => setUnplannedType(e.target.value)} /> Other</label>
-                                </div>
-                            </div>
-
-                            <div className="form-field">
-                                <label className="form-label">Reason</label>
-                                <textarea className="form-textarea" value={unplannedReason} onChange={e => setUnplannedReason(e.target.value)} placeholder="Reason for having unplanned leave" />
-                            </div>
-
-                            <div className="form-grid-2">
-                                <div className="form-field">
-                                    <label className="form-label">No. of Days</label>
-                                    <input className="form-input" type="number" value={unplannedDays} onChange={e => setUnplannedDays(e.target.value)} placeholder="0" />
-                                </div>
-                                <div className="form-field">
-                                    <label className="form-label">Starting Date</label>
-                                    <input className="form-input" type="date" value={unplannedStartDate} onChange={e => setUnplannedStartDate(e.target.value)} />
-                                </div>
-                                <div className="form-field">
-                                    <label className="form-label">Joining Date</label>
-                                    <input className="form-input" type="date" value={unplannedJoiningDate} onChange={e => setUnplannedJoiningDate(e.target.value)} />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="leave-actions">
-                        <button className="leave-submit-btn" onClick={handleSubmit}>Submit</button>
-                        <button className="leave-upload-btn" onClick={() => fileInputRef.current.click()}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="12" y1="8" x2="12" y2="16" />
-                                <line x1="8" y1="12" x2="16" y2="12" />
-                            </svg>
-                            Upload Files
-                        </button>
+                        <div className="upload-text-main">Click to upload files</div>
+                        <div className="upload-text-sub">Maximum file size: 5MB</div>
                         <input type="file" ref={fileInputRef} style={{ display: "none" }} multiple onChange={handleFileUpload} />
                     </div>
 
-                    <div className="leave-uploaded-bar">
-                        {uploadedFiles.length > 0 ? uploadedFiles.join(", ") : "Uploaded Files...."}
+                    {/* File Chips */}
+                    <div className="file-chips-container">
+                        {uploadedFiles.map((fileName, idx) => (
+                            <div key={idx} className="file-chip">
+                                <FileText size={14} />
+                                <span>{fileName}</span>
+                                <X size={14} className="file-chip-remove" onClick={(e) => { e.stopPropagation(); removeFile(fileName); }} />
+                            </div>
+                        ))}
                     </div>
 
+                    {/* Actions */}
+                    <div className="form-actions-premium">
+                        <button className="btn-submit-premium" onClick={handleSubmit}>Submit Application</button>
+                    </div>
                 </div>
             </div>
         </Layout>
     );
 }
+
+
+

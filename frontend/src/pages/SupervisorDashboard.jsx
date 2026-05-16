@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import "../styles/SupervisorDashboard.css";
 import { io } from "socket.io-client";
+import { Users, LayoutGrid, ClipboardCheck, ChevronRight } from "lucide-react";
 
 export default function SupervisorDashboard() {
+    const navigate = useNavigate();
     const [search, setSearch] = useState("");
+    const [staffingSearch, setStaffingSearch] = useState("");
     const [nurses, setNurses] = useState([]);
     const [pendingRequests, setPendingRequests] = useState(0);
     const [staffingFilter, setStaffingFilter] = useState("All Units");
     const [assignUnitFilters, setAssignUnitFilters] = useState([]);
+    const [staffingUnitFilters, setStaffingUnitFilters] = useState([]);
     const [showUnitDropdown, setShowUnitDropdown] = useState(false);
+    const [showStaffingDropdown, setShowStaffingDropdown] = useState(false);
 
     const fetchRequests = () => {
         fetch("http://localhost:4000/api/requests")
@@ -55,10 +61,16 @@ export default function SupervisorDashboard() {
         return matchesSearch && matchesUnit;
     });
 
-    const toggleUnitFilter = (u) => {
-        setAssignUnitFilters(prev =>
-            prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]
-        );
+    const toggleUnitFilter = (u, type = 'assign') => {
+        if (type === 'assign') {
+            setAssignUnitFilters(prev =>
+                prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]
+            );
+        } else {
+            setStaffingUnitFilters(prev =>
+                prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]
+            );
+        }
     };
 
     // Daily Staffing (Grouping by unit to calculate available staff)
@@ -69,9 +81,11 @@ export default function SupervisorDashboard() {
         const coveragePercentage = Math.round((availableCount / required) * 100);
 
         let status = "safe";
-        if (coveragePercentage < 65) status = "critical";
-        else if (coveragePercentage < 75) status = "high-risk";
-        else if (coveragePercentage < 85) status = "low-risk";
+        if (coveragePercentage < 25) status = "critical";
+        else if (coveragePercentage <= 50) status = "high-risk";
+        else if (coveragePercentage <= 75) status = "low-risk";
+        else if (coveragePercentage < 100) status = "safe";
+        else status = "overstaffed";
 
         return {
             unit,
@@ -82,9 +96,11 @@ export default function SupervisorDashboard() {
         };
     });
 
-    const filteredDailyStaffing = staffingFilter === "All Units"
-        ? dailyStaffing
-        : dailyStaffing.filter(row => row.unit === staffingFilter);
+    const filteredDailyStaffing = dailyStaffing.filter(row => {
+        const matchesUnit = staffingUnitFilters.length === 0 || staffingUnitFilters.includes(row.unit);
+        const matchesSearch = row.unit.toLowerCase().includes(staffingSearch.toLowerCase());
+        return matchesUnit && matchesSearch;
+    });
 
     // Ratios (Mocked based on existing units, since patients data doesn't exist)
     const ratios = units.map((unit, index) => {
@@ -109,127 +125,211 @@ export default function SupervisorDashboard() {
 
                     {/* Top Stats Cards */}
                     <div className="cards-row">
-                        <div className="wave-card glass-card">
-                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></i> Number of Nurses</p>
+                        <div className="glass-card blue">
+                            <p><Users size={20} /> Number of Nurses</p>
                             <h1>{totalNurses}</h1>
                         </div>
-                        <div className="wave-card glass-card">
-                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></i> Units</p>
+                        <div className="glass-card blue">
+                            <p><LayoutGrid size={20} /> Units</p>
                             <h1>{totalUnits}</h1>
                         </div>
-                        <div className="wave-card glass-card">
-                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="13" r="3"></circle><path d="M12 11v2l1 1"></path></svg></i> Pending Requests</p>
-                            <h1 style={{ color: "var(--accent-orange)" }}>{pendingRequests > 0 ? pendingRequests : 0}</h1>
+                        <div className="glass-card yellow">
+                            <p><ClipboardCheck size={20} /> Pending Requests</p>
+                            <h1>{pendingRequests > 0 ? pendingRequests : 0}</h1>
+                        </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)', fontWeight: '700', marginTop: '30px' }}>Quick Actions</h3>
+                    <div className="cards-row" style={{ marginBottom: '40px' }}>
+                        <div className="glass-card blue clickable-card" 
+                             style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative' }}
+                             onClick={() => navigate('/assign-staff')}>
+                            <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>Assign Staff</h2>
+                            <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '280px', position: 'relative', zIndex: 2 }}>Manage daily staff deployments across all units.</p>
+                            <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
+                        </div>
+
+                        <div className="glass-card blue clickable-card" 
+                             style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative' }}
+                             onClick={() => navigate('/supervisor/manage-requests')}>
+                            <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>Manage Requests</h2>
+                            <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '280px', position: 'relative', zIndex: 2 }}>Review and process staff leave and scheduling requests.</p>
+                            <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
                         </div>
                     </div>
 
                     {/* Middle Section */}
                     <div className="middle-section">
                         <div className="table-box content-box">
-                            <div className="box-header" style={{ flexDirection: 'column', gap: '10px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                    <h2 className="content-box-title">Assigned Staff</h2>
-                                    <div className="actions">
-                                        <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }} onClick={() => {
-                                            setSearch("");
-                                            setAssignUnitFilters([]);
-                                        }}>Clear Filters</button>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
-                                    <input
-                                        type="text"
-                                        placeholder="Search name..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="input-pill"
-                                        style={{ flex: 1, minWidth: "120px", padding: "6px 12px" }}
-                                    />
-
-                                    <div style={{ position: "relative" }}>
-                                        <div
-                                            className="filter-select"
-                                            onClick={() => setShowUnitDropdown(!showUnitDropdown)}
-                                            style={{ cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", minWidth: "110px", height: "100%", userSelect: "none" }}
-                                        >
-                                            <span>
-                                                {assignUnitFilters.length === 0
-                                                    ? "All Units"
-                                                    : `${assignUnitFilters.length} Selected`}
-                                            </span>
-                                            <span style={{ fontSize: "10px", marginLeft: "8px" }}>▼</span>
-                                        </div>
-                                        {showUnitDropdown && (
-                                            <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "5px", background: "#fff", border: "1px solid #c7d5e5", borderRadius: "10px", padding: "10px", zIndex: 10, display: "flex", flexDirection: "column", gap: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: "150px" }}>
-                                                {units.map(u => (
-                                                    <label key={u} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#2f3e55", cursor: "pointer" }}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={assignUnitFilters.includes(u)}
-                                                            onChange={() => toggleUnitFilter(u)}
-                                                        />
-                                                        {u}
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-
-
+                            <div className="box-header" style={{ marginBottom: '20px' }}>
+                                <h2 className="content-box-title">Assigned Staff</h2>
+                                <div className="actions">
+                                    <button className="add-nurse-btn" style={{ padding: '8px 16px', fontSize: '13px' }} onClick={() => {
+                                        setSearch("");
+                                        setStaffingSearch("");
+                                        setAssignUnitFilters([]);
+                                        setStaffingUnitFilters([]);
+                                    }}>Clear Filters</button>
                                 </div>
                             </div>
-                            <div className="custom-table" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                                <div className="table-header" style={{ gridTemplateColumns: "0.5fr 1.5fr 2fr" }}>
-                                    <span>#</span>
-                                    <span>Unit</span>
-                                    <span>Name</span>
+
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Search name..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="input-pill"
+                                    style={{ flex: 1, height: '42px' }}
+                                />
+
+                                <div style={{ position: "relative" }}>
+                                    <button
+                                        className="filter-select"
+                                        onClick={() => setShowUnitDropdown(!showUnitDropdown)}
+                                        style={{ 
+                                            background: 'var(--accent-blue)', 
+                                            color: 'white', 
+                                            height: '42px', 
+                                            padding: '0 20px', 
+                                            borderRadius: 'var(--radius-lg)',
+                                            border: 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            fontSize: '14px',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        {assignUnitFilters.length === 0
+                                            ? "All Units"
+                                            : `${assignUnitFilters.length} Selected`}
+                                        <span style={{ fontSize: "10px" }}>▼</span>
+                                    </button>
+                                    {showUnitDropdown && (
+                                        <div className="glass-card" style={{ position: "absolute", top: "100%", right: 0, marginTop: "8px", background: "#fff", padding: "15px", zIndex: 100, display: "flex", flexDirection: "column", gap: "10px", minWidth: "180px", boxShadow: 'var(--shadow-premium)' }}>
+                                            {units.map(u => (
+                                                <label key={u} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "var(--text-primary)", cursor: "pointer" }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={assignUnitFilters.includes(u)}
+                                                        onChange={() => toggleUnitFilter(u)}
+                                                        style={{ width: '16px', height: '16px' }}
+                                                    />
+                                                    {u}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                                {assignedStaff.length > 0 ? assignedStaff.map(staff => (
-                                    <div key={staff.id} className="table-row premium-row" style={{ gridTemplateColumns: "0.5fr 1.5fr 2fr" }}>
-                                        <span>{staff.id}</span>
-                                        <span>{staff.unit}</span>
-                                        <span>{staff.name}</span>
+                            </div>
+
+                            <div className="nurse-table-header" style={{ gridTemplateColumns: "0.5fr 1.5fr 2fr" }}>
+                                <span>#</span>
+                                <span>Unit</span>
+                                <span>Name</span>
+                            </div>
+                            <div style={{ maxHeight: "400px", overflowY: "auto", pr: '5px' }}>
+                                {assignedStaff.length > 0 ? assignedStaff.map((staff, idx) => (
+                                    <div key={staff.id} className="nurse-table-row premium-row" style={{ gridTemplateColumns: "0.5fr 1.5fr 2fr" }}>
+                                        <span style={{ color: 'var(--text-muted)', fontWeight: '400' }}>{idx + 1}</span>
+                                        <span style={{ fontWeight: '500' }}>{staff.unit}</span>
+                                        <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{staff.name}</span>
                                     </div>
-                                )) : <div style={{ padding: "10px", color: "var(--text-secondary)" }}>No matching staff</div>}
+                                )) : <div style={{ padding: "30px", textAlign: 'center', color: "var(--text-muted)" }}>No matching staff</div>}
                             </div>
                         </div>
 
                         <div className="table-box content-box">
-                            <div className="box-header">
-                                <h2 className="content-box-title">daily Staffing by Unit</h2>
+                            <div className="box-header" style={{ marginBottom: '20px' }}>
+                                <h2 className="content-box-title">Daily Staffing by Unit</h2>
                                 <div className="actions">
-                                    <select
+                                    <button className="add-nurse-btn" style={{ padding: '8px 16px', fontSize: '13px' }} onClick={() => {
+                                        setSearch("");
+                                        setStaffingSearch("");
+                                        setAssignUnitFilters([]);
+                                        setStaffingUnitFilters([]);
+                                    }}>Clear Filters</button>
+                                </div>
+                            </div>
+                            
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Search unit..."
+                                    value={staffingSearch}
+                                    onChange={(e) => setStaffingSearch(e.target.value)}
+                                    className="input-pill"
+                                    style={{ flex: 1, height: '42px' }}
+                                />
+
+                                <div style={{ position: "relative" }}>
+                                    <button
                                         className="filter-select"
-                                        value={staffingFilter}
-                                        onChange={(e) => setStaffingFilter(e.target.value)}
+                                        onClick={() => setShowStaffingDropdown(!showStaffingDropdown)}
+                                        style={{ 
+                                            background: 'var(--accent-blue)', 
+                                            color: 'white', 
+                                            height: '42px', 
+                                            padding: '0 20px', 
+                                            borderRadius: 'var(--radius-lg)',
+                                            border: 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            fontSize: '14px',
+                                            fontWeight: '600'
+                                        }}
                                     >
-                                        <option value="All Units">All Units</option>
-                                        {units.map(u => <option key={u} value={u}>{u}</option>)}
-                                    </select>
+                                        {staffingUnitFilters.length === 0
+                                            ? "All Units"
+                                            : `${staffingUnitFilters.length} Selected`}
+                                        <span style={{ fontSize: "10px" }}>▼</span>
+                                    </button>
+                                    {showStaffingDropdown && (
+                                        <div className="glass-card" style={{ position: "absolute", top: "100%", right: 0, marginTop: "8px", background: "#fff", padding: "15px", zIndex: 100, display: "flex", flexDirection: "column", gap: "10px", minWidth: "180px", boxShadow: 'var(--shadow-premium)' }}>
+                                            {units.map(u => (
+                                                <label key={u} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "var(--text-primary)", cursor: "pointer" }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={staffingUnitFilters.includes(u)}
+                                                        onChange={() => toggleUnitFilter(u, 'staffing')}
+                                                        style={{ width: '16px', height: '16px' }}
+                                                    />
+                                                    {u}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <div className="custom-table" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                                <div className="table-header staffing-header">
-                                    <span>Unit</span>
-                                    <span>Required</span>
-                                    <span>Available</span>
-                                    <span>Coverage</span>
-                                </div>
+
+                            <div className="nurse-table-header" style={{ gridTemplateColumns: "1.5fr 1fr 1fr 1.2fr" }}>
+                                <span>Unit</span>
+                                <span>Required</span>
+                                <span>Available</span>
+                                <span>Coverage</span>
+                            </div>
+                            <div style={{ maxHeight: "400px", overflowY: "auto", pr: '5px' }}>
                                 {filteredDailyStaffing.length > 0 ? filteredDailyStaffing.map((row, i) => (
-                                    <div key={i} className="table-row staffing-row premium-row">
-                                        <span>{row.unit}</span>
-                                        <span>{row.required}</span>
-                                        <span>{row.available}</span>
-                                        <span className={`badge ${row.status}`}>{row.coverage}</span>
+                                    <div key={i} className="nurse-table-row premium-row" style={{ gridTemplateColumns: "1.5fr 1fr 1fr 1.2fr" }}>
+                                        <span style={{ fontWeight: '600' }}>{row.unit}</span>
+                                        <span style={{ textAlign: 'center' }}>{row.required}</span>
+                                        <span style={{ textAlign: 'center' }}>{row.available}</span>
+                                        <span style={{ display: 'flex', justifyContent: 'center' }}>
+                                            <span className={`status ${row.status}`}>{row.coverage}</span>
+                                        </span>
                                     </div>
-                                )) : <div style={{ padding: "10px", color: "var(--text-secondary)" }}>No units data</div>}
+                                )) : <div style={{ padding: "30px", textAlign: 'center', color: "var(--text-muted)" }}>No units data</div>}
                             </div>
-                            <div className="legend">
-                                <span className="legend-item critical">Critical shortage</span>
-                                <span className="legend-item high-risk">High risk</span>
-                                <span className="legend-item low-risk">Low Risk</span>
-                                <span className="legend-item safe">Safe</span>
-                                <span className="legend-item overstaffed">Overstaffed</span>
+                            
+                            <div className="legend" style={{ marginTop: '20px', justifyContent: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                                <span className="status critical" style={{ fontSize: '11px' }}>Critical shortage</span>
+                                <span className="status high-risk" style={{ fontSize: '11px' }}>High risk</span>
+                                <span className="status low-risk" style={{ fontSize: '11px' }}>Low Risk</span>
+                                <span className="status safe" style={{ fontSize: '11px' }}>Safe</span>
+                                <span className="status overstaffed" style={{ fontSize: '11px' }}>Overstaffed</span>
                             </div>
                         </div>
                     </div>
@@ -239,26 +339,26 @@ export default function SupervisorDashboard() {
                         <i className="warning-icon">i</i> {ratios.filter(r => r.status === 'exceeds').length} Units are exceeding the allowed nurse-to-patient ratio: {exceedingUnitsStr}
                     </div>
 
-                    <div className="table-box content-box">
-                        <div className="box-header">
+                    <div className="table-box content-box" style={{ marginTop: '24px' }}>
+                        <div className="box-header" style={{ marginBottom: '24px' }}>
                             <h2 className="content-box-title">Nurse-to-patient Ratios by Unit</h2>
-                            <div className="actions" style={{ display: 'flex', gap: '8px' }}>
-                                <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }}>Update Ratio</button>
-                                <button className="btn-pill" style={{ background: 'var(--text-primary)', color: 'white' }}>View All</button>
+                            <div className="actions" style={{ display: 'flex', gap: '12px' }}>
+                                <button className="add-nurse-btn" style={{ padding: '10px 20px' }}>Update Ratio</button>
+                                <button className="add-nurse-btn" style={{ padding: '10px 20px', background: 'var(--text-primary)' }}>View All</button>
                             </div>
                         </div>
                         <div className="ratios-list">
                             {ratios.map((ratio, i) => (
-                                <div key={i} className="ratio-item">
-                                    <div className="ratio-header">{ratio.unit}</div>
-                                    <div className="ratio-pill-container">
-                                        <div className="ratio-pill">
-                                            <span className="ratio-details">{ratio.text}</span>
-                                            <span className={`ratio-status-text ${ratio.status}`}>
-                                                {ratio.status === 'exceeds' ? 'Exceeds' : 'Normal'}
-                                            </span>
+                                <div key={i} className="ratio-row">
+                                    <div className="ratio-top-line">
+                                        <div className="ratio-unit-name">{ratio.unit}</div>
+                                        <div className="ratio-badge">{ratio.text}</div>
+                                        <div className={`ratio-status-label ${ratio.status}`}>
+                                            {ratio.status === 'exceeds' ? 'Exceeds' : 'Normal'}
                                         </div>
-                                        <div className="ratio-bar-bg">
+                                    </div>
+                                    <div className="ratio-bar-container">
+                                        <div className="ratio-bar-track">
                                             <div className={`ratio-bar-fill ${ratio.status}`} style={{ width: `${ratio.value}%` }}></div>
                                         </div>
                                     </div>

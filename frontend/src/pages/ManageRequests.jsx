@@ -85,12 +85,13 @@ export default function ManageRequests() {
         <Layout role="supervisor" logoSrc="/logo.png" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Supervisor"}>
             <div className="main">
                 
-                <div className="table-box content-box" style={{ flex: 1, marginTop: '20px' }}>
-                    <div className="box-header">
-                        <h2 className="content-box-title">{showAllHistory ? "All Requests" : "Pending Requests Management"}</h2>
+                <div className="info-card content-box" style={{ flex: 1, marginTop: '20px', display: 'flex', flexDirection: 'column', padding: '24px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)' }}>
+                    <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: "1px solid rgba(0,0,0,0.05)", paddingBottom: "10px", marginBottom: "15px" }}>
+                        <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "bold", color: "var(--text-primary)" }}>{showAllHistory ? "All Requests" : "Pending Requests Management"}</h3>
                         <button
-                            className="btn-pill"
-                            style={{ background: 'var(--accent-blue)', color: 'white', gap: '5px', display: 'flex', alignItems: 'center' }}
+                            style={{ background: '#314259', color: 'white', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '500', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'background 0.2s' }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#1e2b3c'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#314259'}
                             onClick={() => setShowAllHistory(!showAllHistory)}
                         >
                             <FileText size={14} />
@@ -98,8 +99,8 @@ export default function ManageRequests() {
                         </button>
                     </div>
                     
-                    <div className="custom-table" style={{ marginTop: '10px' }}>
-                        <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1.5fr' }}>
+                    <div style={{ marginTop: '10px', overflowY: 'auto', flex: 1, paddingRight: '5px' }}>
+                        <div className="nurse-table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1.5fr', flexShrink: 0, padding: '16px 20px', backgroundColor: '#c7d5e5' }}>
                             <span>Staff Name</span>
                             <span>Request Type</span>
                             <span>Submitted On</span>
@@ -107,21 +108,20 @@ export default function ManageRequests() {
                             <span style={{ textAlign: "center" }}>{showAllHistory ? "Status / Actions" : "Actions"}</span>
                         </div>
                         
-                        <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                        <div>
                             {filtered.length > 0 ? filtered.map((req) => (
-                                <div className="table-row premium-row" key={req.request_id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1.5fr', padding: '12px 15px', marginBottom: '8px' }}>
-                                    <span style={{ fontWeight: 500 }}>{req.nurse_name || req.full_name || `Nurse #${req.nurse_id}`}</span>
-                                    <span style={{ color: 'var(--text-secondary)' }}>{req.request_type}</span>
-                                    <span style={{ fontSize: '11px' }}>{req.submission_date ? new Date(req.submission_date).toLocaleDateString() : '–'}</span>
+                                <div className="nurse-table-row" key={req.request_id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1.5fr', padding: '16px 20px', transition: 'var(--transition-fast)' }}>
+                                    <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{req.full_name || `Nurse #${req.nurse_id}`}</span>
+                                    <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{req.request_type}</span>
+                                    <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{req.submission_date ? new Date(req.submission_date).toLocaleDateString() : '–'}</span>
 
                                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                                         <button 
                                             title="View Attachment" 
-                                            className="action-btn" 
-                                            style={{ background: "#e2e8f0", color: "#4a6a85", padding: "4px 8px", fontSize: "14px", borderRadius: "6px" }} 
+                                            style={{ background: "transparent", border: "none", color: "var(--text-secondary)", fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", textDecoration: "underline", padding: 0 }} 
                                             onClick={() => alert("Attachment preview coming soon! (Backend upload handling required)")}
                                         >
-                                            📎 View
+                                            <span style={{ fontSize: '11px' }}>📎</span> View
                                         </button>
                                     </div>
 
@@ -129,15 +129,17 @@ export default function ManageRequests() {
                                         {req.current_status === "Pending" ? (
                                             <>
                                                 <button
-                                                    className="btn-pill"
-                                                    style={{ backgroundColor: 'var(--accent-green)', color: 'white' }}
+                                                    style={{ backgroundColor: 'var(--accent-green)', color: 'white', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '500', border: 'none', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#10893a'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-green)'}
                                                     onClick={() => handleApprove(req.request_id)}
                                                 >
                                                     Approve
                                                 </button>
                                                 <button
-                                                    className="btn-pill"
-                                                    style={{ backgroundColor: 'var(--accent-red)', color: 'white' }}
+                                                    style={{ backgroundColor: 'var(--accent-red)', color: 'white', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '500', border: 'none', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b71c1c'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-red)'}
                                                     onClick={() => handleRejectClick(req.request_id)}
                                                 >
                                                     Deny

@@ -4,9 +4,9 @@ const pool = require("../db");
 exports.getAllRequests = async () => {
 
     const query = `
-        SELECT r.*, n.full_name AS nurse_name 
+        SELECT r.*, n.full_name 
         FROM Request r
-        LEFT JOIN Nursing_staff n ON r.nurse_id = n.user_id
+        LEFT JOIN Nursing_staff n ON r.nurse_id = n.nurse_id
     `;
     const [rows] = await pool.query(query);
 
@@ -16,7 +16,10 @@ exports.getAllRequests = async () => {
 // GET by nurse id
 exports.getRequestsByNurseId = async (nurseId) => {
     const [rows] = await pool.query(
-        "SELECT * FROM Request WHERE nurse_id = ?",
+        `SELECT r.*, n.full_name 
+         FROM Request r
+         LEFT JOIN Nursing_staff n ON r.nurse_id = n.nurse_id
+         WHERE r.nurse_id = ?`,
         [nurseId]
     );
 
@@ -26,7 +29,10 @@ exports.getRequestsByNurseId = async (nurseId) => {
 // GET one
 exports.getRequestById = async (id) => {
     const [rows] = await pool.query(
-        "SELECT * FROM Request WHERE request_id = ?",
+        `SELECT r.*, n.full_name 
+         FROM Request r
+         LEFT JOIN Nursing_staff n ON r.nurse_id = n.nurse_id
+         WHERE r.request_id = ?`,
         [id]
     );
     return rows[0];

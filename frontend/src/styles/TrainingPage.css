@@ -61,7 +61,8 @@
     color: var(--text-primary);
 }
 
-.tr-search, .tr-select {
+.tr-search,
+.tr-select {
     padding: 5px 12px;
     border-radius: var(--radius-lg);
     border: none;

@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { MessageSquare, X, Send, User, Search, Smile, Bell, ChevronLeft } from "lucide-react";
 import io from "socket.io-client";
 import "./ChatHub.css";
 
 // Singleton socket connection
-const socket = io("http://localhost:4000", {
+export const socket = io("http://localhost:4000", {
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
@@ -18,13 +19,13 @@ export default function ChatHub() {
     const [newMessage, setNewMessage] = useState("");
     const [notifications, setNotifications] = useState({}); // {userId: count}
     const [search, setSearch] = useState(""); // Restored missing state
-    
+
     // Docking state
     const [isDocked, setIsDocked] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
-    
+
     const messagesEndRef = useRef(null);
-    
+
     // Safety check for current user configuration
     const rawUser = JSON.parse(sessionStorage.getItem("user") || "{}");
     const currentUser = {
@@ -82,7 +83,7 @@ export default function ChatHub() {
 
         const handleReceive = (msg) => {
             console.log("[ChatHub] Incoming message:", msg);
-            
+
             const senderId = Number(msg.sender_id);
             const recipientId = Number(msg.recipient_id);
 
@@ -129,12 +130,12 @@ export default function ChatHub() {
     useEffect(() => {
         if (selectedContact) {
             const partnerId = Number(selectedContact.user_id);
-            
+
             fetch(`http://localhost:4000/api/live-chat/history/${currentUser.user_id}/${partnerId}`)
                 .then(res => res.json())
                 .then(setMessages)
                 .catch(err => console.error("[ChatHub] History fetch fail:", err));
-            
+
             setNotifications(prev => {
                 const updated = { ...prev };
                 delete updated[partnerId];
@@ -185,127 +186,185 @@ export default function ChatHub() {
         setIsOpen(!isOpen);
     };
 
-    return (
-        <div 
-            className={`chat-hub-container ${isOpen ? 'active' : ''}`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            style={{
-                right: isDocked ? "-45px" : "30px",
-                transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-                bottom: "30px"
-            }}
-        >
-            
-            {isHovered && !isDocked && (
-                <button 
-                    title="Minimize to side"
-                    onClick={toggleDock}
-                    className="hub-minimize-btn"
-                >
-                    <X size={12} />
-                </button>
-            )}
+    const getInitials = (name) => {
+        if (!name) return "?";
+        const parts = name.trim().split(/\s+/);
+        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+        return parts[0][0].toUpperCase();
+    };
 
-            {/* Main Floating Bubble */}
-            <div 
-                className="chat-bubble" 
-                onClick={handleBubbleClick}
-            >
-                {totalNotifications > 0 && !isOpen && (
-                    <div className="chat-notification-badge">
-                        {totalNotifications > 9 ? "9+" : totalNotifications}
+    const formatMessageDate = (timestamp) => {
+        const date = new Date(timestamp);
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+
+        if (date.toDateString() === today.toDateString()) return "Today";
+        if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    const renderMessages = () => {
+        const grouped = [];
+        let lastDate = "";
+
+        messages.forEach((m, idx) => {
+            const dateStr = formatMessageDate(m.timestamp);
+            if (dateStr !== lastDate) {
+                grouped.push({ type: "separator", label: dateStr });
+                lastDate = dateStr;
+            }
+            grouped.push({ type: "message", data: m });
+        });
+
+        return grouped.map((item, idx) => {
+            if (item.type === "separator") {
+                return (
+                    <div key={`sep-${idx}`} className="date-separator">
+                        <span>{item.label}</span>
                     </div>
-                )}
-                {isDocked ? <ChevronLeft size={24} style={{ marginRight: '15px' }} /> : (isOpen ? <X size={24} /> : <MessageSquare size={24} />)}
-            </div>
-
-            {/* Main Chat Area */}
-            {isOpen && (
-                <div className="chat-window">
-                    <div className="chat-sidebar">
-                        <div className="sidebar-header">
-                            <h3>Staff Directory</h3>
-                            <div className="search-box">
-                                <Search size={14} className="search-icon" />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search colleague..." 
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <div className="contacts-list">
-                            {Array.isArray(contacts) && contacts
-                                .filter(c => (c.full_name || "").toLowerCase().includes(search.toLowerCase()))
-                                .sort((a, b) => b.last_msg_at - a.last_msg_at)
-                                .map(contact => (
-                                    <div 
-                                        key={contact.user_id} 
-                                        className={`contact-item ${selectedContact?.user_id === contact.user_id ? 'active' : ''}`}
-                                        onClick={() => setSelectedContact(contact)}
-                                    >
-                                    <div className="avatar">
-                                        <User size={18} />
-                                    </div>
-                                    <div className="contact-info">
-                                        <span className="contact-name">{contact.full_name}</span>
-                                        <span className="contact-role">{contact.job_title}</span>
-                                    </div>
-                                    {notifications[Number(contact.user_id)] > 0 && (
-                                        <div className="green-status-dot" title="New message"></div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="chat-main">
-                        {selectedContact ? (
-                            <>
-                                <div className="chat-header">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div className="avatar-small"><User size={14} /></div>
-                                        <div>
-                                            <div className="chat-title">{selectedContact.full_name}</div>
-                                            <div className="chat-status">Online</div>
-                                        </div>
-                                    </div>
-                                    <button className="close-btn" onClick={() => setSelectedContact(null)}><X size={18} /></button>
-                                </div>
-                                <div className="messages-area">
-                                    {messages.map((m, idx) => (
-                                        <div key={idx} className={`message-bubble ${Number(m.sender_id) === currentUser.user_id ? 'sent' : 'received'}`}>
-                                            <div className="message-content">{m.content}</div>
-                                            <div className="message-time">
-                                                {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <div ref={messagesEndRef} />
-                                </div>
-                                <form className="chat-input-area" onSubmit={handleSendMessage}>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Type your message..." 
-                                        value={newMessage}
-                                        onChange={(e) => setNewMessage(e.target.value)}
-                                    />
-                                    <button type="submit" className="send-btn">
-                                        <Send size={18} />
-                                    </button>
-                                </form>
-                            </>
-                        ) : (
-                            <div className="chat-placeholder">
-                                <MessageSquare size={48} color="#dce6ef" />
-                                <p>Select a staff member to start chatting</p>
-                            </div>
-                        )}
+                );
+            }
+            const m = item.data;
+            const isSent = Number(m.sender_id) === currentUser.user_id;
+            return (
+                <div key={idx} className={`message-bubble ${isSent ? 'sent' : 'received'}`}>
+                    <div className="message-content">{m.content}</div>
+                    <div className="message-time">
+                        {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                 </div>
-            )}
-        </div>
+            );
+        });
+    };
+
+    return (
+        <>
+            {isOpen && <div className="chat-backdrop" onClick={() => setIsOpen(false)} />}
+
+            <div
+                className={`chat-hub-container ${isOpen ? 'active' : ''}`}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                style={{
+                    right: isDocked ? "-45px" : "30px",
+                    transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                    bottom: "30px"
+                }}
+            >
+
+                {isHovered && !isDocked && (
+                    <button
+                        title="Minimize to side"
+                        onClick={toggleDock}
+                        className="hub-minimize-btn"
+                    >
+                        <X size={12} />
+                    </button>
+                )}
+
+                {/* Main Floating Bubble */}
+                <div
+                    className="chat-bubble"
+                    onClick={handleBubbleClick}
+                >
+                    {totalNotifications > 0 && !isOpen && (
+                        <div className="chat-notification-badge">
+                            {totalNotifications > 9 ? "9+" : totalNotifications}
+                        </div>
+                    )}
+                    {isDocked ? <ChevronLeft size={24} style={{ marginRight: '15px' }} /> : (isOpen ? <X size={24} /> : <MessageSquare size={24} />)}
+                </div>
+
+                {/* Main Chat Area */}
+                {isOpen && (
+                    <div className="chat-window">
+                        <div className="chat-sidebar">
+                            <div className="sidebar-header">
+                                <h3>Staff Directory</h3>
+                                <div className="search-box">
+                                    <Search size={16} className="search-icon" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search colleague..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="contacts-list">
+                                {Array.isArray(contacts) && contacts
+                                    .filter(c => (c.full_name || "").toLowerCase().includes(search.toLowerCase()))
+                                    .sort((a, b) => b.last_msg_at - a.last_msg_at)
+                                    .map(contact => (
+                                        <div
+                                            key={contact.user_id}
+                                            className={`contact-item ${selectedContact?.user_id === contact.user_id ? 'active' : ''}`}
+                                            onClick={() => setSelectedContact(contact)}
+                                        >
+                                            <div className="avatar">
+                                                {getInitials(contact.full_name)}
+                                                <div className={`status-dot ${contact.is_online ? 'online' : 'offline'}`}></div>
+                                            </div>
+                                            <div className="contact-info">
+                                                <span className="contact-name">{contact.full_name}</span>
+                                                <span className="contact-role">{contact.job_title}</span>
+                                            </div>
+                                            {notifications[Number(contact.user_id)] > 0 && (
+                                                <div className="notification-dot-mini" title="New message"></div>
+                                            )}
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+
+                        <div className="chat-main">
+                            {selectedContact ? (
+                                <>
+                                    <div className="chat-header">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div className="avatar-small">
+                                                {getInitials(selectedContact.full_name)}
+                                                <div className={`status-dot-small ${selectedContact.is_online ? 'online' : 'offline'}`}></div>
+                                            </div>
+                                            <div>
+                                                <div className="chat-title">{selectedContact.full_name}</div>
+                                                <div className="chat-status">{selectedContact.is_online ? "Online" : "Offline"}</div>
+                                            </div>
+                                        </div>
+                                        <button className="close-panel-btn" onClick={() => setSelectedContact(null)}><X size={20} /></button>
+                                    </div>
+                                    <div className="messages-area">
+                                        {renderMessages()}
+                                        <div ref={messagesEndRef} />
+                                    </div>
+                                    <form className="chat-input-area" onSubmit={handleSendMessage}>
+                                        <div className="input-wrapper">
+                                            <input
+                                                type="text"
+                                                placeholder="Type your message..."
+                                                value={newMessage}
+                                                onChange={(e) => setNewMessage(e.target.value)}
+                                            />
+                                        </div>
+                                        <button type="submit" className="send-btn">
+                                            <Send size={20} />
+                                        </button>
+                                    </form>
+                                </>
+                            ) : (
+                                <div className="chat-placeholder">
+                                    <div className="placeholder-icon">
+                                        <MessageSquare size={64} />
+                                    </div>
+                                    <h3>Your Messages</h3>
+                                    <p>Select a colleague from the directory to start a secure conversation.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </>
     );
 }

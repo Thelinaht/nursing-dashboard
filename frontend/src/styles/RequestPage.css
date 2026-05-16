@@ -1,112 +1,134 @@
 .main {
     flex: 1;
-    padding: 30px;
+    padding: 24px 40px;
     overflow-y: auto;
 }
 
 .back-btn {
     align-self: flex-start;
-    margin-bottom: 12px;
-    padding: 0;
+    margin-bottom: 8px;
+    padding: 4px 0;
     background: transparent;
     border: none;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
-    color: #5a6f87;
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: 0.2s;
+    transition: var(--transition-fast);
+    opacity: 0.8;
 }
 
 .back-btn:hover {
-    color: #2f3e55;
-    text-decoration: underline;
-    background: transparent;
-    transform: none;
+    opacity: 1;
+    color: var(--text-primary);
+    transform: translateX(-4px);
 }
 
-
-.main h2 {
-    font-size: 22px;
-    font-weight: bold;
-    color: #2f3e55;
+.main h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-primary);
     margin-bottom: 20px;
+    letter-spacing: -0.02em;
 }
 
-.section-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #2f3e55;
+.section-header {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
     margin-bottom: 16px;
+    padding-left: 4px;
 }
 
 /* Request Grid */
 .request-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: 24px;
+    margin-bottom: 48px;
 }
 
-.request-btn {
-    background: #dce6f2;
+.request-card {
+    background: #ffffff;
     border-radius: 16px;
-    padding: 20px;
+    padding: 32px 24px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    justify-content: space-between;
-    min-height: 130px;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    transition: 0.2s;
-    border: none;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
 }
 
-.request-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+.request-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    background: linear-gradient(to bottom, #ffffff, #f8fafc);
 }
 
-.req-icon {
-    width: 44px;
-    height: 44px;
+.req-icon-wrapper {
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
-    background: #2f3e55;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-bottom: 20px;
+    transition: var(--transition-fast);
 }
 
-.req-icon svg {
-    stroke: white !important;
+.request-card:hover .req-icon-wrapper {
+    transform: scale(1.1) rotate(5deg);
 }
 
 .req-label {
-    font-size: 16px;
-    font-weight: 600;
-    color: #2f3e55;
-    text-align: left;
-    margin-top: 15px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
 }
 
-/* History Button */
-.history-btn {
-    background: linear-gradient(135deg, #b3c4d8, #9fb3cc);
+.req-subtitle {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* History Button Premium */
+.history-btn-container {
+    margin-top: 20px;
+}
+
+.history-btn-premium {
+    width: 100%;
+    background: var(--accent-blue);
     border-radius: 16px;
-    padding: 14px 24px;
+    padding: 20px 24px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: 0.2s;
-    border: none;
-    font-size: 14px;
+    box-shadow: var(--shadow-premium);
+    transition: var(--transition-fast);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 16px;
     font-weight: 600;
-    color: #2f3e55;
+    color: white;
 }
 
-.history-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+.history-btn-premium:hover {
+    background: var(--accent-blue-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.history-btn-premium svg {
+    stroke: white !important;
 }

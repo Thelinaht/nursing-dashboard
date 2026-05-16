@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import Layout from "../components/Layout";
@@ -13,7 +14,7 @@ export default function StaffOrientation() {
     const [nurseId, setNurseId] = useState(null);
     const [saving, setSaving] = useState(false);
     const fileRefs = useRef({});
-    
+
     const formatDate = (dateString) => {
         if (!dateString) return "—";
         const date = new Date(dateString);

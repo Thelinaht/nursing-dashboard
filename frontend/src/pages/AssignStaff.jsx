@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import "../styles/SupervisorDashboard.css";
@@ -125,13 +126,8 @@ export default function AssignStaff() {
                 <div className="supervisor-container">
 
                     {/* Header and Top Stats */}
-                    <div className="box-header" style={{ marginBottom: "20px" }}>
-                        <div>
-                            <h2 className="table-title">Daily Staff Assignment</h2>
-                            <p style={{ fontSize: "14px", color: "#44596f", marginTop: "5px" }}>
-                                Manage nursing deployments across all units.
-                            </p>
-                        </div>
+                    <div className="box-header" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <h2 className="table-title" style={{ margin: 0 }}>Daily Staff Assignment</h2>
                         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                             <span style={{ fontSize: "14px", fontWeight: "bold", color: "#2f3e55" }}>📅 Select Date:</span>
                             <input
@@ -139,22 +135,22 @@ export default function AssignStaff() {
                                 value={selectedDate}
                                 onChange={e => setSelectedDate(e.target.value)}
                                 className="search-input filter-select"
-                                style={{ padding: "8px 12px", background: "#fff" }}
+                                style={{ padding: "8px 12px", background: "#fff", color: "#2f3e55", borderRadius: "8px", border: "1px solid #c7d5e5", outline: "none" }}
                             />
                         </div>
                     </div>
 
                     <div className="cards-row">
-                        <div className="wave-card glass-card">
-                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg></i> Total Assigned Today</p>
+                        <div className="glass-card blue">
+                            <p><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg> Total Assigned Today</p>
                             <h1>{loading ? "-" : totalAssigned}</h1>
                         </div>
-                        <div className="wave-card glass-card danger-text">
-                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="17" y1="11" x2="23" y2="11"></line></svg></i> Unassigned Nurses</p>
+                        <div className="glass-card red">
+                            <p><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="17" y1="11" x2="23" y2="11"></line></svg> Unassigned Nurses</p>
                             <h1>{loading ? "-" : totalUnassigned}</h1>
                         </div>
-                        <div className="wave-card glass-card">
-                            <p><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></i> Units Covered</p>
+                        <div className="glass-card purple">
+                            <p><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> Units Covered</p>
                             <h1>{loading ? "-" : unitsCovered}</h1>
                         </div>
                     </div>
@@ -176,7 +172,7 @@ export default function AssignStaff() {
                             </div>
 
                             <div className="custom-table" style={{ flex: 1, maxHeight: "350px", overflowY: "auto", borderBottom: "1px solid #c7d5e5" }}>
-                                <div className="table-header" style={{ fontWeight: "bold" }}>
+                                <div className="nurse-table-header" style={{ fontWeight: "bold", gridTemplateColumns: "0.5fr 1fr 1.5fr 1fr", gap: "25px", alignItems: "center" }}>
                                     <span>#</span>
                                     <span>Unit</span>
                                     <span>Name</span>
@@ -186,9 +182,11 @@ export default function AssignStaff() {
                                     filteredNurses.length > 0 ? filteredNurses.map(nurse => (
                                         <div
                                             key={nurse.nurse_id}
-                                            className="table-row"
+                                            className="nurse-table-row"
                                             style={{
                                                 cursor: "pointer",
+                                                gridTemplateColumns: "0.5fr 1fr 1.5fr 1fr",
+                                                gap: "25px",
                                                 background: selectedNurse?.nurse_id === nurse.nurse_id ? "#b7c9dc" : undefined
                                             }}
                                             onClick={() => {
@@ -275,13 +273,13 @@ export default function AssignStaff() {
                                                     🏥 {unit} ({groupedAssignments[unit].length})
                                                 </h3>
                                                 <div className="custom-table" style={{ background: "transparent" }}>
-                                                    <div className="table-header" style={{ padding: "5px 12px", gridTemplateColumns: "1.5fr 1fr 1fr", fontWeight: "bold" }}>
+                                                    <div className="nurse-table-header" style={{ gridTemplateColumns: "1.5fr 1fr 1fr" }}>
                                                         <span>Name</span>
                                                         <span>Shift</span>
                                                         <span style={{ textAlign: "right" }}>Actions</span>
                                                     </div>
                                                     {groupedAssignments[unit].map(assign => (
-                                                        <div key={assign.assignment_id} className="table-row" style={{ padding: "8px 12px", fontSize: "12px", gridTemplateColumns: "1.5fr 1fr 1fr" }}>
+                                                        <div key={assign.assignment_id} className="nurse-table-row" style={{ gridTemplateColumns: "1.5fr 1fr 1fr" }}>
                                                             <span style={{ fontWeight: "bold" }}>{assign.full_name}</span>
                                                             <span>{assign.shift}</span>
                                                             <span style={{ textAlign: "right" }}>

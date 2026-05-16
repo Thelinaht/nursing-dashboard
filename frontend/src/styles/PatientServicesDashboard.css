@@ -31,41 +31,6 @@
     gap: 20px;
 }
 
-.psd-summary-card {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 24px;
-}
-
-.psd-summary-card-title {
-    font-size: 14px;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.psd-summary-card-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--accent-blue);
-    margin: 4px 0;
-}
-
-.psd-summary-card-trend {
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.psd-trend-up {
-    color: var(--accent-green);
-}
-
-.psd-trend-down {
-    color: var(--accent-red);
-}
-
 /* 2. Middle Charts Row */
 .psd-charts-grid {
     display: grid;

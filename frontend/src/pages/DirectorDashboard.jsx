@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, ClipboardList, Activity, Download, Calculator, FileText, ArrowLeft, ArrowRight } from "lucide-react";
@@ -88,8 +89,8 @@ export default function DirectorDashboard() {
     });
     socket.on("request_updated", fetchRequests);
     return () => {
-        socket.off("new_incident");
-        socket.off("request_updated");
+      socket.off("new_incident");
+      socket.off("request_updated");
     };
   }, []);
 
@@ -176,20 +177,20 @@ export default function DirectorDashboard() {
             </button>
           </div>
 
-          {/* Top Stats Cards (Inheriting from Supervisor theme directly!) */}
+          {/* Top Stats Cards */}
           <div className="cards-row">
-            <div className="wave-card glass-card">
-              <p><i><Users size={16} color="white" /></i> Required Nurses</p>
+            <div className="glass-card blue">
+              <p><Users size={20} /> Required Nurses</p>
               <h1>{stats.required}</h1>
             </div>
 
-            <div className="wave-card glass-card">
-              <p><i><ClipboardList size={16} color="white" /></i> Available Nurses</p>
+            <div className="glass-card green">
+              <p><ClipboardList size={20} /> Available Nurses</p>
               <h1>{stats.available}</h1>
             </div>
 
-            <div className="wave-card glass-card danger-text">
-              <p><i><Activity size={16} color="white" /></i> Shortage ({stats.percentage})</p>
+            <div className="glass-card red">
+              <p><Activity size={20} /> Shortage ({stats.percentage})</p>
               <h1>{stats.shortage}</h1>
             </div>
           </div>
@@ -274,9 +275,9 @@ export default function DirectorDashboard() {
                 </div>
                 <div className="calc-result-area">
                   <span style={{ fontSize: '14px', fontWeight: 500, color: '#4a6070' }}>Total Staff Required:</span>
-                  <div style={{ marginTop: '5px', display: 'flex', alignItems: 'baseline', gap: '5px' }}>
-                    <span style={{ fontSize: '36px', fontWeight: 700, color: '#4a6a85' }}>{calcResult}</span>
-                    <span style={{ fontSize: '14px', color: '#8ea2b5' }}>Nurses</span>
+                  <div style={{ marginTop: '5px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                    <span style={{ fontSize: '48px', fontWeight: 800, color: '#1E3A5F' }}>{calcResult}</span>
+                    <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 500 }}>Nurses</span>
                   </div>
                   <p style={{ fontSize: '11px', color: '#888', marginTop: '10px', fontStyle: 'italic' }}>
                     *Based on hospital standard actual working days and leave policy.
