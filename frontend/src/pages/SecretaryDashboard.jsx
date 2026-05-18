@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import "../styles/SecretaryDashboard.css";
-import { Users, AlertCircle, Flag, Globe } from "lucide-react";
+import { Users, AlertCircle, Flag, Globe, Filter, ChevronDown } from "lucide-react";
 import logo from "../assets/logo.png";
 
 export default function SecretaryDashboard() {
@@ -16,10 +16,10 @@ export default function SecretaryDashboard() {
     //  search
     const [search, setSearch] = useState("");
     const [sortOrder, setSortOrder] = useState("az"); // az | za
+    const [showFilters, setShowFilters] = useState(false);
 
     //  filters
     const [filters, setFilters] = useState({
-        job_title: "",
         position_title: "",
         unit: "",
         status: "",
@@ -59,7 +59,6 @@ export default function SecretaryDashboard() {
     }, []);
 
     //  dynamic filter options
-    const jobTitles = [...new Set(nurses.map(n => n.job_title).filter(Boolean))];
     const positions = [...new Set(nurses.map(n => n.position_title).filter(Boolean))];
     const units = [...new Set(nurses.map(n => n.unit).filter(Boolean))];
     const nationalities = [...new Set(nurses.map(n => n.nationality).filter(Boolean))].sort();
@@ -78,7 +77,6 @@ export default function SecretaryDashboard() {
 
     //  filtering + sorting logic
     const filteredNurses = nurses.filter(n =>
-        (!filters.job_title || n.job_title === filters.job_title) &&
         (!filters.position_title || n.position_title === filters.position_title) &&
         (!filters.unit || n.unit === filters.unit) &&
         (!filters.status || n.status === filters.status) &&
@@ -181,7 +179,7 @@ export default function SecretaryDashboard() {
                 {/* Filters */}
                 <div className="filter-section">
 
-                    {/* Row 1: Search + dropdowns */}
+                    {/* Row 1: Search + Filters toggle button */}
                     <div className="filter-row">
                         <input
                             type="text"
@@ -190,52 +188,65 @@ export default function SecretaryDashboard() {
                             onChange={(e) => setSearch(e.target.value)}
                             className="search-input"
                         />
-                        <select className="filter-select" value={filters.job_title} onChange={(e) => handleFilterChange("job_title", e.target.value)}>
-                            <option value="">Job Title</option>
-                            {jobTitles.map(j => <option key={j}>{j}</option>)}
-                        </select>
-                        <select className="filter-select" value={filters.position_title} onChange={(e) => handleFilterChange("position_title", e.target.value)}>
-                            <option value="">Position</option>
-                            {positions.map(p => <option key={p}>{p}</option>)}
-                        </select>
-                        <select className="filter-select" value={filters.unit} onChange={(e) => handleFilterChange("unit", e.target.value)}>
-                            <option value="">Unit</option>
-                            {units.map(u => <option key={u}>{u}</option>)}
-                        </select>
-                        <select className="filter-select" value={filters.status} onChange={(e) => handleFilterChange("status", e.target.value)}>
-                            <option value="">Status</option>
-                            {statuses.map(s => <option key={s}>{s}</option>)}
-                        </select>
-                        <select className="filter-select" value={filters.age} onChange={(e) => handleFilterChange("age", e.target.value)}>
-                            <option value="">Age</option>
-                            {ages.map(a => <option key={a} value={a}>{a} years old</option>)}
-                        </select>
-                        <select className="filter-select" value={filters.nationality} onChange={(e) => handleFilterChange("nationality", e.target.value)}>
-                            <option value="">Nationality</option>
-                            {nationalities.map(nat => <option key={nat} value={nat}>{nat}</option>)}
-                        </select>
-                        <select className="filter-select" value={filters.years_of_experience} onChange={(e) => handleFilterChange("years_of_experience", e.target.value)}>
-                            <option value="">Experience</option>
-                            {experienceYears.map(y => <option key={y} value={y}>{y} {Number(y) === 1 ? "year" : "years"}</option>)}
-                        </select>
-                        <select className="filter-select" value={filters.contract_type} onChange={(e) => handleFilterChange("contract_type", e.target.value)}>
-                            <option value="">Contract Type</option>
-                            {contractTypes.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                        <input
-                            type="date"
-                            className="filter-date"
-                            value={filters.birthdate}
-                            onChange={(e) => handleFilterChange("birthdate", e.target.value)}
-                            title="Filter by birthdate"
-                        />
+                        <button
+                            type="button"
+                            className={`filters-toggle-btn ${showFilters ? "open" : ""}`}
+                            onClick={() => setShowFilters(!showFilters)}
+                        >
+                            <Filter size={16} />
+                            <span>Filters</span>
+                            {Object.values(filters).filter(v => v !== "").length > 0 && (
+                                <span className="filter-badge">{Object.values(filters).filter(v => v !== "").length}</span>
+                            )}
+                            <ChevronDown size={14} className={`chevron ${showFilters ? "rotated" : ""}`} />
+                        </button>
                     </div>
 
-                    {/* Row 2: active chips + report btn */}
+                    {/* Collapsible Filter panel */}
+                    {showFilters && (
+                        <div className="filters-panel">
+                            <select className="filter-select" value={filters.position_title} onChange={(e) => handleFilterChange("position_title", e.target.value)}>
+                                <option value="">Position</option>
+                                {positions.map(p => <option key={p}>{p}</option>)}
+                            </select>
+                            <select className="filter-select" value={filters.unit} onChange={(e) => handleFilterChange("unit", e.target.value)}>
+                                <option value="">Unit</option>
+                                {units.map(u => <option key={u}>{u}</option>)}
+                            </select>
+                            <select className="filter-select" value={filters.status} onChange={(e) => handleFilterChange("status", e.target.value)}>
+                                <option value="">Status</option>
+                                {statuses.map(s => <option key={s}>{s}</option>)}
+                            </select>
+                            <select className="filter-select" value={filters.age} onChange={(e) => handleFilterChange("age", e.target.value)}>
+                                <option value="">Age</option>
+                                {ages.map(a => <option key={a} value={a}>{a} years old</option>)}
+                            </select>
+                            <select className="filter-select" value={filters.nationality} onChange={(e) => handleFilterChange("nationality", e.target.value)}>
+                                <option value="">Nationality</option>
+                                {nationalities.map(nat => <option key={nat} value={nat}>{nat}</option>)}
+                            </select>
+                            <select className="filter-select" value={filters.years_of_experience} onChange={(e) => handleFilterChange("years_of_experience", e.target.value)}>
+                                <option value="">Experience</option>
+                                {experienceYears.map(y => <option key={y} value={y}>{y} {Number(y) === 1 ? "year" : "years"}</option>)}
+                            </select>
+                            <select className="filter-select" value={filters.contract_type} onChange={(e) => handleFilterChange("contract_type", e.target.value)}>
+                                <option value="">Contract Type</option>
+                                {contractTypes.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <input
+                                type="date"
+                                className="filter-date"
+                                value={filters.birthdate}
+                                onChange={(e) => handleFilterChange("birthdate", e.target.value)}
+                                title="Filter by birthdate"
+                            />
+                        </div>
+                    )}
+
+                    {/* Row 3: active chips + report btn */}
                     <div className="filter-actions">
                         <div className="active-filters">
                             <span className="results-count">{filteredNurses.length} result{filteredNurses.length !== 1 ? "s" : ""}</span>
-                            {filters.job_title && <span className="filter-chip">{filters.job_title}<button onClick={() => handleFilterChange("job_title", "")}>✕</button></span>}
                             {filters.position_title && <span className="filter-chip">{filters.position_title}<button onClick={() => handleFilterChange("position_title", "")}>✕</button></span>}
                             {filters.unit && <span className="filter-chip">{filters.unit}<button onClick={() => handleFilterChange("unit", "")}>✕</button></span>}
                             {filters.status && <span className="filter-chip">{filters.status}<button onClick={() => handleFilterChange("status", "")}>✕</button></span>}
@@ -244,8 +255,8 @@ export default function SecretaryDashboard() {
                             {filters.years_of_experience && <span className="filter-chip">{filters.years_of_experience} {Number(filters.years_of_experience) === 1 ? "year" : "years"}<button onClick={() => handleFilterChange("years_of_experience", "")}>✕</button></span>}
                             {filters.age && <span className="filter-chip">Age: {filters.age}<button onClick={() => handleFilterChange("age", "")}>✕</button></span>}
                             {filters.birthdate && <span className="filter-chip">Born: {new Date(filters.birthdate).toLocaleDateString("en-GB")}<button onClick={() => handleFilterChange("birthdate", "")}>✕</button></span>}
-                            {(filters.job_title || filters.position_title || filters.unit || filters.status || filters.contract_type || filters.nationality || filters.years_of_experience || filters.age || filters.birthdate || search) && (
-                                <button className="clear-btn" onClick={() => { setFilters({ job_title: "", position_title: "", unit: "", status: "", contract_type: "", nationality: "", years_of_experience: "", age: "", birthdate: "" }); setSearch(""); }}>Clear all</button>
+                            {(filters.position_title || filters.unit || filters.status || filters.contract_type || filters.nationality || filters.years_of_experience || filters.age || filters.birthdate || search) && (
+                                <button className="clear-btn" onClick={() => { setFilters({ position_title: "", unit: "", status: "", contract_type: "", nationality: "", years_of_experience: "", age: "", birthdate: "" }); setSearch(""); }}>Clear all</button>
                             )}
                         </div>
                         <button className="report-btn" onClick={generatePDF}>Generate Report</button>
