@@ -11,6 +11,39 @@ const BASE_URL = "http://localhost:4000";
 const EMPTY_PROJECT = { title: "", investigator_name: "", status: "Active", start_date: "" };
 const EMPTY_PUB = { title: "", author_name: "", type: "Published", date: "", journal_name: "" };
 
+/* ============================================================
+   Custom bar renderer — compacts visible bars when one is empty.
+   E.g., if a year has Research + Conference but no Publications,
+   the visible bars sit adjacent without a gap in between.
+   ============================================================ */
+const ALL_BARS = ["projects", "publications", "conferences"];
+
+const renderCompactBar = (color, key) => (props) => {
+    const { x, y, width: W, height: H, payload } = props;
+
+    // Skip rendering if this bar's value is empty
+    if (!payload || !payload[key] || payload[key] === 0 || H <= 0) return null;
+
+    // Find the group's center based on the natural slot of this bar
+    const slot = ALL_BARS.indexOf(key);
+    const naturalCenter = x + W / 2;
+    const groupCenter = naturalCenter - (slot - 1) * W;
+
+    // Determine where this bar should sit among the visible ones
+    const visible = ALL_BARS.filter(k => payload[k] && payload[k] > 0);
+    const myVisibleIndex = visible.indexOf(key);
+    const visibleCount = visible.length;
+
+    // Re-center based on visible count
+    const newCenter = groupCenter + (myVisibleIndex - (visibleCount - 1) / 2) * W;
+    const newX = newCenter - W / 2;
+
+    // Top-rounded rectangle path (radius on top corners only)
+    const r = Math.min(4, H, W / 2);
+    const d = `M ${newX},${y + H} L ${newX},${y + r} Q ${newX},${y} ${newX + r},${y} L ${newX + W - r},${y} Q ${newX + W},${y} ${newX + W},${y + r} L ${newX + W},${y + H} Z`;
+    return <path d={d} fill={color} />;
+};
+
 export default function ResearcherDashboard() {
     const [user, setUser] = useState(null);
     const [projects, setProjects] = useState([]);
@@ -516,7 +549,7 @@ export default function ResearcherDashboard() {
                                     Publications
                                 </span>
                                 <span className="rd-legend-item">
-                                    <span className="rd-legend-dot" style={{ background: "#2f3e55" }} />
+                                    <span className="rd-legend-dot" style={{ background: "#ffffffff" }} />
                                     Conference
                                 </span>
                             </div>
@@ -527,7 +560,12 @@ export default function ResearcherDashboard() {
                                     </div>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={utilizationData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <BarChart
+                                            data={utilizationData}
+                                            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                                            barGap={0}
+                                            barCategoryGap="25%"
+                                        >
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(90,111,135,0.1)" />
                                             <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#5a6f87" }} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#5a6f87" }} allowDecimals={false} />
@@ -537,9 +575,9 @@ export default function ResearcherDashboard() {
                                                 labelStyle={{ color: 'white' }}
                                                 itemStyle={{ color: 'rgba(255,255,255,0.85)' }}
                                             />
-                                            <Bar dataKey="projects" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={22} name="Research Projects" />
-                                            <Bar dataKey="publications" fill="#9fb3cc" radius={[4, 4, 0, 0]} barSize={22} name="Publications" />
-                                            <Bar dataKey="conferences" fill="#2f3e55" radius={[4, 4, 0, 0]} barSize={22} name="Conference" />
+                                            <Bar dataKey="projects" fill="#5a6f87" barSize={26} name="Research Projects" shape={renderCompactBar("#5a6f87", "projects")} />
+                                            <Bar dataKey="publications" fill="#9fb3cc" barSize={26} name="Publications" shape={renderCompactBar("#9fb3cc", "publications")} />
+                                            <Bar dataKey="conferences" fill="#ffffffff" barSize={26} name="Conference" shape={renderCompactBar("#ffffffff", "conferences")} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 )}
