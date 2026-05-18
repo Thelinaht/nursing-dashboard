@@ -217,15 +217,15 @@ export default function ResearcherDashboard() {
         projects.forEach(p => {
             if (!p.start_date) return;
             const year = new Date(p.start_date).getFullYear();
-            if (!yearMap[year]) yearMap[year] = { year: String(year), projects: 0, publications: 0 };
+            if (!yearMap[year]) yearMap[year] = { year: String(year), projects: 0, publications: 0, conferences: 0 };
             yearMap[year].projects += 1;
         });
         publications.forEach(p => {
             if (!p.date) return;
-            if (p.type !== "Published") return; // Only count "Published" type
             const year = new Date(p.date).getFullYear();
-            if (!yearMap[year]) yearMap[year] = { year: String(year), projects: 0, publications: 0 };
-            yearMap[year].publications += 1;
+            if (!yearMap[year]) yearMap[year] = { year: String(year), projects: 0, publications: 0, conferences: 0 };
+            if (p.type === "Published") yearMap[year].publications += 1;
+            if (p.type === "Presented") yearMap[year].conferences += 1;
         });
         return Object.values(yearMap).sort((a, b) => a.year.localeCompare(b.year));
     })();
@@ -504,7 +504,7 @@ export default function ResearcherDashboard() {
                                 </button>
                             </div>
                             <p className="rd-chart-subtitle">
-                                Comparing the total number of research projects started (Active + Completed) against the publications produced each year.
+                                Comparing the total number of research projects started (Active + Completed), publications produced, and conference presentations each year.
                             </p>
                             <div className="rd-legend-row">
                                 <span className="rd-legend-item">
@@ -514,6 +514,10 @@ export default function ResearcherDashboard() {
                                 <span className="rd-legend-item">
                                     <span className="rd-legend-dot" style={{ background: "#9fb3cc" }} />
                                     Publications
+                                </span>
+                                <span className="rd-legend-item">
+                                    <span className="rd-legend-dot" style={{ background: "#2f3e55" }} />
+                                    Conference
                                 </span>
                             </div>
                             <div className="rd-chart-box">
@@ -533,8 +537,9 @@ export default function ResearcherDashboard() {
                                                 labelStyle={{ color: 'white' }}
                                                 itemStyle={{ color: 'rgba(255,255,255,0.85)' }}
                                             />
-                                            <Bar dataKey="projects" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30} name="Research Projects" />
-                                            <Bar dataKey="publications" fill="#9fb3cc" radius={[4, 4, 0, 0]} barSize={30} name="Publications" />
+                                            <Bar dataKey="projects" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={22} name="Research Projects" />
+                                            <Bar dataKey="publications" fill="#9fb3cc" radius={[4, 4, 0, 0]} barSize={22} name="Publications" />
+                                            <Bar dataKey="conferences" fill="#2f3e55" radius={[4, 4, 0, 0]} barSize={22} name="Conference" />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 )}
