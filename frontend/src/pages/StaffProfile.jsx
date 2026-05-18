@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import Layout from "../components/Layout";
@@ -225,11 +224,11 @@ export default function StaffProfile() {
                     {renderInput("Payroll Number", "payroll_number")}
 
                     {renderSelect("Status", "status", [
-                        "Active", "On Leave", "Terminated", "Transferred", "EOC"
+                        "Active", "Breech of contract", "Terminated", "Transferred", "EOC"
                     ])}
 
                     {renderSelect("Contract Type", "contract_type", [
-                        "KFHU", "SOPHS", "IAUH", "Business Contract"
+                        "KFHU", "SOPHS", "IAUH-SOPHS", "Business", "Tamheer", "Others"
                     ])}
 
                     {renderInput("Track Care Number", "track_care_number")}

@@ -1,11 +1,10 @@
-
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import "../styles/SecretaryDashboard.css";
-import { Users, AlertCircle } from "lucide-react";
+import { Users, AlertCircle, Flag, Globe } from "lucide-react";
 import logo from "../assets/logo.png";
 
 export default function SecretaryDashboard() {
@@ -23,8 +22,25 @@ export default function SecretaryDashboard() {
         job_title: "",
         position_title: "",
         unit: "",
-        status: ""
+        status: "",
+        contract_type: "",
+        nationality: "",
+        years_of_experience: "",
+        age: "",
+        birthdate: ""
     });
+
+    // ── Compute age from birth date ──
+    const calculateAge = (birthDate) => {
+        if (!birthDate) return null;
+        const today = new Date();
+        const dob = new Date(birthDate);
+        if (isNaN(dob.getTime())) return null;
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+        return age;
+    };
 
     // fetch expiring licenses count
     useEffect(() => {
@@ -46,7 +62,19 @@ export default function SecretaryDashboard() {
     const jobTitles = [...new Set(nurses.map(n => n.job_title).filter(Boolean))];
     const positions = [...new Set(nurses.map(n => n.position_title).filter(Boolean))];
     const units = [...new Set(nurses.map(n => n.unit).filter(Boolean))];
-    const statuses = [...new Set(nurses.map(n => n.status).filter(Boolean))];
+    const nationalities = [...new Set(nurses.map(n => n.nationality).filter(Boolean))].sort();
+    const experienceYears = [...new Set(
+        nurses
+            .map(n => n.years_of_experience)
+            .filter(v => v !== null && v !== undefined && v !== "")
+    )].sort((a, b) => Number(a) - Number(b));
+    const ages = [...new Set(
+        nurses
+            .map(n => calculateAge(n.birth_date_gregorian))
+            .filter(a => a !== null && !isNaN(a))
+    )].sort((a, b) => a - b);
+    const statuses = ["Active", "Breech of contract", "Terminated", "Transferred", "EOC"];
+    const contractTypes = ["KFHU", "SOPHS", "IAUH-SOPHS", "Business", "Tamheer", "Others"];
 
     //  filtering + sorting logic
     const filteredNurses = nurses.filter(n =>
@@ -54,6 +82,11 @@ export default function SecretaryDashboard() {
         (!filters.position_title || n.position_title === filters.position_title) &&
         (!filters.unit || n.unit === filters.unit) &&
         (!filters.status || n.status === filters.status) &&
+        (!filters.contract_type || n.contract_type === filters.contract_type) &&
+        (!filters.nationality || n.nationality === filters.nationality) &&
+        (!filters.years_of_experience || String(n.years_of_experience) === String(filters.years_of_experience)) &&
+        (!filters.age || calculateAge(n.birth_date_gregorian) === Number(filters.age)) &&
+        (!filters.birthdate || (n.birth_date_gregorian && n.birth_date_gregorian.split("T")[0] === filters.birthdate)) &&
         (
             n.full_name?.toLowerCase().includes(search.toLowerCase()) ||
             n.national_id_iqama?.includes(search)
@@ -67,6 +100,8 @@ export default function SecretaryDashboard() {
     //  stats
     const totalNurses = filteredNurses.length;
     const expired = filteredNurses.filter(n => n.status === "EOC").length;
+    const saudiCount = nurses.filter(n => n.nationality === "Saudi").length;
+    const nonSaudiCount = nurses.filter(n => n.nationality && n.nationality !== "Saudi").length;
     //  filter change
     const handleFilterChange = (type, value) => {
         setFilters(prev => ({
@@ -110,7 +145,15 @@ export default function SecretaryDashboard() {
         >
             <div className="main">
 
-                <h1>Staff Directory</h1>
+                <div className="page-header">
+                    <h1>Staff Directory</h1>
+                    <button
+                        className="add-nurse-btn"
+                        onClick={() => navigate("/add-nurse")}
+                    >
+                        + Add New Nurse Record
+                    </button>
+                </div>
 
                 {/*  Cards */}
                 <div className="cards">
@@ -124,12 +167,15 @@ export default function SecretaryDashboard() {
                         <h1>{expiredLicenses}</h1>
                     </div>
 
-                    <button
-                        className="add-nurse-btn"
-                        onClick={() => navigate("/add-nurse")}
-                    >
-                        + Add New Nurse Record
-                    </button>
+                    <div className="glass-card green">
+                        <p><Flag size={20} /> Total Saudi Staff</p>
+                        <h1>{saudiCount}</h1>
+                    </div>
+
+                    <div className="glass-card yellow">
+                        <p><Globe size={20} /> Total Non-Saudi Staff</p>
+                        <h1>{nonSaudiCount}</h1>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -160,6 +206,29 @@ export default function SecretaryDashboard() {
                             <option value="">Status</option>
                             {statuses.map(s => <option key={s}>{s}</option>)}
                         </select>
+                        <select className="filter-select" value={filters.age} onChange={(e) => handleFilterChange("age", e.target.value)}>
+                            <option value="">Age</option>
+                            {ages.map(a => <option key={a} value={a}>{a} years old</option>)}
+                        </select>
+                        <select className="filter-select" value={filters.nationality} onChange={(e) => handleFilterChange("nationality", e.target.value)}>
+                            <option value="">Nationality</option>
+                            {nationalities.map(nat => <option key={nat} value={nat}>{nat}</option>)}
+                        </select>
+                        <select className="filter-select" value={filters.years_of_experience} onChange={(e) => handleFilterChange("years_of_experience", e.target.value)}>
+                            <option value="">Experience</option>
+                            {experienceYears.map(y => <option key={y} value={y}>{y} {Number(y) === 1 ? "year" : "years"}</option>)}
+                        </select>
+                        <select className="filter-select" value={filters.contract_type} onChange={(e) => handleFilterChange("contract_type", e.target.value)}>
+                            <option value="">Contract Type</option>
+                            {contractTypes.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <input
+                            type="date"
+                            className="filter-date"
+                            value={filters.birthdate}
+                            onChange={(e) => handleFilterChange("birthdate", e.target.value)}
+                            title="Filter by birthdate"
+                        />
                     </div>
 
                     {/* Row 2: active chips + report btn */}
@@ -170,8 +239,13 @@ export default function SecretaryDashboard() {
                             {filters.position_title && <span className="filter-chip">{filters.position_title}<button onClick={() => handleFilterChange("position_title", "")}>✕</button></span>}
                             {filters.unit && <span className="filter-chip">{filters.unit}<button onClick={() => handleFilterChange("unit", "")}>✕</button></span>}
                             {filters.status && <span className="filter-chip">{filters.status}<button onClick={() => handleFilterChange("status", "")}>✕</button></span>}
-                            {(filters.job_title || filters.position_title || filters.unit || filters.status || search) && (
-                                <button className="clear-btn" onClick={() => { setFilters({ job_title: "", position_title: "", unit: "", status: "" }); setSearch(""); }}>Clear all</button>
+                            {filters.contract_type && <span className="filter-chip">{filters.contract_type}<button onClick={() => handleFilterChange("contract_type", "")}>✕</button></span>}
+                            {filters.nationality && <span className="filter-chip">{filters.nationality}<button onClick={() => handleFilterChange("nationality", "")}>✕</button></span>}
+                            {filters.years_of_experience && <span className="filter-chip">{filters.years_of_experience} {Number(filters.years_of_experience) === 1 ? "year" : "years"}<button onClick={() => handleFilterChange("years_of_experience", "")}>✕</button></span>}
+                            {filters.age && <span className="filter-chip">Age: {filters.age}<button onClick={() => handleFilterChange("age", "")}>✕</button></span>}
+                            {filters.birthdate && <span className="filter-chip">Born: {new Date(filters.birthdate).toLocaleDateString("en-GB")}<button onClick={() => handleFilterChange("birthdate", "")}>✕</button></span>}
+                            {(filters.job_title || filters.position_title || filters.unit || filters.status || filters.contract_type || filters.nationality || filters.years_of_experience || filters.age || filters.birthdate || search) && (
+                                <button className="clear-btn" onClick={() => { setFilters({ job_title: "", position_title: "", unit: "", status: "", contract_type: "", nationality: "", years_of_experience: "", age: "", birthdate: "" }); setSearch(""); }}>Clear all</button>
                             )}
                         </div>
                         <button className="report-btn" onClick={generatePDF}>Generate Report</button>
