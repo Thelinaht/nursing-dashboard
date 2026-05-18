@@ -40,12 +40,10 @@ const menuConfig = {
   ],
   director: [
     { label: "Dashboard", path: "/director-dashboard", icon: I.dashboard },
-    { label: "Staff Directory", path: "/staff", icon: I.staff },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   associateDirector: [
     { label: "Dashboard", path: "/director-dashboard", icon: I.dashboard },
-    { label: "Staff Directory", path: "/staff", icon: I.staff },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   qualityManager: [

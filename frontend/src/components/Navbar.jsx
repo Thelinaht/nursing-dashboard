@@ -1,4 +1,28 @@
+import React, { useState, useEffect } from "react";
+import { Maximize, Minimize } from "lucide-react";
+
 export default function Navbar({ username = "User" }) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(err => {
+        console.error("Error attempting to enable fullscreen:", err);
+      });
+    } else {
+      document.exitFullscreen?.();
+    }
+  };
+
   const now = new Date();
   const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
@@ -21,10 +45,12 @@ export default function Navbar({ username = "User" }) {
           <span style={styles.date}>{dateStr}</span>
         </div>
         <div style={styles.divider} />
-        <button style={styles.iconBtn} title="Fullscreen" onClick={() => document.documentElement.requestFullscreen?.()}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a8fa6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-          </svg>
+        <button style={styles.iconBtn} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"} onClick={toggleFullscreen}>
+          {isFullscreen ? (
+            <Minimize size={16} color="#7a8fa6" strokeWidth={2} />
+          ) : (
+            <Maximize size={16} color="#7a8fa6" strokeWidth={2} />
+          )}
         </button>
       </div>
     </header>

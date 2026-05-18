@@ -21,6 +21,7 @@ const miscRoutes = require("./routes/miscRoutes");
 const licenseRoutes = require("./routes/licenseRoutes");
 const researchRoutes = require("./routes/researchRoutes");
 const notificationsRoutes = require("./routes/notificationsRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 
 
@@ -110,6 +111,7 @@ app.use("/api/licenses", licenseRoutes);
 
 app.use("/api/research", researchRoutes);
 app.use("/api/notifications", notificationsRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 
 

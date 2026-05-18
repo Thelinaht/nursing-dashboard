@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import "../styles/SupervisorDashboard.css";
 import { io } from "socket.io-client";
-import { Users, LayoutGrid, ClipboardCheck, ChevronRight } from "lucide-react";
+import { Users, LayoutGrid, ClipboardCheck, ChevronRight, Download } from "lucide-react";
 
 export default function SupervisorDashboard() {
     const navigate = useNavigate();
@@ -17,6 +17,16 @@ export default function SupervisorDashboard() {
     const [showUnitDropdown, setShowUnitDropdown] = useState(false);
     const [showStaffingDropdown, setShowStaffingDropdown] = useState(false);
 
+    // Nurse-to-Patient Ratio Log state
+    const [ratioLogs, setRatioLogs] = useState([]);
+    const [logFilter, setLogFilter] = useState('Today');
+    const [showLogForm, setShowLogForm] = useState(false);
+    const [logFormUnit, setLogFormUnit] = useState('');
+    const [logFormShift, setLogFormShift] = useState('Morning');
+    const [logFormRatio, setLogFormRatio] = useState('');
+    const [logFormNotes, setLogFormNotes] = useState('');
+    const [logSuccess, setLogSuccess] = useState(false);
+
     const fetchRequests = () => {
         fetch("http://localhost:4000/api/requests")
             .then(res => res.json())
@@ -26,6 +36,75 @@ export default function SupervisorDashboard() {
                 }
             })
             .catch(err => console.error(err));
+    };
+
+    const fetchRatioLogs = async () => {
+        try {
+            const res = await fetch(`http://localhost:4000/api/dashboard/ratio-logs?filter=${logFilter}`);
+            const data = await res.json();
+            setRatioLogs(data);
+        } catch (err) {
+            console.error("Error fetching ratio logs:", err);
+        }
+    };
+
+    const handleLogSubmit = async (e) => {
+        e.preventDefault();
+        if (!logFormUnit || !logFormRatio) return;
+        const user = JSON.parse(sessionStorage.getItem("user")) || {};
+        const logged_by = user.user_id || 1;
+        try {
+            const res = await fetch("http://localhost:4000/api/dashboard/ratio-logs", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    unit: logFormUnit,
+                    shift: logFormShift,
+                    actual_ratio: logFormRatio,
+                    notes: logFormNotes,
+                    logged_by,
+                    timestamp: new Date().toISOString()
+                })
+            });
+            if (res.ok) {
+                setLogFormUnit('');
+                setLogFormShift('Morning');
+                setLogFormRatio('');
+                setLogFormNotes('');
+                setShowLogForm(false);
+                setLogSuccess(true);
+                setTimeout(() => setLogSuccess(false), 5000);
+                fetchRatioLogs();
+            }
+        } catch (err) {
+            console.error("Error submitting log:", err);
+        }
+    };
+
+    const exportLogsToExcel = () => {
+        const csvRows = [];
+        csvRows.push(['Unit', 'Required ratio', 'Logged ratio', 'Shift', 'Status', 'Logged by', 'Time'].join(','));
+        ratioLogs.forEach(row => {
+            csvRows.push([
+                `"${row.unit_name}"`,
+                `"${row.required_ratio || 'N/A'}"`,
+                `"${row.logged_ratio}"`,
+                row.shift,
+                row.status,
+                `"${row.logged_by_name || 'System'}"`,
+                `"${new Date(row.timestamp).toLocaleString()}"`
+            ].join(','));
+        });
+        const csvContent = '\uFEFF' + csvRows.join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'Nurse_Patient_Ratio_Log.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     };
 
     // Fetch data from backend
@@ -43,6 +122,10 @@ export default function SupervisorDashboard() {
             socket.disconnect();
         };
     }, []);
+
+    useEffect(() => {
+        fetchRatioLogs();
+    }, [logFilter]);
 
     // Calculate Top Stats
     const totalNurses = nurses.length;
@@ -102,20 +185,7 @@ export default function SupervisorDashboard() {
         return matchesUnit && matchesSearch;
     });
 
-    // Ratios (Mocked based on existing units, since patients data doesn't exist)
-    const ratios = units.map((unit, index) => {
-        const maxRatio = index % 2 === 0 ? "1:4" : "1:6";
-        const exceeds = index % 3 === 0;
-        return {
-            unit,
-            text: `1 nurses, ${exceeds ? 7 : 4} patients - Max: ${maxRatio}`,
-            status: exceeds ? "exceeds" : "normal",
-            value: exceeds ? 100 : 50
-        };
-    });
 
-    // The top exceeding units to display in warning
-    const exceedingUnitsStr = ratios.filter(r => r.status === 'exceeds').map(r => r.unit).join(', ') || 'None';
 
     return (
         <Layout role="supervisor" logoSrc="/logo.png" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Supervisor"}>
@@ -334,36 +404,146 @@ export default function SupervisorDashboard() {
                         </div>
                     </div>
 
-                    {/* Bottom Section */}
-                    <div className="warning-banner">
-                        <i className="warning-icon">i</i> {ratios.filter(r => r.status === 'exceeds').length} Units are exceeding the allowed nurse-to-patient ratio: {exceedingUnitsStr}
-                    </div>
-
-                    <div className="table-box content-box" style={{ marginTop: '24px' }}>
-                        <div className="box-header" style={{ marginBottom: '24px' }}>
-                            <h2 className="content-box-title">Nurse-to-patient Ratios by Unit</h2>
-                            <div className="actions" style={{ display: 'flex', gap: '12px' }}>
-                                <button className="add-nurse-btn" style={{ padding: '10px 20px' }}>Update Ratio</button>
-                                <button className="add-nurse-btn" style={{ padding: '10px 20px', background: 'var(--text-primary)' }}>View All</button>
+                    {/* Nurse-to-Patient Ratio Log */}
+                    <div className="table-box content-box" style={{ marginTop: '24px', width: '100%' }}>
+                        <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 className="content-box-title">Nurse-to-Patient Ratio Log</h2>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <div className="filter-buttons" style={{ display: 'flex', gap: '5px' }}>
+                                    {['Today', 'This Week', 'All'].map(filter => (
+                                        <button
+                                            key={filter}
+                                            onClick={() => setLogFilter(filter)}
+                                            style={{
+                                                padding: '6px 14px',
+                                                fontSize: '12px',
+                                                borderRadius: '20px',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                backgroundColor: logFilter === filter ? 'var(--accent-blue)' : '#f1f5f9',
+                                                color: logFilter === filter ? 'white' : '#64748b',
+                                                fontWeight: logFilter === filter ? 600 : 500,
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            {filter}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    className="add-nurse-btn"
+                                    style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '10px' }}
+                                    onClick={exportLogsToExcel}
+                                >
+                                    <Download size={14} />
+                                    Export to Excel
+                                </button>
                             </div>
                         </div>
-                        <div className="ratios-list">
-                            {ratios.map((ratio, i) => (
-                                <div key={i} className="ratio-row">
-                                    <div className="ratio-top-line">
-                                        <div className="ratio-unit-name">{ratio.unit}</div>
-                                        <div className="ratio-badge">{ratio.text}</div>
-                                        <div className={`ratio-status-label ${ratio.status}`}>
-                                            {ratio.status === 'exceeds' ? 'Exceeds' : 'Normal'}
+
+                        <div className="custom-table" style={{ marginTop: '15px' }}>
+                            <div className="table-header" style={{ gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1.5fr 1.5fr', fontSize: '14px' }}>
+                                <span>Unit</span>
+                                <span>Required ratio</span>
+                                <span>Logged ratio</span>
+                                <span>Shift</span>
+                                <span style={{ textAlign: 'center' }}>Status</span>
+                                <span>Logged by</span>
+                                <span>Time</span>
+                            </div>
+                            <div style={{ minHeight: '150px', maxHeight: '300px', overflowY: 'auto' }}>
+                                {ratioLogs.length > 0 ? ratioLogs.map((row, idx) => (
+                                    <div className="table-row premium-row" key={idx} style={{
+                                        gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 1.5fr 1.5fr',
+                                        padding: '12px 15px',
+                                        marginBottom: '8px',
+                                        alignItems: 'center',
+                                        fontSize: '14px',
+                                        backgroundColor: row.status === 'Compliant' ? '#f0fdf4' : row.status === 'Borderline' ? '#fffbeb' : '#fef2f2'
+                                    }}>
+                                        <span style={{ fontWeight: 600, color: '#1e293b' }}>{row.unit_name}</span>
+                                        <span style={{ color: '#64748b' }}>{row.required_ratio || 'N/A'}</span>
+                                        <span style={{ fontWeight: 600 }}>{row.logged_ratio}</span>
+                                        <span>{row.shift}</span>
+                                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                            <span className="badge" style={{
+                                                backgroundColor: row.status === 'Compliant' ? '#dcfce7' : row.status === 'Borderline' ? '#fef3c7' : '#fee2e2',
+                                                color: row.status === 'Compliant' ? '#16a34a' : row.status === 'Borderline' ? '#d97706' : '#dc2626',
+                                                margin: 0, padding: '4px 10px', fontSize: '12px', width: 'max-content'
+                                            }}>
+                                                {row.status}
+                                            </span>
                                         </div>
+                                        <span style={{ color: '#475569' }}>{row.logged_by_name || 'System'}</span>
+                                        <span style={{ color: '#64748b', fontSize: '12px' }}>{new Date(row.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
                                     </div>
-                                    <div className="ratio-bar-container">
-                                        <div className="ratio-bar-track">
-                                            <div className={`ratio-bar-fill ${ratio.status}`} style={{ width: `${ratio.value}%` }}></div>
-                                        </div>
+                                )) : (
+                                    <div style={{ textAlign: 'center', padding: '40px', color: '#8ea2b5' }}>
+                                        No ratio logs found for this period.
                                     </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Log Form */}
+                        <div style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+                            {logSuccess && (
+                                <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', padding: '10px 15px', borderRadius: '6px', marginBottom: '15px', fontSize: '14px', fontWeight: 500 }}>
+                                    ✓ Nurse-to-Patient Ratio Logged Successfully! Notification sent to your notifications tab.
                                 </div>
-                            ))}
+                            )}
+                            <button
+                                className="add-nurse-btn"
+                                style={{ 
+                                    padding: '10px 20px', 
+                                    fontSize: '13px', 
+                                    background: showLogForm ? 'var(--text-primary)' : 'var(--accent-blue)',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}
+                                onClick={() => setShowLogForm(!showLogForm)}
+                            >
+                                {showLogForm ? 'Hide Form' : "Log Today's Ratio"}
+                            </button>
+                            {showLogForm && (
+                                <form onSubmit={handleLogSubmit} style={{ marginTop: '20px', display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap', background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '150px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Unit</label>
+                                        <select required value={logFormUnit} onChange={e => setLogFormUnit(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', background: 'white' }}>
+                                            <option value="">Select Unit...</option>
+                                            {[...new Set([
+                                                "ICU", "CCU", "HDU", "Pediatric", "PICU", "NICU", "Medical", "Surgical", "Labor & Delivery", "Postpartum", "Psychiatry",
+                                                "ER", "OPD / Royal Clinic", "OR", "Recovery Room", "Day Surgery", "Endoscopy", "Short Stay Unit", "Wound Care Unit",
+                                                "Hemodialysis", "Peritoneal Dialysis", "Pediatric PDU", "Cardiac Catheter Lab",
+                                                ...units
+                                            ])].sort().map(u => (
+                                                <option key={u} value={u}>{u}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '150px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Shift</label>
+                                        <select required value={logFormShift} onChange={e => setLogFormShift(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', background: 'white' }}>
+                                            <option value="Morning">Morning</option>
+                                            <option value="Evening">Evening</option>
+                                            <option value="Night">Night</option>
+                                        </select>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '100px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Actual Ratio</label>
+                                        <input required type="text" placeholder="e.g. 1:3" value={logFormRatio} onChange={e => setLogFormRatio(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', background: 'white' }} />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 2, minWidth: '200px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Notes (optional)</label>
+                                        <input type="text" placeholder="Add notes..." value={logFormNotes} onChange={e => setLogFormNotes(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', background: 'white' }} />
+                                    </div>
+                                    <button type="submit" className="add-nurse-btn" style={{ padding: '10px 24px', fontSize: '13px', height: '40px' }}>
+                                        Submit
+                                    </button>
+                                </form>
+                            )}
                         </div>
                     </div>
 

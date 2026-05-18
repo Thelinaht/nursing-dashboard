@@ -40,6 +40,37 @@ const getUserNotifications = async (req, res) => {
   }
 
   try {
+    // Check if the user is a Director (role_id = 4)
+    const [userRole] = await pool.query("SELECT role_id FROM UserRole WHERE user_id = ?", [userId]);
+    if (userRole.length > 0 && userRole[0].role_id === 4) {
+      // Check if Priority Alerts have been seeded already
+      const [existingAlerts] = await pool.query("SELECT * FROM Notification WHERE user_id = ? AND category = 'Priority Alert'", [userId]);
+      if (existingAlerts.length === 0) {
+        const priorityAlerts = [
+          { title: "SICU license expiry approaching (3 days)", message: "The license for SICU is expiring in 3 days. Action is required.", notification_type: "error", priority: "critical" },
+          { title: "ER staffing low on Night Shift", message: "Emergency Room staffing levels are dangerously low for the upcoming night shift.", notification_type: "warning", priority: "high" },
+          { title: "Training overdue for 14 staff", message: "14 staff members have overdue compliance training modules.", notification_type: "warning", priority: "high" },
+          { title: "Unusual overtime requested in Pediatric Unit", message: "Pediatric unit has submitted an unusually high request for overtime hours.", notification_type: "info", priority: "medium" },
+          { title: "Missing documents for 3 new orientees", message: "HR documents are missing for 3 newly joined orientees.", notification_type: "info", priority: "medium" },
+          { title: "Patient satisfaction dropped below 85% in Oncology", message: "Oncology unit patient satisfaction rating has dropped below the target of 85%.", notification_type: "error", priority: "critical" },
+          { title: "System maintenance scheduled for tonight", message: "Routine system maintenance is scheduled from 2:00 AM to 4:00 AM tonight.", notification_type: "info", priority: "low" },
+          { title: "Equipment malfunction reported in OR-3", message: "An equipment malfunction has been reported and logged for Operating Room 3.", notification_type: "warning", priority: "high" },
+          { title: "Nurse 'Ahmad' leave request pending for 5 days", message: "A leave request submitted by Ahmad has been pending supervisor approval for 5 days.", notification_type: "info", priority: "medium" },
+          { title: "Mandatory Fire Safety training compliance at 60%", message: "Fire Safety training compliance is currently at 60%, below the required 95% standard.", notification_type: "warning", priority: "high" },
+          { title: "Monthly quality report ready for review", message: "The monthly nursing quality index report is ready for Director review.", notification_type: "info", priority: "low" },
+          { title: "Multiple shift swaps requested for Eid holiday", message: "High volume of shift swap requests received for the upcoming Eid holiday shift.", notification_type: "info", priority: "medium" },
+          { title: "Code Blue response time exceeded 3 minutes", message: "A Code Blue response time incident has exceeded the 3-minute benchmark.", notification_type: "error", priority: "critical" }
+        ];
+
+        for (const alert of priorityAlerts) {
+          await pool.query(
+            "INSERT INTO Notification (user_id, title, message, notification_type, priority, category) VALUES (?, ?, ?, ?, ?, 'Priority Alert')",
+            [userId, alert.title, alert.message, alert.notification_type, alert.priority]
+          );
+        }
+      }
+    }
+
     let query = "SELECT * FROM Notification WHERE user_id = ?";
     const params = [userId];
 

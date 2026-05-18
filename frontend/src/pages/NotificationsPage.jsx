@@ -36,11 +36,7 @@ export default function NotificationsPage() {
 
     try {
       const activeUserId = user.user_id || user.id;
-      let url = `http://localhost:4000/api/notifications/user/${activeUserId}`;
-
-      if (filterType !== "All") {
-        url += `?type=${filterType.toLowerCase()}`;
-      }
+      const url = `http://localhost:4000/api/notifications/user/${activeUserId}`;
 
       const res = await fetch(url, {
         headers: {
@@ -56,7 +52,7 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, filterType]);
+  }, [user]);
 
   useEffect(() => {
     fetchNotifications();
@@ -145,52 +141,63 @@ export default function NotificationsPage() {
             ))}
           </div>
 
-          {!loading && notifications.length === 0 && (
-            <div className="empty-state">
-              {Icons.bellGhost}
-              <p>No {filterType !== 'All' ? filterType.toLowerCase() : ''} notifications to display</p>
-            </div>
-          )}
+          {(() => {
+            const filteredNotifications = notifications.filter(notif => {
+              if (filterType === "All") return true;
+              return notif.notification_type?.toLowerCase() === filterType.toLowerCase();
+            });
 
-          <div className="notifications-list">
-            {notifications.map(notif => (
-              <div
-                key={notif.notification_id}
-                className={`notification-card type-${notif.notification_type || 'info'} ${notif.is_read ? 'read' : 'unread'}`}
-                onClick={(e) => {
-                  if (!notif.is_read) handleMarkAsRead(e, notif.notification_id);
-                }}
-              >
-                <div className="notification-card-main">
-                  <div className="notification-icon-square">
-                    {Icons.check}
+            return (
+              <>
+                {!loading && filteredNotifications.length === 0 && (
+                  <div className="empty-state">
+                    {Icons.bellGhost}
+                    <p>No {filterType !== 'All' ? filterType.toLowerCase() : ''} notifications to display</p>
                   </div>
-                  <div className="notification-info">
-                    <h4 className="notification-title">{notif.title}</h4>
-                    <p className="notification-desc">{notif.message}</p>
-                  </div>
+                )}
+
+                <div className="notifications-list">
+                  {filteredNotifications.map(notif => (
+                    <div
+                      key={notif.notification_id}
+                      className={`notification-card type-${notif.notification_type || 'info'} ${notif.is_read ? 'read' : 'unread'}`}
+                      onClick={(e) => {
+                        if (!notif.is_read) handleMarkAsRead(e, notif.notification_id);
+                      }}
+                    >
+                      <div className="notification-card-main">
+                        <div className="notification-icon-square">
+                          {Icons.check}
+                        </div>
+                        <div className="notification-info">
+                          <h4 className="notification-title">{notif.title}</h4>
+                          <p className="notification-desc">{notif.message}</p>
+                        </div>
+                      </div>
+
+                      <div className="notification-meta-wrapper">
+                        <div className="notification-meta">
+                          <span className="notification-time">
+                            {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
+
+                        <button
+                          className={`persistent-mark-read ${notif.is_read ? 'is-read' : ''}`}
+                          onClick={(e) => {
+                            if (!notif.is_read) handleMarkAsRead(e, notif.notification_id);
+                          }}
+                          title={notif.is_read ? "Read" : "Mark as read"}
+                        >
+                          {notif.is_read ? <CheckCircle2 size={24} color="#3B82F6" fill="#3B82F6" stroke="white" /> : <Circle size={24} color="#3B82F6" />}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="notification-meta-wrapper">
-                  <div className="notification-meta">
-                    <span className="notification-time">
-                      {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
-                    </span>
-                  </div>
-
-                  <button
-                    className={`persistent-mark-read ${notif.is_read ? 'is-read' : ''}`}
-                    onClick={(e) => {
-                      if (!notif.is_read) handleMarkAsRead(e, notif.notification_id);
-                    }}
-                    title={notif.is_read ? "Read" : "Mark as read"}
-                  >
-                    {notif.is_read ? <CheckCircle2 size={24} color="#3B82F6" fill="#3B82F6" stroke="white" /> : <Circle size={24} color="#3B82F6" />}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              </>
+            );
+          })()}
 
         </div>
       </div>

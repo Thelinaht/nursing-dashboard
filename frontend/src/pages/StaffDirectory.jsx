@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, Download, UserPlus, FileText, ArrowLeft, ArrowRight } from "lucide-react";
+import { Search, Filter, Download, UserPlus, FileText, ArrowLeft, ArrowRight, Users, AlertCircle } from "lucide-react";
 import Layout from "../components/Layout";
 
 // Use the same CSS as Secretary Dashboard for consistency
@@ -115,16 +115,16 @@ export default function StaffDirectory() {
 
                 {/* Stats Summary Area */}
                 <div className="cards-row" style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>
-                    <div className="wave-card glass-card" style={{ flex: 1, minWidth: '200px' }}>
-                        <p>Total Staff</p>
+                    <div className="glass-card blue" style={{ flex: 1, minWidth: '200px' }}>
+                        <p><Users size={20} /> Total Staff</p>
                         <h1>{nurses.length}</h1>
                     </div>
-                    <div className="wave-card glass-card" style={{ flex: 1, minWidth: '200px' }}>
-                        <p>Search Results</p>
+                    <div className="glass-card green" style={{ flex: 1, minWidth: '200px' }}>
+                        <p><Search size={20} /> Search Results</p>
                         <h1>{filteredNurses.length}</h1>
                     </div>
-                    <div className="wave-card glass-card danger-text" style={{ flex: 1, minWidth: '200px' }}>
-                        <p>Expired Licenses</p>
+                    <div className="glass-card red" style={{ flex: 1, minWidth: '200px' }}>
+                        <p><AlertCircle size={20} /> Expired Licenses</p>
                         <h1>{nurses.filter(n => n.status === "EOC").length}</h1>
                     </div>
                 </div>

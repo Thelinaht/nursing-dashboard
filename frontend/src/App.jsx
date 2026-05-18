@@ -22,6 +22,8 @@ import LicenseTracker from "./pages/LicenseTracker";
 // dashboards / admin
 import AddNurse from "./pages/AddNurse";
 import DirectorDashboard from "./pages/DirectorDashboard";
+import InpatientStaffingPage from "./pages/InpatientStaffingPage";
+import AmbulatoryStaffingPage from "./pages/AmbulatoryStaffingPage";
 import QualityManagerDashboard from "./pages/QualityManagerDashboard";
 import TrainingDirectorDashboard from "./pages/TrainingDirectorDashboard";
 import PatientServicesDashboard from "./pages/PatientServicesDashboard";
@@ -52,6 +54,8 @@ function App() {
                                 <Route path="/supervisor-dashboard" element={<SupervisorDashboard />} />
                                 <Route path="/supervisor/manage-requests" element={<ManageRequests />} />
                                 <Route path="/director-dashboard" element={<DirectorDashboard />} />
+                                <Route path="/inpatient-staffing" element={<InpatientStaffingPage />} />
+                                <Route path="/ambulatory-staffing" element={<AmbulatoryStaffingPage />} />
                                 <Route path="/quality-manager-dashboard" element={<QualityManagerDashboard />} />
                                 <Route path="/training-director-dashboard" element={<TrainingDirectorDashboard />} />
                                 <Route path="/patient-services-dashboard" element={<PatientServicesDashboard />} />

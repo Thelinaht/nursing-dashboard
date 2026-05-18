@@ -52,7 +52,7 @@ export default function Login() {
 
 
             } else {
-                alert(data.message);
+                alert(data.message || data.error || "An unknown error occurred.");
             }
         } catch (err) {
             console.error("ERROR:", err);
