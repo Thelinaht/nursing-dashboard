@@ -1,447 +1,838 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // kept for potential nav use
+import { useState, useMemo } from "react";
 import Layout from "../components/Layout";
 import "../styles/QualityManagerDashboard.css";
-import { Activity, ArrowDown, AlertTriangle, AlertCircle, Star, Calculator } from "lucide-react";
 import {
-    Chart as ChartJS,
-    CategoryScale, LinearScale, BarElement, LineElement,
-    PointElement, ArcElement, Title, Tooltip, Legend, Filler
-} from "chart.js";
-import { Bar, Line, Doughnut } from "react-chartjs-2";
+    AlertTriangle, Activity, Pill, TrendingUp,
+    Plus, Pencil, Trash2, X, Filter, Calculator
+} from "lucide-react";
+import {
+    BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
+    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from "recharts";
 
-ChartJS.register(
-    CategoryScale, LinearScale, BarElement, LineElement,
-    PointElement, ArcElement, Title, Tooltip, Legend, Filler
-);
+// ============================================================
+// Constants
+// ============================================================
+const UNITS = ["ER", "MICU", "SICU", "PICU", "NICU", "CCU", "2D", "3B", "3C", "3D", "4A", "4B", "4C", "4D", "4E", "5A", "5B", "E3", "E4"];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SYSTEM PALETTE  (derived from design-system.css + QualityManagerDashboard.css)
-//
-//  Background family:  #eef1f5  →  #dce6f2  →  #c8d9ed
-//  Slate spectrum:
-//    S1  #1e293b   darkest  (--text-primary)
-//    S2  #2f3e55   dark     (headers, strong)
-//    S3  #4a6480   mid-dark
-//    S4  #5a6f87   mid      (--text-secondary, axis labels)
-//    S5  #7a91a8   mid-light
-//    S6  #9cb5cb   light
-//    S7  #b8cede   lightest swatch
-//  Chart BG:  #dce6f2
-//
-//  Semantic (compliance only – kept because colour = meaning):
-//    green  #16a34a   amber  #d97706   red  #dc2626
-// ─────────────────────────────────────────────────────────────────────────────
-const P = {
-    s1: "#1e293b",
-    s2: "#2f3e55",
-    s3: "#4a6480",
-    s4: "#5a6f87",
-    s5: "#7a91a8",
-    s6: "#9cb5cb",
-    s7: "#b8cede",
-    chartBg: "#dce6f2",
-    // compliance semantic colours – unchanged because colour = meaning
-    green: "#16a34a",
-    amber: "#d97706",
-    red: "#dc2626",
+const FALL_LOCATIONS = ["Pt. room", "Bathroom", "Hallway", "Others"];
+const FALL_INJURIES = ["None", "Minor", "Major"];
+const FALL_FACTORS = ["Loss balance", "Dizziness", "Wet floor", "Pt. gen. condition", "Post Procedure", "Unattended"];
+
+const HAPI_STAGES = ["Stage 1", "Stage 2", "Stage 3", "Stage 4", "Unstageable", "SDTPI"];
+const HAPI_CAUSES = ["Immobility", "Device related", "Moisture"];
+const HAPI_SITES = ["Sacral", "Heel", "Buttocks", "Occiput", "Scapular", "Wrist", "Multiple", "Other"];
+
+const MED_TYPES = [
+    "MAR not double checked",
+    "Charting Errors",
+    "Order Misread",
+    "Medication Label Misread",
+    "Medication Overlooked",
+    "Incorrect Calculation",
+    "Medication not double-checked",
+    "Wrong patient",
+    "Wrong dose"
+];
+
+// Color palette (matches design tokens + the existing slate scheme)
+const COLORS = {
+    s2: "#2f3e55", s4: "#5a6f87", s5: "#7a91a8", s6: "#9cb5cb",
+    red: "#dc2626", orange: "#d97706", green: "#16a34a", purple: "#7e57c2",
+    blue: "#334155",
+};
+const PIE_COLORS = [COLORS.s2, COLORS.s5, COLORS.s6, COLORS.orange, COLORS.green, COLORS.red, COLORS.purple];
+
+// ============================================================
+// Mock data — replace with API calls when backend is ready
+// ============================================================
+const MOCK_FALLS = [
+    { id: 1, urn: "1705549", unit: "3C", incident_date: "2026-01-15", incident_time: "2340", age: 57, gender: "M", location: "Pt. room", injury: "None", contributing_factor: "Loss balance", description: "Patient with right lower limb necrotizing fasciitis." },
+    { id: 2, urn: "654641", unit: "3A", incident_date: "2026-01-22", incident_time: "2200", age: 38, gender: "M", location: "Others", injury: "None", contributing_factor: "Dizziness", description: "Patient collapsed in front of ER." },
+    { id: 3, urn: "464520", unit: "2E", incident_date: "2026-02-05", incident_time: "2100", age: 70, gender: "M", location: "Pt. room", injury: "Minor", contributing_factor: "Pt. gen. condition", description: "Patient delirium, got out of bed." },
+    { id: 4, urn: "2013261", unit: "2D", incident_date: "2026-02-10", incident_time: "2200", age: 38, gender: "F", location: "Pt. room", injury: "None", contributing_factor: "Dizziness", description: "Post cystoscopy, fainted." },
+    { id: 5, urn: "396998", unit: "2D", incident_date: "2026-02-15", incident_time: "0400", age: 58, gender: "F", location: "Bathroom", injury: "None", contributing_factor: "Wet floor", description: "Post total knee replacement, fell after wudu." },
+    { id: 6, urn: "1523551", unit: "2C", incident_date: "2026-03-08", incident_time: "0700", age: 25, gender: "F", location: "Bathroom", injury: "Minor", contributing_factor: "Dizziness", description: "Felt down in bathroom, hit nose." },
+    { id: 7, urn: "2007970", unit: "ER", incident_date: "2026-03-12", incident_time: "0550", age: 42, gender: "F", location: "Bathroom", injury: "None", contributing_factor: "Dizziness", description: "Felt dizzy, fell while being assisted." },
+    { id: 8, urn: "2013926", unit: "2D", incident_date: "2026-03-20", incident_time: "0900", age: 64, gender: "F", location: "Others", injury: "Major", contributing_factor: "Loss balance", description: "Fell down in MRI room." },
+];
+
+const MOCK_HAPI = [
+    { id: 1, urn: "1699078", unit: "4D", incident_date: "2026-01-17", stage: "Stage 2", cause: "Immobility", site: "Sacral", outcome_intervention: "Not healed, expired", description: "Sacral sore 5cmx3cm and 3cmx2cm." },
+    { id: 2, urn: "1437094", unit: "4E", incident_date: "2026-01-18", stage: "Stage 2", cause: "Immobility", site: "Sacral", outcome_intervention: "Healed", description: "Skin peeling on sacral area." },
+    { id: 3, urn: "2011407", unit: "SICU", incident_date: "2026-02-16", stage: "Unstageable", cause: "Immobility", site: "Sacral", outcome_intervention: "Same stage, same size", description: "Pressure sore deteriorating to unstageable, 9x10cm." },
+    { id: 4, urn: "2014145", unit: "MICU", incident_date: "2026-02-13", stage: "Stage 2", cause: "Immobility", site: "Sacral", outcome_intervention: "Same size but dry", description: "Blister at sacral area, 5cmx1cm." },
+    { id: 5, urn: "1375524", unit: "MICU", incident_date: "2026-02-12", stage: "Stage 2", cause: "Immobility", site: "Heel", outcome_intervention: "Dry and healing", description: "Right heel blister, 5x6 cm." },
+    { id: 6, urn: "2013277", unit: "SICU", incident_date: "2026-03-10", stage: "Stage 2", cause: "Immobility", site: "Sacral", outcome_intervention: "Same stage, increased in size", description: "Blister in sacral region." },
+    { id: 7, urn: "766726", unit: "SICU", incident_date: "2026-03-06", stage: "Stage 1", cause: "Device related", site: "Heel", outcome_intervention: "Healed", description: "Skin peeling on sacral region." },
+    { id: 8, urn: "1255135", unit: "PICU", incident_date: "2026-03-15", stage: "Stage 3", cause: "Immobility", site: "Buttocks", outcome_intervention: "Same stage, decreased in size", description: "Buttocks pressure injury." },
+];
+
+const MOCK_MEDS = [
+    { id: 1, urn: "2006582", unit: "PICU", incident_date: "2026-01-08", incident_time: "1430", incident_type: "Wrong dose", description: "Calculation error in pediatric dose." },
+    { id: 2, urn: "1683880", unit: "ER", incident_date: "2026-01-15", incident_time: "0900", incident_type: "MAR not double checked", description: "MAR not verified before administration." },
+    { id: 3, urn: "654641", unit: "ER", incident_date: "2026-01-22", incident_time: "1130", incident_type: "Wrong patient", description: "Medication given to wrong patient." },
+    { id: 4, urn: "1620598", unit: "PICU", incident_date: "2026-02-03", incident_time: "0800", incident_type: "Charting Errors", description: "Wrong time documented." },
+    { id: 5, urn: "1479394", unit: "2A", incident_date: "2026-02-14", incident_time: "1600", incident_type: "Medication not double-checked", description: "High alert med not double-checked." },
+    { id: 6, urn: "503620", unit: "MICU", incident_date: "2026-02-20", incident_time: "0700", incident_type: "Incorrect Calculation", description: "Drip rate miscalculation." },
+    { id: 7, urn: "1545538", unit: "NICU", incident_date: "2026-03-05", incident_time: "0300", incident_type: "Medication Label Misread", description: "Wrong concentration read from label." },
+    { id: 8, urn: "1255135", unit: "PICU", incident_date: "2026-03-18", incident_time: "1200", incident_type: "Medication Overlooked", description: "Scheduled dose missed." },
+];
+
+const EMPTY_FALL = { urn: "", unit: "", incident_date: "", incident_time: "", age: "", gender: "M", location: "Pt. room", injury: "None", contributing_factor: "", description: "" };
+const EMPTY_HAPI = { urn: "", unit: "", incident_date: "", stage: "Stage 1", cause: "Immobility", site: "", outcome_intervention: "", description: "" };
+const EMPTY_MED = { urn: "", unit: "", incident_date: "", incident_time: "", incident_type: "MAR not double checked", description: "" };
+
+// ============================================================
+// Staffing Calculator (preserved from original)
+// ============================================================
+const STAFFING_MODES = {
+    kfhu_expat_1off: { workDays: 248, label: "Expat 8h · 1 day off" },
+    kfhu_expat_2off: { workDays: 196, label: "Expat 8h · 2 days off" },
+    kfhu_expat_12h: { workDays: 144, label: "Expat 12h · 3 days off" },
+    kfhu_saudi_8h: { workDays: 205, label: "Saudi 8h · 2 days off" },
+    kfhu_saudi_12h: { workDays: 153, label: "Saudi 12h · 3 days off" },
+    telford: { workDays: null, label: "Telford Method" },
 };
 
-const transparentBg = {
-    id: "transparentBg",
-    beforeDraw: (chart) => {
-        const ctx = chart.canvas.getContext("2d");
-        ctx.save();
-        ctx.globalCompositeOperation = "destination-over";
-        ctx.fillStyle = P.chartBg;
-        ctx.fillRect(0, 0, chart.width, chart.height);
-        ctx.restore();
-    },
-};
-ChartJS.register(transparentBg);
-
-const MOCK = {
-    kpis: [
-        { label: "Infection Rate (CLABSI)", value: "1.2", theme: { Icon: Activity } },
-        { label: "Patient Falls", value: "0.8", theme: { Icon: ArrowDown } },
-        { label: "Medication Errors", value: "1,234", theme: { Icon: AlertCircle } },
-        { label: "Pressure Ulcers", value: "0.3%", theme: { Icon: AlertTriangle } },
-        { label: "Staff Satisfaction", value: "80%", theme: { Icon: Star } },
-    ],
-
-    // 1 ── Infection rates by type (Bar, 3 bars)
-    //      Three distinct slate stops so each bar reads clearly
-    infectionChart: {
-        labels: ["CLABSI", "CAUTI", "SSI"],
-        datasets: [{
-            data: [1200, 900, 2313],
-            backgroundColor: [P.s2, P.s5, P.s7],
-            borderRadius: 6,
-        }],
-    },
-
-    // 2 ── Patient fall rates 2020–2025 (Line, 2 series)
-    //      Actual = darkest slate, area-filled; Target = lighter slate, dashed
-    fallsChart: {
-        labels: ["2020", "2021", "2022", "2023", "2024", "2025"],
-        datasets: [
-            {
-                label: "Actual",
-                data: [3.2, 2.8, 2.1, 1.6, 1.1, 0.8],
-                borderColor: P.s2,
-                backgroundColor: "rgba(47,62,85,0.13)",
-                pointBackgroundColor: P.s2,
-                tension: 0.4, fill: true, pointRadius: 4,
-            },
-            {
-                label: "Target",
-                data: [3.0, 2.5, 2.0, 1.5, 1.0, 0.7],
-                borderColor: P.s6,
-                borderDash: [5, 5],
-                tension: 0.4, fill: false, pointRadius: 0,
-            },
-        ],
-    },
-
-    // 3 ── Medication error types (Doughnut, 5 segments)
-    //      Full slate ramp S2 → S7 for clear segment differentiation
-    medErrChart: {
-        labels: ["Wrong Patient", "Wrong Med", "Wrong Dose", "Wrong Time", "Other"],
-        datasets: [{
-            data: [30, 25, 20, 15, 10],
-            backgroundColor: [P.s2, P.s3, P.s5, P.s6, P.s7],
-            borderWidth: 0,
-        }],
-    },
-
-    // 4 ── Pressure ulcer rates by month (Grouped Bar, 2 series)
-    //      2025 (current year) = dark slate; 2024 (prior year) = light slate
-    pressureChart: {
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
-        datasets: [
-            { label: "2025", data: [45, 60, 55, 80, 70, 65, 75], backgroundColor: P.s2, borderRadius: 4 },
-            { label: "2024", data: [50, 70, 65, 90, 80, 75, 85], backgroundColor: P.s6, borderRadius: 4 },
-        ],
-    },
-
-    // 5 ── Staff satisfaction scores (horizontal bars)
-    //      Shade encodes value: highest score → darkest; lowest → lightest
-    satisfaction: [
-        { label: "Overall", value: 80, color: P.s3 },
-        { label: "Communication", value: 76, color: P.s4 },
-        { label: "Workload", value: 62, color: P.s6 },   // lowest  → lightest
-        { label: "Leadership", value: 85, color: P.s2 },   // highest → darkest
-        { label: "Recognition", value: 70, color: P.s5 },
-    ],
-
-    // 6 ── Certification compliance (horizontal bars)
-    //      Semantic green/amber/red KEPT — colour communicates clinical meaning
-    compliance: [
-        { name: "BLS", pct: 98, status: "green" },
-        { name: "ACLS", pct: 91, status: "green" },
-        { name: "PALS", pct: 78, status: "amber" },
-        { name: "NRP", pct: 72, status: "amber" },
-        { name: "Fire Safety", pct: 95, status: "green" },
-        { name: "Infection Control", pct: 61, status: "red" },
-    ],
-};
-
-// ── Shared Chart.js options ───────────────────────────────────────────────────
-const chartOpts = () => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: { display: false },
-        title: { display: false },
-        transparentBg: {},
-        tooltip: {
-            backgroundColor: P.s1,
-            titleColor: "#ffffff",
-            bodyColor: "rgba(255,255,255,0.82)",
-            cornerRadius: 8,
-            padding: 10,
-        },
-    },
-    scales: {
-        x: {
-            grid: { display: false },
-            ticks: { font: { size: 11 }, color: P.s4 },
-        },
-        y: {
-            grid: { color: "rgba(90,111,135,0.1)" },
-            ticks: { font: { size: 11 }, color: P.s4 },
-        },
-    },
-});
-
-const doughnutOpts = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: "65%",
-    plugins: {
-        legend: { display: false },
-        transparentBg: {},
-        tooltip: {
-            backgroundColor: P.s1,
-            titleColor: "#ffffff",
-            bodyColor: "rgba(255,255,255,0.82)",
-            cornerRadius: 8,
-            padding: 10,
-        },
-    },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
+// ============================================================
+// Main Component
+// ============================================================
 export default function QualityManagerDashboard() {
-    const navigate = useNavigate();
+    // Data state
+    const [falls, setFalls] = useState(MOCK_FALLS);
+    const [hapis, setHapis] = useState(MOCK_HAPI);
+    const [meds, setMeds] = useState(MOCK_MEDS);
 
+    // Period filter
+    const [period, setPeriod] = useState("annual");
+    const [year, setYear] = useState(2026);
+    const [month, setMonth] = useState(1);
+    const [quarter, setQuarter] = useState(1);
+
+    // Modal
+    const [activeModal, setActiveModal] = useState(null);
+    const [editingItem, setEditingItem] = useState(null);
+
+    // Staffing calculator state
     const [staffMode, setStaffMode] = useState("kfhu_expat_1off");
-    const [beds, setBeds] = useState(20);
-    const [ratio, setRatio] = useState(4);
+    const [in3Shifts, setIn3Shifts] = useState(15);
     const [telfordHours, setTelfordHours] = useState(8);
 
-    const STAFFING_MODES = {
-        kfhu_expat_1off: { workDays: 248, label: "Expat 8h · 1 day off", note: "365 − 45 − 20 − 52 = 248" },
-        kfhu_expat_2off: { workDays: 196, label: "Expat 8h · 2 days off", note: "365 − 45 − 20 − 104 = 196" },
-        kfhu_expat_12h: { workDays: 144, label: "Expat 12h · 3 days off", note: "365 − 45 − 20 − 156 = 144" },
-        kfhu_saudi_8h: { workDays: 205, label: "Saudi 8h · 2 days off", note: "365 − 36 − 20 − 104 = 205" },
-        kfhu_saudi_12h: { workDays: 153, label: "Saudi 12h · 3 days off", note: "365 − 36 − 20 − 156 = 153" },
-        telford: { workDays: null, label: "Telford Method", note: "(nurses × hrs × 7) ÷ 48" },
+    // ─── Filter helper ───
+    const matchesPeriod = (dateStr) => {
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        if (d.getFullYear() !== year) return false;
+        if (period === "monthly") return d.getMonth() + 1 === month;
+        if (period === "quarterly") return Math.ceil((d.getMonth() + 1) / 3) === quarter;
+        return true;
     };
 
-    const calcStaff = () => {
-        const nursesPerShift = Math.ceil(beds / ratio);
-        const in3Shifts = nursesPerShift * 3;
-        if (staffMode === "telford") {
-            return { result: Math.ceil((in3Shifts * telfordHours * 7) / 48), nursesPerShift, in3Shifts };
+    const visibleFalls = useMemo(() => falls.filter(f => matchesPeriod(f.incident_date)), [falls, period, year, month, quarter]);
+    const visibleHapis = useMemo(() => hapis.filter(h => matchesPeriod(h.incident_date)), [hapis, period, year, month, quarter]);
+    const visibleMeds = useMemo(() => meds.filter(m => matchesPeriod(m.incident_date)), [meds, period, year, month, quarter]);
+
+    // ─── KPI stats ───
+    const stats = {
+        totalFalls: visibleFalls.length,
+        totalFallsWithInjury: visibleFalls.filter(f => f.injury !== "None").length,
+        totalHapi: visibleHapis.length,
+        totalMeds: visibleMeds.length,
+    };
+
+    // ─── Chart data builders ───
+    const fallsByInjury = useMemo(() => {
+        const counts = { None: 0, Minor: 0, Major: 0 };
+        visibleFalls.forEach(f => counts[f.injury] = (counts[f.injury] || 0) + 1);
+        return Object.entries(counts).map(([name, value]) => ({ name, value })).filter(d => d.value > 0);
+    }, [visibleFalls]);
+
+    const fallsByUnit = useMemo(() => {
+        const counts = {};
+        visibleFalls.forEach(f => counts[f.unit] = (counts[f.unit] || 0) + 1);
+        return Object.entries(counts).map(([unit, count]) => ({ unit, count })).sort((a, b) => b.count - a.count);
+    }, [visibleFalls]);
+
+    const fallsByFactor = useMemo(() => {
+        const counts = {};
+        visibleFalls.forEach(f => { if (f.contributing_factor) counts[f.contributing_factor] = (counts[f.contributing_factor] || 0) + 1; });
+        const arr = Object.entries(counts).map(([factor, count]) => ({ factor, count })).sort((a, b) => b.count - a.count);
+        const total = arr.reduce((s, x) => s + x.count, 0);
+        let cum = 0;
+        return arr.map(x => { cum += x.count; return { ...x, cumulative: total ? Math.round((cum / total) * 100) : 0 }; });
+    }, [visibleFalls]);
+
+    const fallsTrend = useMemo(() => {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const counts = Array(12).fill(0);
+        falls.forEach(f => {
+            const d = new Date(f.incident_date);
+            if (d.getFullYear() === year) counts[d.getMonth()]++;
+        });
+        return months.map((m, i) => ({ month: m, count: counts[i] }));
+    }, [falls, year]);
+
+    const hapiByStage = useMemo(() => {
+        const counts = {};
+        visibleHapis.forEach(h => counts[h.stage] = (counts[h.stage] || 0) + 1);
+        return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    }, [visibleHapis]);
+
+    const hapiByCause = useMemo(() => {
+        const counts = {};
+        visibleHapis.forEach(h => counts[h.cause] = (counts[h.cause] || 0) + 1);
+        return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    }, [visibleHapis]);
+
+    const hapiBySite = useMemo(() => {
+        const counts = {};
+        visibleHapis.forEach(h => counts[h.site] = (counts[h.site] || 0) + 1);
+        return Object.entries(counts).map(([site, count]) => ({ site, count })).sort((a, b) => b.count - a.count);
+    }, [visibleHapis]);
+
+    const medsByType = useMemo(() => {
+        const counts = {};
+        visibleMeds.forEach(m => counts[m.incident_type] = (counts[m.incident_type] || 0) + 1);
+        return Object.entries(counts).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count);
+    }, [visibleMeds]);
+
+    const medsByUnit = useMemo(() => {
+        const counts = {};
+        visibleMeds.forEach(m => counts[m.unit] = (counts[m.unit] || 0) + 1);
+        return Object.entries(counts).map(([unit, count]) => ({ unit, count })).sort((a, b) => b.count - a.count);
+    }, [visibleMeds]);
+
+    // ─── CRUD handlers ───
+    const openAdd = (kind) => { setEditingItem(null); setActiveModal(kind); };
+    const openEdit = (kind, item) => { setEditingItem(item); setActiveModal(kind); };
+    const closeModal = () => { setActiveModal(null); setEditingItem(null); };
+
+    const saveItem = (kind, form) => {
+        const setter = kind === "fall" ? setFalls : kind === "hapi" ? setHapis : setMeds;
+        const list = kind === "fall" ? falls : kind === "hapi" ? hapis : meds;
+        if (editingItem) {
+            setter(prev => prev.map(x => x.id === editingItem.id ? { ...form, id: editingItem.id } : x));
+        } else {
+            const newId = Math.max(0, ...list.map(x => x.id)) + 1;
+            setter([{ ...form, id: newId }, ...list]);
         }
-        const { workDays } = STAFFING_MODES[staffMode];
-        return { result: Math.ceil((in3Shifts * 365) / workDays), nursesPerShift, in3Shifts };
+        closeModal();
     };
 
-    const badgeClass = (s) => s === "green" ? "badge-green" : s === "amber" ? "badge-amber" : "badge-red";
-    const complianceBarColor = (s) => s === "green" ? P.green : s === "amber" ? P.amber : P.red;
+    const deleteItem = (kind, id) => {
+        if (!confirm("Are you sure you want to delete this incident?")) return;
+        const setter = kind === "fall" ? setFalls : kind === "hapi" ? setHapis : setMeds;
+        setter(prev => prev.filter(x => x.id !== id));
+    };
 
-    const { result, nursesPerShift, in3Shifts } = calcStaff();
+    const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-GB") : "—";
+
+    // ─── Staffing calculation ───
+    const calcStaff = () => {
+        const n = parseInt(in3Shifts) || 0;
+        if (staffMode === "telford") return Math.ceil((n * telfordHours * 7) / 48);
+        const { workDays } = STAFFING_MODES[staffMode];
+        return Math.ceil((n * 365) / workDays);
+    };
+
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     return (
-        <Layout role="qualityManager" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Quality Manager"}>
-            <div className="qm-container">
+        <Layout role="qualityManager" username={JSON.parse(sessionStorage.getItem("user") || "{}")?.full_name || "Quality Manager"}>
+            <div className="qd-main">
 
-                {/* ── Header (no tab buttons) ── */}
-                <div className="qm-header">
-                    <div><h1>Quality Manager Dashboard</h1></div>
+                {/* ── Header ── */}
+                <div className="qd-page-header">
+                    <h1>Quality Manager Dashboard</h1>
+                    <p className="qd-subtitle">Track nursing quality indicators across the department</p>
                 </div>
 
-                {/* ── KPI cards ── */}
-                <div className="kpi-grid">
-                    {MOCK.kpis.map(k => {
-                        const Icon = k.theme.Icon;
-                        let cardClass = "blue";
-                        if (k.label.toLowerCase().includes("infection")) cardClass = "blue";
-                        if (k.label.toLowerCase().includes("falls")) cardClass = "green";
-                        if (k.label.toLowerCase().includes("medication")) cardClass = "red";
-                        if (k.label.toLowerCase().includes("pressure")) cardClass = "yellow";
-                        if (k.label.toLowerCase().includes("satisfaction")) cardClass = "purple";
-                        return (
-                            <div key={k.label} className={`glass-card ${cardClass}`}>
-                                <p><Icon size={22} /> {k.label}</p>
-                                <h1>{k.value}</h1>
-                                <div style={{ fontSize: "12px", opacity: 0.8, marginBottom: "4px" }}>{k.unit}</div>
-                                <div style={{ fontSize: "12px", fontWeight: "600" }}>{k.note}</div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* ── Row 1: charts grid (2×2) ── */}
-                <div className="charts-grid">
-
-                    {/* 1 – Infection rates by type */}
-                    <div className="chart-card" style={{ background: P.chartBg, border: "none" }}>
-                        <p className="chart-title">Infection rates by type</p>
-                        <div className="legend-row">
-                            {MOCK.infectionChart.labels.map((l, i) => (
-                                <span key={l} className="legend-item">
-                                    <span className="legend-dot"
-                                        style={{ background: MOCK.infectionChart.datasets[0].backgroundColor[i] }} />
-                                    {l}
-                                </span>
-                            ))}
-                        </div>
-                        <div style={{ height: 180 }}>
-                            <Bar data={MOCK.infectionChart} options={chartOpts()} />
+                {/* ── Period Filter Bar ── */}
+                <div className="qd-period-bar">
+                    <div className="qd-period-group">
+                        <Filter size={16} />
+                        <span className="qd-period-label">Period:</span>
+                        <div className="qd-period-tabs">
+                            <button className={`qd-period-tab ${period === "monthly" ? "active" : ""}`} onClick={() => setPeriod("monthly")}>Monthly</button>
+                            <button className={`qd-period-tab ${period === "quarterly" ? "active" : ""}`} onClick={() => setPeriod("quarterly")}>Quarterly</button>
+                            <button className={`qd-period-tab ${period === "annual" ? "active" : ""}`} onClick={() => setPeriod("annual")}>Annual</button>
                         </div>
                     </div>
 
-                    {/* 2 – Patient fall rates 2020–2025 */}
-                    <div className="chart-card" style={{ background: P.chartBg, border: "none" }}>
-                        <p className="chart-title">Patient fall rates (2020–2025)</p>
-                        <div className="legend-row">
-                            <span className="legend-item">
-                                <span className="legend-dot" style={{ background: P.s2 }} />Actual
-                            </span>
-                            <span className="legend-item">
-                                <span className="legend-dot" style={{ background: P.s6 }} />Target
-                            </span>
-                        </div>
-                        <div style={{ height: 165 }}>
-                            <Line data={MOCK.fallsChart} options={chartOpts()} />
-                        </div>
-                    </div>
-
-                    {/* 3 – Medication error types */}
-                    <div className="chart-card" style={{ background: P.chartBg, border: "none" }}>
-                        <p className="chart-title">Medication error types</p>
-                        <div className="legend-row">
-                            {MOCK.medErrChart.labels.map((l, i) => (
-                                <span key={l} className="legend-item">
-                                    <span className="legend-dot"
-                                        style={{ background: MOCK.medErrChart.datasets[0].backgroundColor[i] }} />
-                                    {l}
-                                </span>
-                            ))}
-                        </div>
-                        <div style={{ height: 150 }}>
-                            <Doughnut data={MOCK.medErrChart} options={doughnutOpts} />
-                        </div>
-                    </div>
-
-                    {/* 4 – Pressure ulcer rates by month */}
-                    <div className="chart-card" style={{ background: P.chartBg, border: "none" }}>
-                        <p className="chart-title">Pressure ulcer rates by month</p>
-                        <div className="legend-row">
-                            <span className="legend-item">
-                                <span className="legend-dot" style={{ background: P.s2 }} />2025
-                            </span>
-                            <span className="legend-item">
-                                <span className="legend-dot" style={{ background: P.s6 }} />2024
-                            </span>
-                        </div>
-                        <div style={{ height: 165 }}>
-                            <Bar data={MOCK.pressureChart} options={chartOpts()} />
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* ── Row 2: satisfaction + compliance side by side ── */}
-                <div className="charts-grid">
-
-                    {/* 5 – Staff satisfaction scores */}
-                    <div className="chart-card" style={{ background: P.chartBg, border: "none" }}>
-                        <p className="chart-title">Staff satisfaction scores</p>
-                        <div className="sat-list">
-                            {MOCK.satisfaction.map(s => (
-                                <div key={s.label} className="sat-row">
-                                    <span className="sat-label">{s.label}</span>
-                                    <div className="sat-bar-bg">
-                                        <div className="sat-bar" style={{ width: s.value + "%", background: s.color }} />
-                                    </div>
-                                    <span className="sat-val">{s.value}%</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* 6 – Certification compliance */}
-                    <div className="chart-card" style={{ background: P.chartBg, border: "none" }}>
-                        <p className="chart-title">Certification compliance</p>
-                        <div className="compliance-list">
-                            {MOCK.compliance.map(c => (
-                                <div key={c.name} className="compliance-row">
-                                    <span className="compliance-name">{c.name}</span>
-                                    <div className="compliance-bar-bg">
-                                        <div className="compliance-bar"
-                                            style={{ width: c.pct + "%", background: complianceBarColor(c.status) }} />
-                                    </div>
-                                    <span className={`badge ${badgeClass(c.status)}`}>{c.pct}%</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* ── Row 3: Staffing Calculator — Director style ── */}
-                <div className="chart-card" style={{ background: P.chartBg, border: "none" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                        <Calculator size={18} color={P.s2} />
-                        <p className="chart-title" style={{ margin: 0 }}>Staffing Requirement Calculator</p>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-                        {/* Input: nurses in 3 shifts */}
-                        <div className="input-group">
-                            <label style={{ fontSize: 13, color: P.s4, marginBottom: 8, display: "block" }}>
-                                Nurses Needed in 24H (Sum of 3 shifts)
-                            </label>
-                            <input
-                                type="number"
-                                value={in3Shifts}
-                                min={1}
-                                onChange={e => {
-                                    // back-calculate beds from nurses in 3 shifts
-                                    const n = parseInt(e.target.value) || 1;
-                                    setBeds(Math.ceil((n / 3) * ratio));
-                                }}
-                                className="input-pill"
-                                style={{ width: "100%" }}
-                            />
-                        </div>
-
-                        {/* Select: formula */}
-                        <div className="input-group">
-                            <label style={{ fontSize: 13, color: P.s4, marginBottom: 8, display: "block" }}>
-                                Calculation Formula / Method
-                            </label>
-                            <select
-                                value={staffMode}
-                                onChange={e => setStaffMode(e.target.value)}
-                                className="input-pill"
-                                style={{ width: "100%" }}
-                            >
-                                {Object.entries(STAFFING_MODES).map(([key, val]) => (
-                                    <option key={key} value={key}>{val.label}</option>
-                                ))}
+                    <div className="qd-period-selectors">
+                        <select className="qd-period-select" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+                            {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                        {period === "monthly" && (
+                            <select className="qd-period-select" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+                                {months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
                             </select>
+                        )}
+                        {period === "quarterly" && (
+                            <select className="qd-period-select" value={quarter} onChange={(e) => setQuarter(Number(e.target.value))}>
+                                {[1, 2, 3, 4].map(q => <option key={q} value={q}>Q{q}</option>)}
+                            </select>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── KPI Cards ── */}
+                <div className="qd-cards">
+                    <div className="glass-card red">
+                        <p><AlertTriangle size={20} /> Total Falls</p>
+                        <h1>{stats.totalFalls}</h1>
+                        <span className="qd-card-foot">{stats.totalFallsWithInjury} with injury</span>
+                    </div>
+                    <div className="glass-card yellow">
+                        <p><Activity size={20} /> Pressure Injuries</p>
+                        <h1>{stats.totalHapi}</h1>
+                        <span className="qd-card-foot">HAPI cases reported</span>
+                    </div>
+                    <div className="glass-card purple">
+                        <p><Pill size={20} /> Medication Incidents</p>
+                        <h1>{stats.totalMeds}</h1>
+                        <span className="qd-card-foot">across all units</span>
+                    </div>
+                    <div className="glass-card blue">
+                        <p><TrendingUp size={20} /> Total Incidents</p>
+                        <h1>{stats.totalFalls + stats.totalHapi + stats.totalMeds}</h1>
+                        <span className="qd-card-foot">combined this period</span>
+                    </div>
+                </div>
+
+                {/* ============================================ FALLS ============================================ */}
+                <div className="qd-section">
+                    <div className="qd-section-header">
+                        <div>
+                            <h2 className="qd-section-title">Fall Incidents</h2>
+                            <p className="qd-section-sub">{visibleFalls.length} record{visibleFalls.length !== 1 ? "s" : ""} for the selected period</p>
+                        </div>
+                        <button className="qd-add-btn" onClick={() => openAdd("fall")}>
+                            <Plus size={16} /> Add Fall Incident
+                        </button>
+                    </div>
+
+                    <div className="qd-table-wrap">
+                        <table className="qd-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th><th>URN</th><th>Unit</th><th>Age</th><th>Gender</th>
+                                    <th>Location</th><th>Injury</th><th>Factor</th><th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {visibleFalls.length === 0 ? (
+                                    <tr><td colSpan={9} className="qd-empty">No fall incidents in this period.</td></tr>
+                                ) : visibleFalls.map(f => (
+                                    <tr key={f.id}>
+                                        <td>{formatDate(f.incident_date)}</td>
+                                        <td>{f.urn}</td>
+                                        <td>{f.unit}</td>
+                                        <td>{f.age}</td>
+                                        <td>{f.gender}</td>
+                                        <td>{f.location}</td>
+                                        <td><span className={`qd-badge qd-injury-${f.injury.toLowerCase()}`}>{f.injury}</span></td>
+                                        <td className="qd-td-clip">{f.contributing_factor}</td>
+                                        <td className="qd-actions">
+                                            <button className="qd-icon-btn" onClick={() => openEdit("fall", f)}><Pencil size={13} /></button>
+                                            <button className="qd-icon-btn qd-danger" onClick={() => deleteItem("fall", f.id)}><Trash2 size={13} /></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="qd-charts-grid">
+                        <div className="qd-chart-card">
+                            <h3>Falls by Injury Severity</h3>
+                            {fallsByInjury.length === 0 ? <div className="qd-chart-empty">No data</div> : (
+                                <ResponsiveContainer width="100%" height={220}>
+                                    <PieChart>
+                                        <Pie data={fallsByInjury} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                            {fallsByInjury.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            )}
                         </div>
 
-                        {/* Telford extra input */}
-                        {staffMode === "telford" && (
-                            <div className="input-group">
-                                <label style={{ fontSize: 13, color: P.s4, marginBottom: 8, display: "block" }}>
-                                    Working hours per day
-                                </label>
-                                <input
-                                    type="number"
-                                    value={telfordHours}
-                                    min={1}
-                                    onChange={e => setTelfordHours(parseInt(e.target.value) || 8)}
-                                    className="input-pill"
-                                    style={{ width: "100%" }}
-                                />
-                            </div>
-                        )}
+                        <div className="qd-chart-card">
+                            <h3>Falls by Unit</h3>
+                            {fallsByUnit.length === 0 ? <div className="qd-chart-empty">No data</div> : (
+                                <ResponsiveContainer width="100%" height={220}>
+                                    <BarChart data={fallsByUnit} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(90,111,135,0.1)" />
+                                        <XAxis dataKey="unit" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill={COLORS.s4} radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
 
-                        {/* Result area */}
-                        <div className="calc-result-area">
-                            <span style={{ fontSize: 14, fontWeight: 500, color: P.s3 }}>Total Staff Required:</span>
-                            <div style={{ marginTop: 5, display: "flex", alignItems: "baseline", gap: 5 }}>
-                                <span style={{ fontSize: 36, fontWeight: 700, color: P.s2 }}>{result}</span>
-                                <span style={{ fontSize: 14, color: P.s5 }}>Nurses</span>
+                        <div className="qd-chart-card">
+                            <h3>Monthly Trend ({year})</h3>
+                            <ResponsiveContainer width="100%" height={220}>
+                                <LineChart data={fallsTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(90,111,135,0.1)" />
+                                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
+                                    <Tooltip />
+                                    <Line type="monotone" dataKey="count" stroke={COLORS.red} strokeWidth={2.5} dot={{ r: 4 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        <div className="qd-chart-card">
+                            <h3>Contributing Factors (Pareto)</h3>
+                            {fallsByFactor.length === 0 ? <div className="qd-chart-empty">No data</div> : (
+                                <ResponsiveContainer width="100%" height={220}>
+                                    <BarChart data={fallsByFactor} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(90,111,135,0.1)" />
+                                        <XAxis dataKey="factor" axisLine={false} tickLine={false} tick={{ fontSize: 9 }} interval={0} angle={-15} textAnchor="end" height={50} />
+                                        <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
+                                        <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                        <Tooltip />
+                                        <Bar yAxisId="left" dataKey="count" fill={COLORS.orange} radius={[4, 4, 0, 0]} />
+                                        <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke={COLORS.red} strokeWidth={2} dot={{ r: 3 }} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ============================================ HAPI ============================================ */}
+                <div className="qd-section">
+                    <div className="qd-section-header">
+                        <div>
+                            <h2 className="qd-section-title">Hospital Acquired Pressure Injuries (HAPI)</h2>
+                            <p className="qd-section-sub">{visibleHapis.length} record{visibleHapis.length !== 1 ? "s" : ""} for the selected period</p>
+                        </div>
+                        <button className="qd-add-btn" onClick={() => openAdd("hapi")}>
+                            <Plus size={16} /> Add Pressure Injury
+                        </button>
+                    </div>
+
+                    <div className="qd-table-wrap">
+                        <table className="qd-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th><th>URN</th><th>Unit</th><th>Stage</th>
+                                    <th>Cause</th><th>Site</th><th>Outcome</th><th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {visibleHapis.length === 0 ? (
+                                    <tr><td colSpan={8} className="qd-empty">No pressure injuries in this period.</td></tr>
+                                ) : visibleHapis.map(h => (
+                                    <tr key={h.id}>
+                                        <td>{formatDate(h.incident_date)}</td>
+                                        <td>{h.urn}</td>
+                                        <td>{h.unit}</td>
+                                        <td><span className="qd-badge qd-stage">{h.stage}</span></td>
+                                        <td>{h.cause}</td>
+                                        <td>{h.site}</td>
+                                        <td className="qd-td-clip">{h.outcome_intervention}</td>
+                                        <td className="qd-actions">
+                                            <button className="qd-icon-btn" onClick={() => openEdit("hapi", h)}><Pencil size={13} /></button>
+                                            <button className="qd-icon-btn qd-danger" onClick={() => deleteItem("hapi", h.id)}><Trash2 size={13} /></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="qd-charts-grid">
+                        <div className="qd-chart-card">
+                            <h3>HAPI by Stage</h3>
+                            {hapiByStage.length === 0 ? <div className="qd-chart-empty">No data</div> : (
+                                <ResponsiveContainer width="100%" height={220}>
+                                    <PieChart>
+                                        <Pie data={hapiByStage} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                            {hapiByStage.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+
+                        <div className="qd-chart-card">
+                            <h3>HAPI by Cause (Risk Factors)</h3>
+                            {hapiByCause.length === 0 ? <div className="qd-chart-empty">No data</div> : (
+                                <ResponsiveContainer width="100%" height={220}>
+                                    <PieChart>
+                                        <Pie data={hapiByCause} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                            {hapiByCause.map((_, i) => <Cell key={i} fill={[COLORS.orange, COLORS.green, COLORS.s6][i % 3]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+
+                        <div className="qd-chart-card qd-chart-wide">
+                            <h3>HAPI by Affected Site</h3>
+                            {hapiBySite.length === 0 ? <div className="qd-chart-empty">No data</div> : (
+                                <ResponsiveContainer width="100%" height={220}>
+                                    <BarChart data={hapiBySite} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(90,111,135,0.1)" />
+                                        <XAxis dataKey="site" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill={COLORS.orange} radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ============================================ MEDICATION ============================================ */}
+                <div className="qd-section">
+                    <div className="qd-section-header">
+                        <div>
+                            <h2 className="qd-section-title">Medication Incidents</h2>
+                            <p className="qd-section-sub">{visibleMeds.length} record{visibleMeds.length !== 1 ? "s" : ""} for the selected period</p>
+                        </div>
+                        <button className="qd-add-btn" onClick={() => openAdd("med")}>
+                            <Plus size={16} /> Add Medication Incident
+                        </button>
+                    </div>
+
+                    <div className="qd-table-wrap">
+                        <table className="qd-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th><th>URN</th><th>Unit</th><th>Type</th>
+                                    <th>Description</th><th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {visibleMeds.length === 0 ? (
+                                    <tr><td colSpan={6} className="qd-empty">No medication incidents in this period.</td></tr>
+                                ) : visibleMeds.map(m => (
+                                    <tr key={m.id}>
+                                        <td>{formatDate(m.incident_date)}</td>
+                                        <td>{m.urn}</td>
+                                        <td>{m.unit}</td>
+                                        <td><span className="qd-badge qd-med-type">{m.incident_type}</span></td>
+                                        <td className="qd-td-clip">{m.description}</td>
+                                        <td className="qd-actions">
+                                            <button className="qd-icon-btn" onClick={() => openEdit("med", m)}><Pencil size={13} /></button>
+                                            <button className="qd-icon-btn qd-danger" onClick={() => deleteItem("med", m.id)}><Trash2 size={13} /></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="qd-charts-grid">
+                        <div className="qd-chart-card qd-chart-wide">
+                            <h3>Medication Incidents by Type</h3>
+                            {medsByType.length === 0 ? <div className="qd-chart-empty">No data</div> : (
+                                <ResponsiveContainer width="100%" height={260}>
+                                    <BarChart data={medsByType} layout="vertical" margin={{ top: 10, right: 20, left: 70, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(90,111,135,0.1)" />
+                                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
+                                        <YAxis type="category" dataKey="type" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} width={140} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill={COLORS.purple} radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+
+                        <div className="qd-chart-card">
+                            <h3>Medication Incidents by Unit</h3>
+                            {medsByUnit.length === 0 ? <div className="qd-chart-empty">No data</div> : (
+                                <ResponsiveContainer width="100%" height={260}>
+                                    <BarChart data={medsByUnit} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(90,111,135,0.1)" />
+                                        <XAxis dataKey="unit" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill={COLORS.purple} radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ============================================ STAFFING CALCULATOR ============================================ */}
+                <div className="qd-section">
+                    <div className="qd-section-header">
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <Calculator size={20} color={COLORS.s2} />
+                            <h2 className="qd-section-title" style={{ margin: 0 }}>Staffing Requirement Calculator</h2>
+                        </div>
+                    </div>
+
+                    <div className="qd-calc-grid">
+                        <div className="qd-calc-inputs">
+                            <div className="qd-field">
+                                <label>Nurses Needed in 24H (Sum of 3 shifts)</label>
+                                <input type="number" className="qd-input" min={1} value={in3Shifts} onChange={(e) => setIn3Shifts(parseInt(e.target.value) || 1)} />
                             </div>
-                            <p style={{ fontSize: 11, color: "#888", marginTop: 10, fontStyle: "italic" }}>
+
+                            <div className="qd-field">
+                                <label>Calculation Formula / Method</label>
+                                <select className="qd-input" value={staffMode} onChange={(e) => setStaffMode(e.target.value)}>
+                                    {Object.entries(STAFFING_MODES).map(([key, val]) => (
+                                        <option key={key} value={key}>{val.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {staffMode === "telford" && (
+                                <div className="qd-field">
+                                    <label>Working hours per day</label>
+                                    <input type="number" className="qd-input" min={1} value={telfordHours} onChange={(e) => setTelfordHours(parseInt(e.target.value) || 8)} />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="qd-calc-result">
+                            <span className="qd-calc-label">Total Staff Required</span>
+                            <div className="qd-calc-number">
+                                <span className="qd-calc-big">{calcStaff()}</span>
+                                <span className="qd-calc-unit">Nurses</span>
+                            </div>
+                            <p className="qd-calc-note">
                                 *Based on hospital standard actual working days and leave policy.
                             </p>
                         </div>
-
                     </div>
                 </div>
 
+                {/* ── Modals ── */}
+                {activeModal === "fall" && <FallModal initial={editingItem || EMPTY_FALL} onSave={(form) => saveItem("fall", form)} onClose={closeModal} editing={!!editingItem} />}
+                {activeModal === "hapi" && <HapiModal initial={editingItem || EMPTY_HAPI} onSave={(form) => saveItem("hapi", form)} onClose={closeModal} editing={!!editingItem} />}
+                {activeModal === "med" && <MedModal initial={editingItem || EMPTY_MED} onSave={(form) => saveItem("med", form)} onClose={closeModal} editing={!!editingItem} />}
+
             </div>
         </Layout>
+    );
+}
+
+// ============================================================
+// Fall Modal
+// ============================================================
+function FallModal({ initial, onSave, onClose, editing }) {
+    const [form, setForm] = useState(initial);
+    const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+    const canSave = form.urn && form.unit && form.incident_date && form.location && form.injury;
+
+    return (
+        <div className="qd-overlay" onClick={onClose}>
+            <div className="qd-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="qd-modal-header">
+                    <h3>{editing ? "Edit" : "Add"} Fall Incident</h3>
+                    <button className="qd-close-btn" onClick={onClose}><X size={18} /></button>
+                </div>
+
+                <div className="qd-form-grid">
+                    <div className="qd-field">
+                        <label>URN <span className="qd-req">*</span></label>
+                        <input className="qd-input" value={form.urn} onChange={(e) => set("urn", e.target.value)} />
+                    </div>
+                    <div className="qd-field">
+                        <label>Unit <span className="qd-req">*</span></label>
+                        <select className="qd-input" value={form.unit} onChange={(e) => set("unit", e.target.value)}>
+                            <option value="">Select unit</option>
+                            {UNITS.map(u => <option key={u}>{u}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field">
+                        <label>Date <span className="qd-req">*</span></label>
+                        <input type="date" className="qd-input" value={form.incident_date} onChange={(e) => set("incident_date", e.target.value)} />
+                    </div>
+                    <div className="qd-field">
+                        <label>Time</label>
+                        <input className="qd-input" value={form.incident_time} onChange={(e) => set("incident_time", e.target.value)} placeholder="e.g. 2340" maxLength={4} />
+                    </div>
+                    <div className="qd-field">
+                        <label>Age</label>
+                        <input type="number" className="qd-input" value={form.age} onChange={(e) => set("age", e.target.value)} />
+                    </div>
+                    <div className="qd-field">
+                        <label>Gender</label>
+                        <select className="qd-input" value={form.gender} onChange={(e) => set("gender", e.target.value)}>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                        </select>
+                    </div>
+                    <div className="qd-field">
+                        <label>Location <span className="qd-req">*</span></label>
+                        <select className="qd-input" value={form.location} onChange={(e) => set("location", e.target.value)}>
+                            {FALL_LOCATIONS.map(l => <option key={l}>{l}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field">
+                        <label>Injury <span className="qd-req">*</span></label>
+                        <select className="qd-input" value={form.injury} onChange={(e) => set("injury", e.target.value)}>
+                            {FALL_INJURIES.map(i => <option key={i}>{i}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field qd-full">
+                        <label>Contributing Factor</label>
+                        <select className="qd-input" value={form.contributing_factor} onChange={(e) => set("contributing_factor", e.target.value)}>
+                            <option value="">— None —</option>
+                            {FALL_FACTORS.map(f => <option key={f}>{f}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field qd-full">
+                        <label>Description</label>
+                        <textarea className="qd-input qd-textarea" value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} />
+                    </div>
+                </div>
+
+                <div className="qd-modal-actions">
+                    <button className="qd-cancel-btn" onClick={onClose}>Cancel</button>
+                    <button className="qd-save-btn" disabled={!canSave} onClick={() => onSave(form)}>
+                        {editing ? "Save changes" : "Add incident"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================
+// HAPI Modal
+// ============================================================
+function HapiModal({ initial, onSave, onClose, editing }) {
+    const [form, setForm] = useState(initial);
+    const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+    const canSave = form.urn && form.unit && form.incident_date && form.stage && form.cause;
+
+    return (
+        <div className="qd-overlay" onClick={onClose}>
+            <div className="qd-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="qd-modal-header">
+                    <h3>{editing ? "Edit" : "Add"} Pressure Injury</h3>
+                    <button className="qd-close-btn" onClick={onClose}><X size={18} /></button>
+                </div>
+
+                <div className="qd-form-grid">
+                    <div className="qd-field">
+                        <label>URN <span className="qd-req">*</span></label>
+                        <input className="qd-input" value={form.urn} onChange={(e) => set("urn", e.target.value)} />
+                    </div>
+                    <div className="qd-field">
+                        <label>Unit <span className="qd-req">*</span></label>
+                        <select className="qd-input" value={form.unit} onChange={(e) => set("unit", e.target.value)}>
+                            <option value="">Select unit</option>
+                            {UNITS.map(u => <option key={u}>{u}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field">
+                        <label>Date <span className="qd-req">*</span></label>
+                        <input type="date" className="qd-input" value={form.incident_date} onChange={(e) => set("incident_date", e.target.value)} />
+                    </div>
+                    <div className="qd-field">
+                        <label>Stage <span className="qd-req">*</span></label>
+                        <select className="qd-input" value={form.stage} onChange={(e) => set("stage", e.target.value)}>
+                            {HAPI_STAGES.map(s => <option key={s}>{s}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field">
+                        <label>Cause <span className="qd-req">*</span></label>
+                        <select className="qd-input" value={form.cause} onChange={(e) => set("cause", e.target.value)}>
+                            {HAPI_CAUSES.map(c => <option key={c}>{c}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field">
+                        <label>Site</label>
+                        <select className="qd-input" value={form.site} onChange={(e) => set("site", e.target.value)}>
+                            <option value="">— Select —</option>
+                            {HAPI_SITES.map(s => <option key={s}>{s}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field qd-full">
+                        <label>Outcome / Intervention</label>
+                        <input className="qd-input" value={form.outcome_intervention} onChange={(e) => set("outcome_intervention", e.target.value)} placeholder="e.g. Healed, Same stage same size" />
+                    </div>
+                    <div className="qd-field qd-full">
+                        <label>Description</label>
+                        <textarea className="qd-input qd-textarea" value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} />
+                    </div>
+                </div>
+
+                <div className="qd-modal-actions">
+                    <button className="qd-cancel-btn" onClick={onClose}>Cancel</button>
+                    <button className="qd-save-btn" disabled={!canSave} onClick={() => onSave(form)}>
+                        {editing ? "Save changes" : "Add incident"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================
+// Medication Modal
+// ============================================================
+function MedModal({ initial, onSave, onClose, editing }) {
+    const [form, setForm] = useState(initial);
+    const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+    const canSave = form.unit && form.incident_date && form.incident_type;
+
+    return (
+        <div className="qd-overlay" onClick={onClose}>
+            <div className="qd-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="qd-modal-header">
+                    <h3>{editing ? "Edit" : "Add"} Medication Incident</h3>
+                    <button className="qd-close-btn" onClick={onClose}><X size={18} /></button>
+                </div>
+
+                <div className="qd-form-grid">
+                    <div className="qd-field">
+                        <label>URN</label>
+                        <input className="qd-input" value={form.urn} onChange={(e) => set("urn", e.target.value)} />
+                    </div>
+                    <div className="qd-field">
+                        <label>Unit <span className="qd-req">*</span></label>
+                        <select className="qd-input" value={form.unit} onChange={(e) => set("unit", e.target.value)}>
+                            <option value="">Select unit</option>
+                            {UNITS.map(u => <option key={u}>{u}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field">
+                        <label>Date <span className="qd-req">*</span></label>
+                        <input type="date" className="qd-input" value={form.incident_date} onChange={(e) => set("incident_date", e.target.value)} />
+                    </div>
+                    <div className="qd-field">
+                        <label>Time</label>
+                        <input className="qd-input" value={form.incident_time} onChange={(e) => set("incident_time", e.target.value)} placeholder="e.g. 1430" maxLength={4} />
+                    </div>
+                    <div className="qd-field qd-full">
+                        <label>Incident Type <span className="qd-req">*</span></label>
+                        <select className="qd-input" value={form.incident_type} onChange={(e) => set("incident_type", e.target.value)}>
+                            {MED_TYPES.map(t => <option key={t}>{t}</option>)}
+                        </select>
+                    </div>
+                    <div className="qd-field qd-full">
+                        <label>Description</label>
+                        <textarea className="qd-input qd-textarea" value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} />
+                    </div>
+                </div>
+
+                <div className="qd-modal-actions">
+                    <button className="qd-cancel-btn" onClick={onClose}>Cancel</button>
+                    <button className="qd-save-btn" disabled={!canSave} onClick={() => onSave(form)}>
+                        {editing ? "Save changes" : "Add incident"}
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }
