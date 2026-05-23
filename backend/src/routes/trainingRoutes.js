@@ -9,10 +9,16 @@ router.get("/dashboard/data", controller.getDashboardData);
 router.get("/trainees/directory", controller.getTrainees);
 
 // GET all programs + nurse records by user_id
+router.get("/user/:userId", controller.getTraineeByUser);
+
+// GET all programs + nurse records by user_id
 router.get("/:id", controller.getByUser);
 
 // UPSERT training record
 router.put("/", controller.upsert);
+
+// UPDATE dashboard row dynamically
+router.put("/dashboard/update-row", controller.updateDashboardRow);
 
 // Upload certificate for a specific training
 router.post(

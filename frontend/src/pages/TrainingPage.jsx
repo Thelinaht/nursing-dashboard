@@ -17,7 +17,7 @@ export default function TrainingPage() {
         const user = JSON.parse(sessionStorage.getItem("user"));
         if (!user?.user_id) return;
 
-        fetch(`http://localhost:4000/api/nurses/user/${user.user_id}`)
+        fetch(`http://localhost:4000/api/training/user/${user.user_id}`)
             .then(res => res.json())
             .then(data => setNurse(data))
             .catch(err => console.error(err));
@@ -58,7 +58,7 @@ export default function TrainingPage() {
     const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-GB") : "–";
 
     return (
-        <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name}>
+        <Layout role="nurse" logoSrc="/logo.png" username={nurse?.full_name || nurse?.name}>
             <div className="main">
                 <button className="back-btn" onClick={() => navigate("/nurse-dashboard")}>
                     &larr; Back

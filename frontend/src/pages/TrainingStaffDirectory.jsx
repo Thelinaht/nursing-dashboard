@@ -2,11 +2,28 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, FileText, ArrowLeft, ArrowRight, Loader } from "lucide-react";
+import { Users, GraduationCap, BookOpen, Filter, ChevronDown, Loader, X } from "lucide-react";
 import Layout from "../components/Layout";
 
 import "../styles/SecretaryDashboard.css";
 import "../styles/DirectorDashboard.css";
+
+const TRAINEE_TYPES = ["Intern", "Student Nurse"];
+const STATUS_OPTIONS = ["Active", "Pending", "Completed", "Rejected"];
+const UNIT_OPTIONS = [
+    "General", "ICU", "ER", "CCU", "NICU", "OR", "Pediatrics",
+    "Dialysis", "Oncology", "Orthopedics", "Radiology", "Other"
+];
+
+const emptyForm = {
+    name: "",
+    university: "",
+    program: "Intern",
+    unit: "General",
+    status: "Active",
+    start_date: new Date().toISOString().split("T")[0],
+    end_date: ""
+};
 
 export default function TrainingStaffDirectory() {
     const navigate = useNavigate();
@@ -14,68 +31,138 @@ export default function TrainingStaffDirectory() {
     const [trainees, setTrainees] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // ── Add Trainee Modal state ──
+    const [showModal, setShowModal] = useState(false);
+    const [form, setForm] = useState(emptyForm);
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState("");
+
+    const fetchTrainees = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch("http://localhost:4000/api/training/trainees/directory");
+            const data = await response.json();
+            setTrainees(data || []);
+        } catch (err) {
+            console.error("Error fetching trainees:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchTrainees = async () => {
-            try {
-                const response = await fetch("http://localhost:4000/api/training/trainees/directory");
-                const data = await response.json();
-                setTrainees(data || []);
-            } catch (err) {
-                console.error("Error fetching trainees:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchTrainees();
     }, []);
 
-    // search and filters
+    // ── Search & Filters ──
     const [search, setSearch] = useState("");
-    const [filters, setFilters] = useState({
-        type: "",
-        unit: "",
-        status: ""
-    });
+    const [sortOrder, setSortOrder] = useState("az");
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState({ type: "", unit: "", status: "" });
 
-    // Selection options
     const traineeTypes = [...new Set(trainees.map(n => n.type))].filter(Boolean);
-    const units = [...new Set(trainees.map(n => n.unit || 'General'))].filter(Boolean);
+    const units = [...new Set(trainees.map(n => n.unit || "General"))].filter(Boolean);
     const statuses = [...new Set(trainees.map(n => n.status))].filter(Boolean);
 
-    const filteredTrainees = trainees.filter(n =>
-        (!filters.type || n.type === filters.type) &&
-        (!filters.unit || (n.unit || 'General') === filters.unit) &&
-        (!filters.status || n.status === filters.status) &&
-        (
-            n.name?.toLowerCase().includes(search.toLowerCase()) ||
-            n.university?.toLowerCase().includes(search.toLowerCase())
+    const filteredTrainees = trainees
+        .filter(n =>
+            (!filters.type || n.type === filters.type) &&
+            (!filters.unit || (n.unit || "General") === filters.unit) &&
+            (!filters.status || n.status === filters.status) &&
+            (
+                n.name?.toLowerCase().includes(search.toLowerCase()) ||
+                n.university?.toLowerCase().includes(search.toLowerCase())
+            )
         )
-    );
-
-    const generatePDF = () => {
-        const doc = new jsPDF();
-        doc.setFontSize(18);
-        doc.text("KFHU Training Staff Directory", 14, 22);
-        doc.setFontSize(11);
-        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
-
-        const tableData = filteredTrainees.map(n => [
-            n.name,
-            n.university || "N/A",
-            n.type || "N/A",
-            n.unit || "General",
-            n.status || "N/A"
-        ]);
-
-        autoTable(doc, {
-            startY: 40,
-            head: [["Name", "University", "Trainee Type", "Unit", "Status"]],
-            body: tableData,
-            theme: 'grid',
-            headStyles: { fillColor: [74, 106, 133] }
+        .sort((a, b) => {
+            const nameA = a.name?.toLowerCase() || "";
+            const nameB = b.name?.toLowerCase() || "";
+            return sortOrder === "az" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
         });
 
+    const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
+    const activeFilterCount = Object.values(filters).filter(v => v !== "").length;
+    const clearAll = () => { setFilters({ type: "", unit: "", status: "" }); setSearch(""); };
+
+    // ── Stats ──
+    const isIAU = (u) => u?.toLowerCase().includes("iau") || u?.toLowerCase().includes("imam abdulrahman");
+    // IAU = any trainee (Intern or Student Nurse) from IAU university
+    const iauInterns    = trainees.filter(n => isIAU(n.university)).length;
+    // Non-IAU Interns = Interns from non-IAU universities
+    const nonIauInterns = trainees.filter(n => n.type === "Intern" && !isIAU(n.university)).length;
+    // Summer Training = Student Nurses from non-IAU universities
+    const summerTrainees = trainees.filter(n => n.type === "Student Nurse" && !isIAU(n.university)).length;
+
+    // ── PDF Export ──
+    const generatePDF = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("KFHU Training Staff Directory Report", 14, 15);
+        doc.setFontSize(11);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 23);
+        const tableData = filteredTrainees.map(n => [
+            n.name, n.university || "N/A", n.type || "N/A", n.unit || "General", n.status || "N/A"
+        ]);
+        autoTable(doc, {
+            startY: 30,
+            head: [["Name", "University", "Trainee Type", "Unit", "Status"]],
+            body: tableData,
+            theme: "grid",
+            headStyles: { fillColor: [74, 106, 133] }
+        });
         doc.save("kfhu_training_staff_directory.pdf");
+    };
+
+    // ── Status badge class ──
+    const getStatusClass = (status) => {
+        const s = (status || "").toLowerCase();
+        if (s === "active") return "active";
+        if (s === "completed") return "transferred";
+        if (s === "pending") return "breech-of-contract";
+        if (s === "rejected") return "terminated";
+        return "active";
+    };
+
+    // ── Save new trainee ──
+    const handleAddTrainee = async (e) => {
+        e.preventDefault();
+        setFormError("");
+        if (!form.name.trim()) { setFormError("Full name is required."); return; }
+        if (!form.university.trim()) { setFormError("University is required."); return; }
+
+        setSaving(true);
+        try {
+            const res = await fetch("http://localhost:4000/api/training/dashboard/update-row", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "intern",
+                    id: "new",
+                    fields: {
+                        name: form.name.trim(),
+                        university: form.university.trim(),
+                        program: form.program,
+                        unit: form.unit,
+                        status: form.status,
+                        start_date: form.start_date || null,
+                        end_date: form.end_date || null
+                    }
+                })
+            });
+            const result = await res.json();
+            if (result.success) {
+                setShowModal(false);
+                setForm(emptyForm);
+                fetchTrainees();
+            } else {
+                setFormError(result.error || "Failed to add trainee.");
+            }
+        } catch (err) {
+            console.error(err);
+            setFormError("Network error. Please try again.");
+        } finally {
+            setSaving(false);
+        }
     };
 
     const user = JSON.parse(sessionStorage.getItem("user")) || {};
@@ -86,130 +173,327 @@ export default function TrainingStaffDirectory() {
             logoSrc="/logo.png"
             username={user.full_name || "Training Director"}
         >
-            <div className="main" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="icon-btn-small" onClick={() => navigate(-1)} title="Back">
-                                <ArrowLeft size={18} />
-                            </button>
-                            <button className="icon-btn-small" onClick={() => navigate(1)} title="Forward">
-                                <ArrowRight size={18} />
-                            </button>
-                        </div>
-                        <h2 style={{ fontSize: '28px', color: '#2c3e50', margin: 0 }}>Training Staff Directory</h2>
-                    </div>
-                    <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white', padding: '10px 20px', gap: '8px' }} onClick={generatePDF}>
-                        <FileText size={18} />
-                        Export Directory PDF
+            <div className="main">
+
+                {/* ── Page Header ── */}
+                <div className="page-header">
+                    <h1>Training Staff Directory</h1>
+                    <button className="add-nurse-btn" onClick={() => { setForm(emptyForm); setFormError(""); setShowModal(true); }}>
+                        + Add New Trainee
                     </button>
                 </div>
 
-                {/* Stats Summary Area */}
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '50px' }}>
-                        <Loader className="spin" size={32} color="var(--accent-blue)" />
-                        <p>Loading directory data...</p>
+                    <div style={{ textAlign: "center", padding: "80px 0" }}>
+                        <Loader className="spin" size={36} color="var(--accent-blue)" />
+                        <p style={{ marginTop: "14px", color: "var(--text-secondary)" }}>Loading directory data...</p>
                     </div>
                 ) : (
                     <>
-                        <div className="cards-row" style={{ marginBottom: '30px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
-                            <div className="wave-card glass-card" style={{ background: '#e1f5fe', border: '1px solid rgba(41, 182, 246, 0.3)' }}>
-                                <p style={{ color: '#0277bd' }}>Total Trainees</p>
-                                <h1 style={{ color: '#0277bd' }}>{trainees.length}</h1>
+                        {/* ── KPI Cards ── */}
+                        <div className="cards">
+                            <div className="glass-card blue">
+                                <p><Users size={20} /> Total Trainees</p>
+                                <h1>{trainees.length}</h1>
                             </div>
-                            <div className="wave-card glass-card" style={{ background: '#e8f5e9', border: '1px solid rgba(102, 187, 106, 0.3)' }}>
-                                <p style={{ color: '#2e7d32' }}>Search Results</p>
-                                <h1 style={{ color: '#2e7d32' }}>{filteredTrainees.length}</h1>
+                            <div className="glass-card" style={{ background: "rgba(107,33,168,0.08)", border: "1px solid rgba(107,33,168,0.18)" }}>
+                                <p style={{ color: "#6a1b9a" }}><GraduationCap size={20} /> IAU Interns</p>
+                                <h1 style={{ color: "#6a1b9a" }}>{iauInterns}</h1>
                             </div>
-                            <div className="wave-card glass-card" style={{ background: '#f3e5f5', border: '1px solid rgba(171, 71, 188, 0.3)' }}>
-                                <p style={{ color: '#6a1b9a' }}>IAU Interns</p>
-                                <h1 style={{ color: '#6a1b9a' }}>{trainees.filter(n => n.type === "IAU Intern").length}</h1>
+                            <div className="glass-card" style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.18)" }}>
+                                <p style={{ color: "#1a237e" }}><GraduationCap size={20} /> Non-IAU Interns</p>
+                                <h1 style={{ color: "#1a237e" }}>{nonIauInterns}</h1>
+                            </div>
+                            <div className="glass-card yellow">
+                                <p><BookOpen size={20} /> Summer Trainees</p>
+                                <h1>{summerTrainees}</h1>
                             </div>
                         </div>
 
-                        {/* Filters Section */}
-                <div className="table-box" style={{ marginBottom: '30px', padding: '20px' }}>
-                    <div className="filter-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '15px' }}>
-                        <div style={{ position: 'relative' }}>
-                            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                            <input
-                                type="text"
-                                placeholder="Search by name or university..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="input-pill"
-                                style={{ paddingLeft: '40px', width: '100%' }}
-                            />
-                        </div>
-
-                        <select
-                            className="input-pill"
-                            value={filters.type}
-                            onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                        >
-                            <option value="">All Trainee Types</option>
-                            {traineeTypes.map(t => <option key={t}>{t}</option>)}
-                        </select>
-
-                        <select
-                            className="input-pill"
-                            value={filters.unit}
-                            onChange={(e) => setFilters(prev => ({ ...prev, unit: e.target.value }))}
-                        >
-                            <option value="">All Units</option>
-                            {units.map(u => <option key={u}>{u}</option>)}
-                        </select>
-
-                        <select
-                            className="input-pill"
-                            value={filters.status}
-                            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                        >
-                            <option value="">All Statuses</option>
-                            {statuses.map(s => <option key={s}>{s}</option>)}
-                        </select>
-                    </div>
-                </div>
-
-                {/* Staff List Table */}
-                <div className="table-box content-box">
-                    <div className="box-header" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '15px' }}>
-                        <h2 className="content-box-title">Trainee Roster</h2>
-                    </div>
-
-                    <div className="custom-table" style={{ marginTop: '20px' }}>
-                        <div className="table-header" style={{ gridTemplateColumns: '1.5fr 1fr 1.5fr 1fr 1fr' }}>
-                            <span>Name</span>
-                            <span>University</span>
-                            <span>Trainee Type</span>
-                            <span>Unit</span>
-                            <span>Status</span>
-                        </div>
-                        <div className="table-body">
-                            {filteredTrainees.length > 0 ? filteredTrainees.map((trainee) => (
-                                <div
-                                    key={trainee.id}
-                                    className="table-row premium-row"
-                                    style={{ gridTemplateColumns: '1.5fr 1fr 1.5fr 1fr 1fr', marginBottom: '8px' }}
+                        {/* ── Filters Section ── */}
+                        <div className="filter-section">
+                            <div className="filter-row">
+                                <input
+                                    type="text"
+                                    placeholder="🔍  Search by name or university..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="search-input"
+                                />
+                                <button
+                                    type="button"
+                                    className={`filters-toggle-btn ${showFilters ? "open" : ""}`}
+                                    onClick={() => setShowFilters(!showFilters)}
                                 >
-                                    <span style={{ fontWeight: 800, color: '#2c3e50' }}>{trainee.name}</span>
-                                    <span style={{ color: '#5a738e' }}>{trainee.university || "-"}</span>
-                                    <span>{trainee.type || "-"}</span>
-                                    <span>{trainee.unit || "General"}</span>
-                                    <span className={`status ${trainee.status === 'Completed' ? 'approved' : trainee.status === 'Pending' ? 'pending' : 'approved'}`} style={{ width: 'fit-content' }}>
-                                        {trainee.status || "Active"}
-                                    </span>
+                                    <Filter size={16} />
+                                    <span>Filters</span>
+                                    {activeFilterCount > 0 && (
+                                        <span className="filter-badge">{activeFilterCount}</span>
+                                    )}
+                                    <ChevronDown size={14} className={`chevron ${showFilters ? "rotated" : ""}`} />
+                                </button>
+                            </div>
+
+                            {showFilters && (
+                                <div className="filters-panel">
+                                    <select className="filter-select" value={filters.type} onChange={(e) => handleFilterChange("type", e.target.value)}>
+                                        <option value="">Trainee Type</option>
+                                        {traineeTypes.map(t => <option key={t}>{t}</option>)}
+                                    </select>
+                                    <select className="filter-select" value={filters.unit} onChange={(e) => handleFilterChange("unit", e.target.value)}>
+                                        <option value="">Unit</option>
+                                        {units.map(u => <option key={u}>{u}</option>)}
+                                    </select>
+                                    <select className="filter-select" value={filters.status} onChange={(e) => handleFilterChange("status", e.target.value)}>
+                                        <option value="">Status</option>
+                                        {statuses.map(s => <option key={s}>{s}</option>)}
+                                    </select>
                                 </div>
-                            )) : (
-                                <div style={{ textAlign: 'center', padding: '50px', color: '#8ea2b5' }}>No trainees found matching your criteria.</div>
                             )}
+
+                            <div className="filter-actions">
+                                <div className="active-filters">
+                                    <span className="results-count">
+                                        {filteredTrainees.length} result{filteredTrainees.length !== 1 ? "s" : ""}
+                                    </span>
+                                    {filters.type && <span className="filter-chip">{filters.type}<button onClick={() => handleFilterChange("type", "")}>✕</button></span>}
+                                    {filters.unit && <span className="filter-chip">{filters.unit}<button onClick={() => handleFilterChange("unit", "")}>✕</button></span>}
+                                    {filters.status && <span className="filter-chip">{filters.status}<button onClick={() => handleFilterChange("status", "")}>✕</button></span>}
+                                    {(filters.type || filters.unit || filters.status || search) && (
+                                        <button className="clear-btn" onClick={clearAll}>Clear all</button>
+                                    )}
+                                </div>
+                                <button className="report-btn" onClick={generatePDF}>Generate Report</button>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                </>
+
+                        {/* ── Table ── */}
+                        <div className="table-box content-box">
+                            <div className="table-header-row">
+                                <h2 className="table-title">Trainees Information</h2>
+                                <select className="sort-select" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+                                    <option value="az">Sort By Name: A → Z</option>
+                                    <option value="za">Sort By Name: Z → A</option>
+                                </select>
+                            </div>
+
+                            <div className="list-header" style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1fr" }}>
+                                <span>Name</span>
+                                <span>University</span>
+                                <span>Trainee Type</span>
+                                <span>Unit</span>
+                                <span>Status</span>
+                            </div>
+
+                            <div className="nurses-list">
+                                {filteredTrainees.length > 0 ? filteredTrainees.map((trainee) => (
+                                    <div
+                                        key={trainee.id}
+                                        className="nurse-card premium-row"
+                                        style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1fr" }}
+                                    >
+                                        <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{trainee.name}</div>
+                                        <div style={{ color: "var(--text-secondary)" }}>{trainee.university || "—"}</div>
+                                        <div>{trainee.type || "—"}</div>
+                                        <div>{trainee.unit || "General"}</div>
+                                        <span className={`status ${getStatusClass(trainee.status)}`}>
+                                            {trainee.status || "Active"}
+                                        </span>
+                                    </div>
+                                )) : (
+                                    <div style={{ textAlign: "center", padding: "60px", color: "var(--text-muted)" }}>
+                                        No trainees found matching your criteria.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
                 )}
             </div>
+
+            {/* ── Add New Trainee Modal ── */}
+            {showModal && (
+                <div
+                    style={{
+                        position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.45)",
+                        zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center",
+                        backdropFilter: "blur(4px)"
+                    }}
+                    onClick={() => setShowModal(false)}
+                >
+                    <div
+                        style={{
+                            background: "white", borderRadius: "16px", width: "520px", maxWidth: "92%",
+                            padding: "32px", boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+                            maxHeight: "90vh", overflowY: "auto"
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                            <div>
+                                <h2 style={{ margin: 0, fontSize: "20px", color: "var(--text-primary)", fontWeight: 700 }}>
+                                    Add New Trainee
+                                </h2>
+                                <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--text-secondary)" }}>
+                                    Fill in the details to register a new trainee
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowModal(false)}
+                                style={{
+                                    background: "rgba(0,0,0,0.06)", border: "none", borderRadius: "50%",
+                                    width: "36px", height: "36px", cursor: "pointer", display: "flex",
+                                    alignItems: "center", justifyContent: "center", transition: "background 0.2s"
+                                }}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAddTrainee} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+                            {/* Full Name */}
+                            <div>
+                                <label style={labelStyle}>Full Name <span style={{ color: "#e53935" }}>*</span></label>
+                                <input
+                                    type="text"
+                                    className="search-input"
+                                    style={inputStyle}
+                                    placeholder="e.g. Noura Al-Sudairi"
+                                    value={form.name}
+                                    onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                                />
+                            </div>
+
+                            {/* University */}
+                            <div>
+                                <label style={labelStyle}>University <span style={{ color: "#e53935" }}>*</span></label>
+                                <input
+                                    type="text"
+                                    className="search-input"
+                                    style={inputStyle}
+                                    placeholder="e.g. Imam Abdulrahman Bin Faisal University"
+                                    value={form.university}
+                                    onChange={e => setForm(p => ({ ...p, university: e.target.value }))}
+                                />
+                            </div>
+
+                            {/* Trainee Type + Unit */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                                <div>
+                                    <label style={labelStyle}>Trainee Type</label>
+                                    <select
+                                        className="search-input"
+                                        style={inputStyle}
+                                        value={form.program}
+                                        onChange={e => setForm(p => ({ ...p, program: e.target.value }))}
+                                    >
+                                        {TRAINEE_TYPES.map(t => <option key={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Unit</label>
+                                    <select
+                                        className="search-input"
+                                        style={inputStyle}
+                                        value={form.unit}
+                                        onChange={e => setForm(p => ({ ...p, unit: e.target.value }))}
+                                    >
+                                        {UNIT_OPTIONS.map(u => <option key={u}>{u}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Status */}
+                            <div>
+                                <label style={labelStyle}>Status</label>
+                                <select
+                                    className="search-input"
+                                    style={inputStyle}
+                                    value={form.status}
+                                    onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
+                                >
+                                    {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Start Date + End Date */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                                <div>
+                                    <label style={labelStyle}>Start Date</label>
+                                    <input
+                                        type="date"
+                                        className="search-input"
+                                        style={inputStyle}
+                                        value={form.start_date}
+                                        onChange={e => setForm(p => ({ ...p, start_date: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>End Date</label>
+                                    <input
+                                        type="date"
+                                        className="search-input"
+                                        style={inputStyle}
+                                        value={form.end_date}
+                                        onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Error message */}
+                            {formError && (
+                                <div style={{
+                                    background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.25)",
+                                    borderRadius: "10px", padding: "10px 14px", color: "#c62828", fontSize: "13px"
+                                }}>
+                                    {formError}
+                                </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "8px" }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowModal(false)}
+                                    style={{
+                                        padding: "10px 24px", borderRadius: "10px", border: "1px solid rgba(0,0,0,0.12)",
+                                        background: "white", cursor: "pointer", fontSize: "14px",
+                                        fontWeight: 600, color: "var(--text-secondary)", transition: "background 0.2s"
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="add-nurse-btn"
+                                    style={{ padding: "10px 28px", fontSize: "14px", opacity: saving ? 0.7 : 1 }}
+                                >
+                                    {saving ? "Saving..." : "Add Trainee"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 }
+
+const labelStyle = {
+    display: "block",
+    fontSize: "12px",
+    fontWeight: 700,
+    color: "var(--text-secondary)",
+    marginBottom: "6px",
+    textTransform: "uppercase",
+    letterSpacing: "0.4px"
+};
+
+const inputStyle = {
+    width: "100%",
+    boxSizing: "border-box",
+    marginTop: 0
+};

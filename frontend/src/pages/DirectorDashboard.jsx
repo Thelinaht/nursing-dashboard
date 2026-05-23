@@ -605,7 +605,10 @@ export default function DirectorDashboard() {
             </div>
 
             {/* Card 4: Training Compliance Card */}
-            <div className={`glass-card ${Number(kpis.training_compliance) >= 80 ? 'green' : 'yellow'}`} style={{ flex: 1, minWidth: '260px', padding: '20px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '145px' }}>
+            <div className={`glass-card ${
+              Number(kpis.training_compliance) >= 80 ? 'green' :
+              Number(kpis.training_compliance) >= 50 ? 'yellow' : 'red'
+            }`} style={{ flex: 1, minWidth: '260px', padding: '20px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '145px' }}>
               <p style={{ margin: '0 0 12px 0', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}><CheckCircle size={16} /> Training Compliance</p>
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, width: '100%' }}>
                 <h1 style={{ fontSize: '36px', fontWeight: 800, margin: 0, textAlign: 'center', lineHeight: 1.1 }}>

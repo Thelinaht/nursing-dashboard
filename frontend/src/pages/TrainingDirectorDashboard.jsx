@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Users, Activity, Award, ClipboardCheck, AlertTriangle, BookOpen,
   Calendar, GraduationCap, TrendingUp, Download, ArrowLeft, ArrowRight,
-  Filter, CheckCircle, Clock, Loader, X
+  Filter, CheckCircle, Clock, Loader, X, Edit, Plus, Edit3
 } from "lucide-react";
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar,
@@ -46,21 +46,149 @@ export default function TrainingDirectorDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalData, setModalData] = useState(null);
+  
+  // Editing states
+  const [editModalData, setEditModalData] = useState(null);
+  const [editFields, setEditFields] = useState({});
+
+  // Certification panel filter
+  const [certView, setCertView] = useState("specific"); // "general" | "specific"
+  // Cert-by-unit chart selected cert
+  const [selectedCert, setSelectedCert] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:4000/api/training/dashboard/data");
+      const data = await res.json();
+      setDashboardData(data);
+    } catch (err) {
+      console.error("Failed to load dashboard data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch("http://localhost:4000/api/training/dashboard/data");
-        const data = await res.json();
-        setDashboardData(data);
-      } catch (err) {
-        console.error("Failed to load dashboard data", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
+
+  const handleEditClick = (type, id, initialData) => {
+    setEditModalData({ type, id, title: getEditModalTitle(type, initialData) });
+    setEditFields(initialData || {});
+  };
+
+  const getEditModalTitle = (type, data) => {
+    switch(type) {
+      case "mandatory": return `Edit Mandatory Trainings: ${data.name}`;
+      case "competency": return `Edit Competency: ${data.nurse} - ${data.competency}`;
+      case "add_competency": return "Add Clinical Competency";
+      case "certification": return `Edit Certification: ${data.traineeName}`;
+      case "add_certification": return "Add Certification & License Tracking";
+      case "onboarding": return `Edit Onboarding: ${data.name}`;
+      case "intern": return `Edit Intern Placement: ${data.name}`;
+      case "add_intern": return "Add Intern / Trainee";
+      default: return "Edit Record";
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    setSavingEdit(true);
+    try {
+      const type = editModalData.type;
+      const id = editModalData.id;
+      
+      let bodyData = {};
+      if (type === "mandatory") {
+        bodyData = {
+          type: "mandatory",
+          id: id,
+          fields: {
+            "Saudi Council": { expiry_date: editFields.saudiCouncilExpiry, status: editFields.saudiCouncilStatus },
+            "BLS": { expiry_date: editFields.blsExpiry, status: editFields.blsStatus },
+            "Fire and Safety": { expiry_date: editFields.fireSafetyExpiry, status: editFields.fireSafetyStatus },
+            "Infection Control": { expiry_date: editFields.infectionControlExpiry, status: editFields.infectionControlStatus },
+            "Medication Safety Program": { expiry_date: editFields.medicationSafetyExpiry, status: editFields.medicationSafetyStatus },
+            "BISCL": { expiry_date: editFields.bisclExpiry, status: editFields.bisclStatus },
+            "FMS": { status: editFields.fmsStatus }
+          }
+        };
+      } else if (type === "competency" || type === "add_competency") {
+        bodyData = {
+          type: "competency",
+          id: type === "add_competency" ? editFields.nurse_id : id,
+          fields: {
+            training_id: editFields.training_id,
+            status: editFields.status,
+            renewal: editFields.renewal,
+            action: editFields.action
+          }
+        };
+      } else if (type === "certification" || type === "add_certification") {
+        // Auto-derive status from expiry date
+        const expiryDate = editFields.expiry ? new Date(editFields.expiry) : null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const derivedStatus = expiryDate && expiryDate < today ? 'Expired' : (editFields.uploadStatus || 'Active');
+
+        bodyData = {
+          type: "certification",
+          id: type === "add_certification" ? "new" : id,
+          fields: {
+            trainee_id: editFields.trainee_id,
+            name: editFields.name,
+            number: editFields.number,
+            expiry: editFields.expiry,
+            compliance: editFields.compliance,
+            uploadStatus: derivedStatus,
+            scope: editFields.scope || 'General'
+          }
+        };
+      } else if (type === "onboarding") {
+        bodyData = {
+          type: "onboarding",
+          id: id,
+          fields: {
+            role: editFields.role,
+            preceptor: editFields.preceptor,
+            progress: Number(editFields.progress || 0),
+            evalScore: editFields.evalScore
+          }
+        };
+      } else if (type === "intern" || type === "add_intern") {
+        bodyData = {
+          type: "intern",
+          id: type === "add_intern" ? "new" : id,
+          fields: {
+            name: editFields.name,
+            university: editFields.university,
+            program: editFields.program,
+            status: editFields.status
+          }
+        };
+      }
+
+      const res = await fetch("http://localhost:4000/api/training/dashboard/update-row", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyData)
+      });
+      const resData = await res.json();
+      if (resData.success) {
+        alert("Saved ✅");
+        setEditModalData(null);
+        fetchData();
+      } else {
+        alert("❌ Save failed: " + (resData.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error saving data");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const renderProgressBar = (progress) => {
     let color = "#4caf50";
@@ -101,21 +229,339 @@ export default function TrainingDirectorDashboard() {
     );
   };
 
+  const renderEditModal = () => {
+    if (!editModalData) return null;
+    const { type, id, title } = editModalData;
+
+    const nursesList = (dashboardData?.mandatoryTrainings || []).map(t => ({ id: t.id, name: t.name }));
+    const programsList = (dashboardData?.programs || []).filter(p => p.training_category === 'Competency');
+
+    return (
+      <div className="modal-overlay" onClick={() => setEditModalData(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1001, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="modal-content glass-card" onClick={e => e.stopPropagation()} style={{ background: '#fff', width: '550px', maxWidth: '90%', padding: '25px', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+            <h2 style={{ fontSize: '18px', color: '#2c3e50', margin: 0 }}>{title}</h2>
+            <button className="icon-btn-small" onClick={() => setEditModalData(null)}><X size={20} /></button>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', overflowY: 'auto', maxHeight: '60vh', padding: '5px' }}>
+            
+            {type === "mandatory" && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p style={{ margin: 0, fontSize: '12px', color: '#7f8c8d' }}>Update mandatory training status and expiry dates for <b>{editFields.name}</b>:</p>
+                
+                <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Saudi Council License</label>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                    <input type="date" className="input-pill" style={{ flex: 1 }} value={editFields.saudiCouncilExpiry || ''} onChange={e => setEditFields(prev => ({ ...prev, saudiCouncilExpiry: e.target.value }))} />
+                    <select className="input-pill" style={{ flex: 1 }} value={editFields.saudiCouncilStatus || 'Valid'} onChange={e => setEditFields(prev => ({ ...prev, saudiCouncilStatus: e.target.value }))}>
+                      <option value="Valid">Valid</option>
+                      <option value="Expired">Expired</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>BLS Certificate</label>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                    <input type="date" className="input-pill" style={{ flex: 1 }} value={editFields.blsExpiry || ''} onChange={e => setEditFields(prev => ({ ...prev, blsExpiry: e.target.value }))} />
+                    <select className="input-pill" style={{ flex: 1 }} value={editFields.blsStatus || 'Pending'} onChange={e => setEditFields(prev => ({ ...prev, blsStatus: e.target.value }))}>
+                      <option value="Completed">Completed</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Expired">Expired</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Fire and Safety</label>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                    <input type="date" className="input-pill" style={{ flex: 1 }} value={editFields.fireSafetyExpiry || ''} onChange={e => setEditFields(prev => ({ ...prev, fireSafetyExpiry: e.target.value }))} />
+                    <select className="input-pill" style={{ flex: 1 }} value={editFields.fireSafetyStatus || 'Pending'} onChange={e => setEditFields(prev => ({ ...prev, fireSafetyStatus: e.target.value }))}>
+                      <option value="Completed">Completed</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Expired">Expired</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Infection Control</label>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                    <input type="date" className="input-pill" style={{ flex: 1 }} value={editFields.infectionControlExpiry || ''} onChange={e => setEditFields(prev => ({ ...prev, infectionControlExpiry: e.target.value }))} />
+                    <select className="input-pill" style={{ flex: 1 }} value={editFields.infectionControlStatus || 'Pending'} onChange={e => setEditFields(prev => ({ ...prev, infectionControlStatus: e.target.value }))}>
+                      <option value="Completed">Completed</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Expired">Expired</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Medication Safety Program</label>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                    <input type="date" className="input-pill" style={{ flex: 1 }} value={editFields.medicationSafetyExpiry || ''} onChange={e => setEditFields(prev => ({ ...prev, medicationSafetyExpiry: e.target.value }))} />
+                    <select className="input-pill" style={{ flex: 1 }} value={editFields.medicationSafetyStatus || 'Pending'} onChange={e => setEditFields(prev => ({ ...prev, medicationSafetyStatus: e.target.value }))}>
+                      <option value="Completed">Completed</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Expired">Expired</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>BISCL</label>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                    <input type="date" className="input-pill" style={{ flex: 1 }} value={editFields.bisclExpiry || ''} onChange={e => setEditFields(prev => ({ ...prev, bisclExpiry: e.target.value }))} />
+                    <select className="input-pill" style={{ flex: 1 }} value={editFields.bisclStatus || 'Pending'} onChange={e => setEditFields(prev => ({ ...prev, bisclStatus: e.target.value }))}>
+                      <option value="Completed">Completed</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Expired">Expired</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>FMS Status</label>
+                  <div style={{ marginTop: '5px' }}>
+                    <select className="input-pill" style={{ width: '100%' }} value={editFields.fmsStatus || '✓'} onChange={e => setEditFields(prev => ({ ...prev, fmsStatus: e.target.value }))}>
+                      <option value="✓">Completed (✓)</option>
+                      <option value="—">Pending (—)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {(type === "competency" || type === "add_competency") && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {type === "add_competency" ? (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Select Trainee</label>
+                    <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.nurse_id || ''} onChange={e => setEditFields(prev => ({ ...prev, nurse_id: e.target.value }))}>
+                      <option value="">-- Choose Trainee --</option>
+                      {nursesList.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Trainee</label>
+                    <input className="input-pill" style={{ width: '100%', marginTop: '5px', background: '#f5f7fa' }} value={editFields.nurse || ''} disabled />
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Competency / Program</label>
+                  {type === "add_competency" ? (
+                    <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.training_id || ''} onChange={e => setEditFields(prev => ({ ...prev, training_id: e.target.value }))}>
+                      <option value="">-- Choose Competency --</option>
+                      {programsList.map(p => <option key={p.training_id} value={p.training_id}>{p.training_name}</option>)}
+                    </select>
+                  ) : (
+                    <input className="input-pill" style={{ width: '100%', marginTop: '5px', background: '#f5f7fa' }} value={editFields.competency || ''} disabled />
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Status</label>
+                    <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.status || 'Pending'} onChange={e => setEditFields(prev => ({ ...prev, status: e.target.value }))}>
+                      <option value="Completed">Completed</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Expired">Expired</option>
+                      <option value="Overdue">Overdue</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Renewal Date</label>
+                    <input type="date" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.renewal || ''} onChange={e => setEditFields(prev => ({ ...prev, renewal: e.target.value }))} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Recommendation & Action Plan</label>
+                  <textarea className="input-pill" style={{ width: '100%', height: '80px', marginTop: '5px', borderRadius: '8px', padding: '10px', resize: 'vertical' }} value={editFields.action || ''} onChange={e => setEditFields(prev => ({ ...prev, action: e.target.value }))} placeholder="e.g. Re-verify by clinical supervisor next shift." />
+                </div>
+              </div>
+            )}
+
+            {(type === "certification" || type === "add_certification") && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {type === "add_certification" ? (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Select Trainee Name</label>
+                    <input type="text" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.traineeName || ''} onChange={e => setEditFields(prev => ({ ...prev, traineeName: e.target.value }))} placeholder="Enter trainee full name" />
+                    
+                    <div style={{ marginTop: '5px', display: 'flex', gap: '5px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', color: '#7f8c8d' }}>Link to Trainee:</span>
+                      <select className="input-pill" style={{ fontSize: '11px', padding: '2px 8px', height: '24px' }} value={editFields.trainee_id || ''} onChange={e => {
+                        const sel = (dashboardData?.internRequests || []).find(r => String(r.id) === e.target.value);
+                        setEditFields(prev => ({ ...prev, trainee_id: e.target.value, traineeName: sel ? sel.name : prev.traineeName }));
+                      }}>
+                        <option value="">-- Choose Trainee Link --</option>
+                        {(dashboardData?.internRequests || []).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Trainee Name</label>
+                    <input className="input-pill" style={{ width: '100%', marginTop: '5px', background: '#f5f7fa' }} value={editFields.traineeName || ''} disabled />
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Certificate Name</label>
+                  <input type="text" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.name || ''} onChange={e => setEditFields(prev => ({ ...prev, name: e.target.value }))} placeholder="e.g. Saudi Council License" />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Cert Number</label>
+                    <input type="text" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.number || ''} onChange={e => setEditFields(prev => ({ ...prev, number: e.target.value }))} placeholder="e.g. CERT-101" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Expiry Date</label>
+                    <input type="date" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.expiry || ''} onChange={e => setEditFields(prev => ({ ...prev, expiry: e.target.value }))} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Compliance %</label>
+                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.compliance || ''} onChange={e => setEditFields(prev => ({ ...prev, compliance: e.target.value }))} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Status</label>
+                    <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.uploadStatus || 'Pending'} onChange={e => setEditFields(prev => ({ ...prev, uploadStatus: e.target.value }))}>
+                      <option value="Active">Active / Verified</option>
+                      <option value="Pending">Pending Approval</option>
+                      <option value="Expired">Expired</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Scope</label>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                    {['General', 'Specific'].map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setEditFields(prev => ({ ...prev, scope: s }))}
+                        style={{
+                          flex: 1, padding: '10px', borderRadius: '10px', border: '2px solid',
+                          borderColor: (editFields.scope || 'General') === s ? 'var(--accent-blue)' : '#e0e0e0',
+                          background: (editFields.scope || 'General') === s ? 'rgba(59,130,246,0.08)' : 'white',
+                          color: (editFields.scope || 'General') === s ? 'var(--accent-blue)' : '#7f8c8d',
+                          fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                      >
+                        {s === 'General' ? '🌐 General' : '🎯 Specific'}
+                        <div style={{ fontSize: '10px', fontWeight: 400, marginTop: '2px', color: 'inherit', opacity: 0.8 }}>
+                          {s === 'General' ? 'All nurses' : 'Unit / specialty'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {type === "onboarding" && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>New Hire</label>
+                  <input className="input-pill" style={{ width: '100%', marginTop: '5px', background: '#f5f7fa' }} value={editFields.name || ''} disabled />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Role</label>
+                    <input type="text" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.role || ''} onChange={e => setEditFields(prev => ({ ...prev, role: e.target.value }))} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Preceptor</label>
+                    <input type="text" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.preceptor || ''} onChange={e => setEditFields(prev => ({ ...prev, preceptor: e.target.value }))} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Completion %</label>
+                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.progress || ''} onChange={e => setEditFields(prev => ({ ...prev, progress: e.target.value }))} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Eval Score</label>
+                    <input type="text" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.evalScore || 'Pending'} onChange={e => setEditFields(prev => ({ ...prev, evalScore: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {(type === "intern" || type === "add_intern") && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Applicant Name</label>
+                  <input type="text" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.name || ''} onChange={e => setEditFields(prev => ({ ...prev, name: e.target.value }))} placeholder="e.g. Noura Al-Sudairi" />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>University</label>
+                  <input type="text" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.university || ''} onChange={e => setEditFields(prev => ({ ...prev, university: e.target.value }))} placeholder="e.g. Imam Abdulrahman Bin Faisal University (IAU)" />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Program</label>
+                    <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.program || 'Intern'} onChange={e => setEditFields(prev => ({ ...prev, program: e.target.value }))}>
+                      <option value="Intern">Intern</option>
+                      <option value="Student Nurse">Student Nurse</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Status</label>
+                    <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.status || 'Active'} onChange={e => setEditFields(prev => ({ ...prev, status: e.target.value }))}>
+                      <option value="Active">Active</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '25px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
+            <button className="save-btn" style={{ background: '#7f8c8d' }} onClick={() => setEditModalData(null)}>Cancel</button>
+            <button className="save-btn" onClick={handleSaveEdit} disabled={savingEdit}>
+              {savingEdit ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Layout role="trainingDirector" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Training Director"}>
       <div className="main training-dashboard-container" style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
 
-        {/* Navigation Controls */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-          <button className="icon-btn-small" onClick={() => navigate(-1)} title="Back">
-            <ArrowLeft size={18} />
-          </button>
-          <button className="icon-btn-small" onClick={() => navigate(1)} title="Forward">
-            <ArrowRight size={18} />
-          </button>
-        </div>
 
-        {/* Loading State */}
+{/* Loading State */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '100px 0' }}>
             <Loader className="spin" size={40} color="var(--accent-blue)" />
@@ -130,7 +576,10 @@ export default function TrainingDirectorDashboard() {
                 <h1>{dashboardData?.stats?.totalTrained || 0}</h1>
               </div>
 
-              <div className="glass-card green">
+              <div className={`glass-card ${
+                Number(dashboardData?.stats?.compliance) >= 80 ? 'green' :
+                Number(dashboardData?.stats?.compliance) >= 50 ? 'yellow' : 'red'
+              }`}>
                 <p><CheckCircle size={22} /> Compliance</p>
                 <h1>{dashboardData?.stats?.compliance || 0}%</h1>
               </div>
@@ -139,9 +588,9 @@ export default function TrainingDirectorDashboard() {
                 onClick={() => setModalData({
                   title: "Expiring & Expired Certificates",
                   gridColumns: "2fr 1fr 1fr",
-                  headers: ["Nurse Name", "Certificate", "Expiry / Status"],
+                  headers: ["Trainee Name", "Certificate", "Expiry / Status"],
                   items: (dashboardData?.certTracker || []).filter(c => c.uploadStatus === 'Expired' || new Date(c.expiry) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-                  renderRow: (item) => <><span style={{ fontWeight: 600 }}>{item.nurseName || 'Unknown'}</span><span style={{ color: '#e53935' }}>{item.name}</span><span style={{ fontWeight: 'bold', color: '#e53935' }}>{item.uploadStatus === 'Expired' ? 'Expired' : item.expiry}</span></>
+                  renderRow: (item) => <><span style={{ fontWeight: 600 }}>{item.traineeName || 'Unknown'}</span><span style={{ color: '#e53935' }}>{item.name}</span><span style={{ fontWeight: 'bold', color: '#e53935' }}>{item.uploadStatus === 'Expired' ? 'Expired' : item.expiry}</span></>
                 })}>
                 <p><AlertTriangle size={22} /> Expiring Certs</p>
                 <h1>{dashboardData?.stats?.expiring || 0}</h1>
@@ -149,9 +598,9 @@ export default function TrainingDirectorDashboard() {
 
               <div className="glass-card yellow clickable-card"
                 onClick={() => setModalData({
-                  title: "Nurses with Overdue Mandatory Training",
+                  title: "Trainees with Overdue Mandatory Training",
                   gridColumns: "1fr",
-                  headers: ["Nurse Name"],
+                  headers: ["Trainee Name"],
                   items: (dashboardData?.mandatoryTrainings || []).filter(m => m.isRed),
                   renderRow: (item) => <span style={{ fontWeight: 600, color: '#e65100' }}>{item.name}</span>
                 })}>
@@ -201,7 +650,27 @@ export default function TrainingDirectorDashboard() {
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {(dashboardData?.mandatoryTrainings || []).map((t) => (
                       <div className="table-row premium-row" key={t.id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1fr 1fr 1fr 0.5fr', padding: '10px 5px', fontSize: '11px' }}>
-                        <span style={{ fontWeight: 600, color: t.isRed ? '#e53935' : 'inherit' }}>{t.name}</span>
+                        <span style={{ fontWeight: 600, color: t.isRed ? '#e53935' : 'inherit', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {t.name}
+                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} title="Edit Trainings" onClick={() => handleEditClick("mandatory", t.id, {
+                            name: t.name,
+                            saudiCouncilExpiry: t.saudiCouncil?.split("T")[0] || "",
+                            saudiCouncilStatus: t.saudiCouncil ? "Valid" : "Expired",
+                            blsExpiry: t.bls?.split("T")[0] || "",
+                            blsStatus: t.bls ? "Completed" : "Pending",
+                            fireSafetyExpiry: t.fireSafety?.split("T")[0] || "",
+                            fireSafetyStatus: t.fireSafety ? "Completed" : "Pending",
+                            infectionControlExpiry: t.infectionControl?.split("T")[0] || "",
+                            infectionControlStatus: t.infectionControl ? "Completed" : "Pending",
+                            medicationSafetyExpiry: t.medicationSafety?.split("T")[0] || "",
+                            medicationSafetyStatus: t.medicationSafety ? "Completed" : "Pending",
+                            bisclExpiry: t.biscl?.split("T")[0] || "",
+                            bisclStatus: t.biscl ? "Completed" : "Pending",
+                            fmsStatus: t.fms === "✓" ? "✓" : "—"
+                          })}>
+                            <Edit size={11} color="var(--accent-blue)" />
+                          </button>
+                        </span>
                         <span style={{ color: t.isRed && t.saudiCouncil?.includes('2024') ? '#e53935' : 'inherit' }}>{t.saudiCouncil || '—'}</span>
                         <span style={{ color: t.isRed && t.bls?.includes('2024') ? '#e53935' : 'inherit' }}>{t.bls || '—'}</span>
                         <span style={{ color: t.isRed && t.fireSafety?.includes('2024') ? '#e53935' : 'inherit' }}>{t.fireSafety || '—'}</span>
@@ -270,11 +739,14 @@ export default function TrainingDirectorDashboard() {
               <div className="table-box content-box" style={{ flex: 2 }}>
                 <div className="box-header">
                   <h2 className="content-box-title">Clinical Competency Assessment</h2>
-                  <button className="icon-btn-small" title="Filter" onClick={() => alert("Filter functionality would open a modal here")}><Filter size={16} /></button>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <button className="icon-btn-small" title="Add Competency" onClick={() => handleEditClick("add_competency", "new", { status: 'Completed' })}><Plus size={16} /></button>
+                    <button className="icon-btn-small" title="Filter" onClick={() => alert("Filter functionality would open a modal here")}><Filter size={16} /></button>
+                  </div>
                 </div>
                 <div className="custom-table" style={{ marginTop: '10px' }}>
                   <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr' }}>
-                    <span>Nurse</span>
+                    <span>Trainee</span>
                     <span>Unit</span>
                     <span>Competency</span>
                     <span>Status</span>
@@ -282,9 +754,21 @@ export default function TrainingDirectorDashboard() {
                     <span>Recommendation</span>
                   </div>
                   <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                    {(dashboardData?.clinicalCompetencies || []).map((c) => (
-                      <div className="table-row premium-row" key={c.id} style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr', padding: '12px 10px', fontSize: '12px' }}>
-                        <span style={{ fontWeight: 500 }}>{c.nurse}</span>
+                    {(dashboardData?.clinicalCompetencies || []).map((c, idx) => (
+                      <div className="table-row premium-row" key={idx} style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr', padding: '12px 10px', fontSize: '12px' }}>
+                        <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {c.nurse}
+                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} title="Edit Competency" onClick={() => handleEditClick("competency", c.id, {
+                            nurse: c.nurse,
+                            competency: c.competency,
+                            training_id: c.training_id,
+                            status: c.status,
+                            renewal: c.renewal,
+                            action: c.action
+                          })}>
+                            <Edit size={11} color="var(--accent-blue)" />
+                          </button>
+                        </span>
                         <span>{c.specialty}</span>
                         <span>{c.competency}</span>
                         <span style={{ color: c.status === "Completed" ? "#4caf50" : "#ff9800", fontWeight: "bold" }}>{c.status}</span>
@@ -323,62 +807,199 @@ export default function TrainingDirectorDashboard() {
               <div className="table-box content-box" style={{ flex: 2 }}>
                 <div className="box-header">
                   <h2 className="content-box-title">Certification & License Tracking</h2>
-                  <button className="icon-btn-small" title="Export" onClick={() => window.print()}><Download size={16} /></button>
-                </div>
-                <div className="custom-table" style={{ marginTop: '10px' }}>
-                  <div className="table-header" style={{ gridTemplateColumns: '1fr 1.2fr 1.2fr 1fr 1fr' }}>
-                    <span>Cert Name</span>
-                    <span>Number</span>
-                    <span>Expiry Date</span>
-                    <span>Compliance %</span>
-                    <span>Status</span>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {/* General / Specific toggle */}
+                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.06)', borderRadius: '8px', padding: '3px', gap: '2px' }}>
+                      <button
+                        onClick={() => setCertView('general')}
+                        style={{
+                          padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
+                          cursor: 'pointer', transition: 'all 0.2s',
+                          background: certView === 'general' ? 'var(--accent-blue)' : 'transparent',
+                          color: certView === 'general' ? 'white' : 'var(--text-secondary)'
+                        }}
+                      >General</button>
+                      <button
+                        onClick={() => setCertView('specific')}
+                        style={{
+                          padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
+                          cursor: 'pointer', transition: 'all 0.2s',
+                          background: certView === 'specific' ? 'var(--accent-blue)' : 'transparent',
+                          color: certView === 'specific' ? 'white' : 'var(--text-secondary)'
+                        }}
+                      >Specific</button>
+                    </div>
+                    <button className="icon-btn-small" title="Add Certification" onClick={() => handleEditClick("add_certification", "new", { compliance: 100, uploadStatus: 'Active' })}><Plus size={16} /></button>
+                    <button className="icon-btn-small" title="Export" onClick={() => window.print()}><Download size={16} /></button>
                   </div>
-                  <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                    {(dashboardData?.certTracker || []).map((c) => (
-                      <div className="table-row premium-row" key={c.id} style={{ gridTemplateColumns: '1fr 1.2fr 1.2fr 1fr 1fr', padding: '12px 10px', fontSize: '12px' }}>
-                        <span style={{ fontWeight: 600 }}>{c.name}</span>
-                        <span>{c.number}</span>
-                        <span>{c.expiry}</span>
-                        <span>
-                          <span style={{ fontWeight: "bold", color: c.compliance > 90 ? "#4caf50" : "#ff9800" }}>{c.compliance}%</span>
-                        </span>
-                        <span className={`status ${c.uploadStatus === 'Verified' ? 'approved' : c.uploadStatus === 'Expired' ? 'rejected' : 'pending'}`} style={{ fontSize: '11px', padding: '4px 10px', width: 'fit-content', textAlign: 'center' }}>
-                          {c.uploadStatus}
-                        </span>
+                </div>
+
+                {/* ── Shared cert table: filtered by scope from Certification_License_Tracking ── */}
+                {(() => {
+                  const allCerts = dashboardData?.certTracker || [];
+                  // Filter by scope field (add scope column to DB: ALTER TABLE Certification_License_Tracking ADD COLUMN scope ENUM('General','Specific') DEFAULT 'General')
+                  const rows = allCerts.filter(c =>
+                    c.scope ? c.scope === (certView === 'general' ? 'General' : 'Specific') : true
+                  );
+                  return (
+                    <div className="custom-table" style={{ marginTop: '10px' }}>
+                      <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1.2fr 1.2fr 1fr 1fr' }}>
+                        <span>Trainee Name</span>
+                        <span>Cert Name</span>
+                        <span>Number</span>
+                        <span>Expiry Date</span>
+                        <span>Compliance %</span>
+                        <span>Status</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                        {rows.map(c => (
+                          <div className="table-row premium-row" key={c.id}
+                            style={{ gridTemplateColumns: '1.2fr 1fr 1.2fr 1.2fr 1fr 1fr', padding: '12px 10px', fontSize: '12px' }}>
+                            <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              {c.traineeName || '—'}
+                              <button className="icon-btn-small"
+                                style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                title="Edit Certificate"
+                                onClick={() => handleEditClick("certification", c.id, {
+                                  traineeName: c.traineeName, name: c.name, number: c.number,
+                                  expiry: c.expiry, compliance: c.compliance, uploadStatus: c.uploadStatus
+                                })}>
+                                <Edit size={11} color="var(--accent-blue)" />
+                              </button>
+                            </span>
+                            <span>{c.name || '—'}</span>
+                            <span>{c.number || '—'}</span>
+                            <span>{c.expiry || '—'}</span>
+                            <span style={{ fontWeight: 'bold', color: Number(c.compliance) >= 80 ? '#4caf50' : Number(c.compliance) >= 50 ? '#ff9800' : '#e53935' }}>
+                              {Number(c.compliance || 0).toFixed(0)}%
+                            </span>
+                            <span className={`status ${c.uploadStatus === 'Active' || c.uploadStatus === 'Verified' ? 'approved' : c.uploadStatus === 'Expired' ? 'rejected' : 'pending'}`}
+                              style={{ fontSize: '11px', padding: '4px 10px', width: 'fit-content', textAlign: 'center' }}>
+                              {c.uploadStatus || 'Pending'}
+                            </span>
+                          </div>
+                        ))}
+                        {rows.length === 0 && (
+                          <div style={{ textAlign: 'center', padding: '30px', color: '#8ea2b5' }}>
+                            No {certView} certifications found.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
-              {/* 5. Staff Participation & Attendance */}
+              {/* 5. Cert & Training Detail by Unit */}
               <div className="table-box content-box" style={{ flex: 1 }}>
                 <div className="box-header">
-                  <h2 className="content-box-title">Staff Participation & Attendance</h2>
+                  <h2 className="content-box-title">Cert &amp; Training by Unit</h2>
                 </div>
-                <div style={{ display: "flex", gap: "15px", marginTop: "10px" }}>
-                  <div style={{ flex: 1, background: "rgba(242, 157, 145, 0.15)", borderRadius: "8px", padding: "15px", textAlign: "center", border: "1px solid rgba(242, 157, 145, 0.3)" }}>
-                    <h3 style={{ color: "#e53935", fontSize: "24px", margin: 0 }}>4.2%</h3>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "12px", margin: 0, marginTop: "5px" }}>Overall No-Show Rate</p>
+
+                {/* stat tiles */}
+                <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                  <div style={{ flex: 1, background: "rgba(242,157,145,0.15)", borderRadius: "8px", padding: "12px", textAlign: "center", border: "1px solid rgba(242,157,145,0.3)" }}>
+                    <h3 style={{ color: "#e53935", fontSize: "22px", margin: 0 }}>
+                      {(dashboardData?.certTracker || []).filter(c => {
+                        if (c.uploadStatus === 'Expired') return true;
+                        if (c.expiry) { const exp = new Date(c.expiry); exp.setHours(0,0,0,0); const t = new Date(); t.setHours(0,0,0,0); return exp < t; }
+                        return false;
+                      }).length}
+                    </h3>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "11px", margin: "4px 0 0" }}>Expired Certs</p>
                   </div>
-                  <div style={{ flex: 1, background: "rgba(76, 175, 80, 0.15)", borderRadius: "8px", padding: "15px", textAlign: "center", border: "1px solid rgba(76, 175, 80, 0.3)" }}>
-                    <h3 style={{ color: "#4caf50", fontSize: "24px", margin: 0 }}>8.5h</h3>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "12px", margin: 0, marginTop: "5px" }}>Avg Training Hrs/Staff</p>
+                  <div style={{ flex: 1, background: "rgba(76,175,80,0.15)", borderRadius: "8px", padding: "12px", textAlign: "center", border: "1px solid rgba(76,175,80,0.3)" }}>
+                    <h3 style={{ color: "#4caf50", fontSize: "22px", margin: 0 }}>{dashboardData?.stats?.compliance ?? 0}%</h3>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "11px", margin: "4px 0 0" }}>Compliance Rate</p>
                   </div>
                 </div>
 
-                <div style={{ height: "140px", marginTop: "15px" }}>
-                  <p style={{ fontSize: "12px", color: "#8ea2b5", marginBottom: "5px", textAlign: "center" }}>Absentee Trend by Unit (%)</p>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={absenteeTrend} margin={{ top: 0, right: 0, left: -30, bottom: 0 }}>
-                      <XAxis dataKey="unit" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-                      <Bar dataKey="rate" fill="#f29d91" radius={[4, 4, 0, 0]} barSize={30} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {/* cert selector + stacked bar + detail table */}
+                {(() => {
+                  const raw = dashboardData?.certsByUnit || [];
+                  const allCerts = dashboardData?.certTracker || [];
+                  const certNames = [...new Set([
+                    ...raw.map(r => r.certName),
+                    ...allCerts.map(c => c.name)
+                  ])].filter(Boolean).sort();
+                  const activeCert = selectedCert || certNames[0] || '';
+
+                  // Stacked bar: group certTracker by unit → {unit, active, expired}
+                  const today = new Date(); today.setHours(0,0,0,0);
+                  const byUnit = {};
+                  allCerts.filter(c => c.name === activeCert).forEach(c => {
+                    const u = c.unit || 'Unassigned';
+                    if (!byUnit[u]) byUnit[u] = { unit: u, active: 0, expired: 0 };
+                    const isExpired = c.uploadStatus === 'Expired' || (c.expiry && new Date(c.expiry) < today);
+                    if (isExpired) byUnit[u].expired++;
+                    else byUnit[u].active++;
+                  });
+                  const chartData = Object.values(byUnit).sort((a, b) => (b.active + b.expired) - (a.active + a.expired));
+
+                  // Detail rows
+                  const detailRows = allCerts.filter(c => c.name === activeCert);
+
+                  return (
+                    <div style={{ marginTop: "12px" }}>
+                      {/* dropdown */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                        <p style={{ fontSize: "11px", color: "#8ea2b5", margin: 0, whiteSpace: "nowrap" }}>Certificate —</p>
+                        <select
+                          value={activeCert}
+                          onChange={e => setSelectedCert(e.target.value)}
+                          style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "6px", border: "1px solid #dde3ea", background: "white", color: "#243647", flex: 1 }}
+                        >
+                          {certNames.map(n => <option key={n} value={n}>{n}</option>)}
+                        </select>
+                      </div>
+
+                      {/* stacked bar */}
+                      {chartData.length > 0 ? (
+                        <div style={{ height: "110px" }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData} margin={{ top: 0, right: 0, left: -30, bottom: 0 }}>
+                              <XAxis dataKey="unit" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                              <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                              <Tooltip cursor={{ fill: "rgba(0,0,0,0.05)" }} formatter={(val, name) => [val, name === 'active' ? 'Active' : 'Expired']} />
+                              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                              <Bar dataKey="active" name="Active" stackId="a" fill="#4caf50" radius={[0,0,0,0]} barSize={28} />
+                              <Bar dataKey="expired" name="Expired" stackId="a" fill="#e53935" radius={[4,4,0,0]} barSize={28} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      ) : (
+                        <div style={{ textAlign: "center", padding: "15px 0", color: "#8ea2b5", fontSize: "12px" }}>No data for this certificate.</div>
+                      )}
+
+                      {/* detail table */}
+                      {detailRows.length > 0 && (
+                        <div style={{ marginTop: "10px" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr 1fr 0.8fr", padding: "6px 8px", background: "rgba(0,0,0,0.04)", borderRadius: "6px", fontSize: "10px", fontWeight: 700, color: "#5a738e", gap: "4px" }}>
+                            <span>Trainee</span><span>Unit</span><span>Expiry</span><span>Status</span>
+                          </div>
+                          <div style={{ maxHeight: "120px", overflowY: "auto" }}>
+                            {detailRows.map(c => {
+                              const isExp = c.uploadStatus === 'Expired' || (c.expiry && new Date(c.expiry) < today);
+                              return (
+                                <div key={c.id} style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr 1fr 0.8fr", padding: "7px 8px", borderBottom: "1px solid #f0f4f8", fontSize: "11px", alignItems: "center", gap: "4px" }}>
+                                  <span style={{ fontWeight: 600, color: "#243647" }}>{c.traineeName || '—'}</span>
+                                  <span style={{ color: "#5a738e" }}>{c.unit || '—'}</span>
+                                  <span style={{ color: isExp ? "#e53935" : "#243647" }}>{c.expiry || '—'}</span>
+                                  <span className={`status ${isExp ? 'rejected' : 'approved'}`} style={{ fontSize: "10px", padding: "3px 7px", width: "fit-content" }}>
+                                    {isExp ? 'Expired' : (c.uploadStatus || 'Active')}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
+
+
             </div>
 
             <div className="panel-row">
@@ -398,7 +1019,18 @@ export default function TrainingDirectorDashboard() {
                   <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
                     {(dashboardData?.onboardingData || []).map((o, idx) => (
                       <div className="table-row premium-row" key={idx} style={{ gridTemplateColumns: '1fr 0.5fr 1fr 1.5fr 1fr', padding: '12px 10px', fontSize: '12px', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 500 }}>{o.name}</span>
+                        <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {o.name}
+                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} title="Edit Onboarding" onClick={() => handleEditClick("onboarding", o.id, {
+                            name: o.name,
+                            role: o.role,
+                            preceptor: o.preceptor,
+                            progress: o.progress,
+                            evalScore: o.evalScore
+                          })}>
+                            <Edit size={11} color="var(--accent-blue)" />
+                          </button>
+                        </span>
                         <span>{o.role}</span>
                         <span>{o.preceptor}</span>
                         <div style={{ paddingRight: "15px" }}>
@@ -456,23 +1088,38 @@ export default function TrainingDirectorDashboard() {
                   <BookOpen size={18} color="var(--accent-blue)" />
                   <h2 className="content-box-title">Nursing Intern Management</h2>
                 </div>
+                <button className="icon-btn-small" title="Add Intern" onClick={() => handleEditClick("add_intern", "new", { program: 'Intern', status: 'Active' })}><Plus size={16} /></button>
               </div>
               <div style={{ display: "flex", gap: "20px", marginTop: "15px" }}>
 
                 {/* Intern Stats */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <div style={{ background: "rgba(96, 130, 230, 0.1)", padding: "15px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontWeight: 500, color: "#4a6a85" }}>IAU Interns</span>
-                    <span style={{ fontSize: "20px", fontWeight: "bold", color: "#6082e6" }}>45</span>
-                  </div>
-                  <div style={{ background: "rgba(156, 181, 241, 0.1)", padding: "15px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontWeight: 500, color: "#4a6a85" }}>Non-IAU Interns</span>
-                    <span style={{ fontSize: "20px", fontWeight: "bold", color: "#9cb5f1" }}>73</span>
-                  </div>
-                  <div style={{ background: "rgba(242, 157, 145, 0.1)", padding: "15px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontWeight: 500, color: "#4a6a85" }}>Summer Training</span>
-                    <span style={{ fontSize: "20px", fontWeight: "bold", color: "#f29d91" }}>22</span>
-                  </div>
+                  {(() => {
+                    const interns = dashboardData?.internRequests || [];
+                    const isIAU = (u) => u?.toLowerCase().includes('iau') || u?.toLowerCase().includes('imam abdulrahman');
+                    // IAU = any trainee (Intern or Student Nurse) from IAU university
+                    const iauCount    = interns.filter(r => isIAU(r.university)).length;
+                    // Non-IAU Interns = Interns from non-IAU universities
+                    const nonIauCount = interns.filter(r => r.program === 'Intern' && !isIAU(r.university)).length;
+                    // Summer Training = Student Nurses from non-IAU universities
+                    const summerCount = interns.filter(r => r.program === 'Student Nurse' && !isIAU(r.university)).length;
+                    return (
+                      <>
+                        <div style={{ background: "rgba(96, 130, 230, 0.1)", padding: "15px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: 500, color: "#4a6a85" }}>IAU Interns</span>
+                          <span style={{ fontSize: "20px", fontWeight: "bold", color: "#6082e6" }}>{iauCount}</span>
+                        </div>
+                        <div style={{ background: "rgba(156, 181, 241, 0.1)", padding: "15px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: 500, color: "#4a6a85" }}>Non-IAU Interns</span>
+                          <span style={{ fontSize: "20px", fontWeight: "bold", color: "#9cb5f1" }}>{nonIauCount}</span>
+                        </div>
+                        <div style={{ background: "rgba(242, 157, 145, 0.1)", padding: "15px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: 500, color: "#4a6a85" }}>Summer Training</span>
+                          <span style={{ fontSize: "20px", fontWeight: "bold", color: "#f29d91" }}>{summerCount}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Intern Requests Table */}
@@ -486,7 +1133,17 @@ export default function TrainingDirectorDashboard() {
                   <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
                     {(dashboardData?.internRequests || []).map((req) => (
                       <div className="table-row premium-row" key={req.id} style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr', padding: '12px 15px', fontSize: '13px' }}>
-                        <span style={{ fontWeight: 500 }}>{req.name}</span>
+                        <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {req.name}
+                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} title="Edit Intern" onClick={() => handleEditClick("intern", req.id, {
+                            name: req.name,
+                            university: req.university,
+                            program: req.program,
+                            status: req.status
+                          })}>
+                            <Edit size={11} color="var(--accent-blue)" />
+                          </button>
+                        </span>
                         <span>{req.university}</span>
                         <span style={{ color: "var(--text-secondary)" }}>{req.program}</span>
                         <span className={`status ${req.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '4px 10px', textAlign: 'center', width: 'fit-content' }}>
@@ -503,6 +1160,7 @@ export default function TrainingDirectorDashboard() {
         )}
 
         {renderModal()}
+        {renderEditModal()}
       </div>
     </Layout>
   );
