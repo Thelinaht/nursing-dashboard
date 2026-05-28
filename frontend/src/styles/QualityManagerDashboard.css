@@ -734,6 +734,8 @@ select.qd-input {
     line-height: 1;
     margin: 4px 0 8px;
     color: var(--accent-red);
+    width: 100%;
+    text-align: center;
 }
 
 .qd-falls-split {
