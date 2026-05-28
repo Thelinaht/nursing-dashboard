@@ -332,6 +332,54 @@
     background: rgba(220, 38, 38, 0.18);
 }
 
+.qd-icon-btn.qd-view {
+    background: rgba(14, 116, 144, 0.08);
+    color: #0e7490;
+}
+
+.qd-icon-btn.qd-view:hover {
+    background: rgba(14, 116, 144, 0.18);
+}
+
+/* ============================================================
+   View Modal Grid
+   ============================================================ */
+.qd-view-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 4px 0 8px;
+}
+
+.qd-view-field {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(51, 65, 85, 0.04);
+    border: 1px solid rgba(51, 65, 85, 0.09);
+    border-radius: var(--radius-sm);
+}
+
+.qd-view-field.qd-full {
+    grid-column: 1 / -1;
+}
+
+.qd-view-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.qd-view-value {
+    font-size: 14px;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
 /* ============================================================
    Charts Grid
    ============================================================ */
@@ -657,4 +705,76 @@ select.qd-input {
         flex-direction: column;
         align-items: stretch;
     }
+}
+
+/* ============================================================
+   Total Falls Card — split layout
+   ============================================================ */
+.qd-falls-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 20px 16px !important;
+    box-sizing: border-box;
+}
+
+.qd-falls-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-red);
+    opacity: 0.9;
+}
+
+.qd-falls-total {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    margin: 4px 0 8px;
+    color: var(--accent-red);
+}
+
+.qd-falls-split {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: rgba(220, 38, 38, 0.07);
+    border: 1px solid rgba(220, 38, 38, 0.12);
+    border-radius: 12px;
+    padding: 12px 0;
+    margin-top: auto;
+    box-sizing: border-box;
+}
+
+.qd-falls-split-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+}
+
+.qd-falls-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(220, 38, 38, 0.2);
+    flex-shrink: 0;
+}
+
+.qd-falls-num {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--accent-red);
+}
+
+.qd-falls-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #374151;
+    opacity: 0.85;
 }

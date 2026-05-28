@@ -1,4 +1,3 @@
-
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -22,6 +21,7 @@ const licenseRoutes = require("./routes/licenseRoutes");
 const researchRoutes = require("./routes/researchRoutes");
 const notificationsRoutes = require("./routes/notificationsRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const qualityRoutes = require("./routes/qualityRoutes");
 
 
 
@@ -112,6 +112,7 @@ app.use("/api/licenses", licenseRoutes);
 app.use("/api/research", researchRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/quality", qualityRoutes);
 
 
 
