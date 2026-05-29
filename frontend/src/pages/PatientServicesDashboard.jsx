@@ -55,11 +55,10 @@ export default function PatientServicesDashboard() {
     };
 
     return (
-        <Layout role="assistantDirector" username={user?.full_name || "Lina"}>
+        <Layout role="assistantDirector" username={user?.full_name}>
             <div className="psd-container">
                 <div className="psd-header">
-                    <h1>Patient Services Dashboard</h1>
-                    <p>Assistant Director of Nursing for Patient Services</p>
+                    <h1>Assistant Director Dashboard</h1>
                 </div>
 
                 {/* 1. Summary Cards */}
