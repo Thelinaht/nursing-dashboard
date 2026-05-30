@@ -1,8 +1,7 @@
-
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, ClipboardList, Activity, Download, Calculator, FileText, TrendingUp, AlertTriangle, AlertCircle, CheckCircle, X, Info, ChevronRight, FileDown } from "lucide-react";
+import RequestsTable from "../components/RequestsTable";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
@@ -94,7 +93,7 @@ export default function DirectorDashboard() {
         `"${row.status}"`
       ].join(','));
     });
-    
+
     // Add BOM for Excel UTF-8 compatibility
     const csvContent = '\uFEFF' + csvRows.join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -547,10 +546,10 @@ export default function DirectorDashboard() {
     <Layout role="director" username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Director"}>
       <div className="main">
         <div className="supervisor-container">
-          
+
           {/* Top KPI Grid */}
           <div className="rd-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '25px', width: '100%' }}>
-            
+
             {/* Card 1: Staffing Overview Card */}
             <div className="glass-card blue" style={{ flex: 1, minWidth: '260px', padding: '20px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '145px' }}>
               <p style={{ margin: '0 0 12px 0', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1E3A5F', fontWeight: 700 }}><Activity size={16} /> Staffing Overview</p>
@@ -623,20 +622,20 @@ export default function DirectorDashboard() {
           {/* Quick Actions */}
           <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)', fontWeight: '700', marginTop: '25px' }}>Quick Actions</h3>
           <div className="cards-row" style={{ marginBottom: '25px' }}>
-            <div className="glass-card blue clickable-card" 
-                 style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative', flex: 1 }}
-                 onClick={() => navigate('/inpatient-staffing')}>
-                <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>Inpatient Staffing</h2>
-                <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '320px', position: 'relative', zIndex: 2 }}>Manage daily inpatient staff census, ratios, and gaps.</p>
-                <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
+            <div className="glass-card blue clickable-card"
+              style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative', flex: 1 }}
+              onClick={() => navigate('/inpatient-staffing')}>
+              <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>Inpatient Staffing</h2>
+              <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '320px', position: 'relative', zIndex: 2 }}>Manage daily inpatient staff census, ratios, and gaps.</p>
+              <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
             </div>
 
-            <div className="glass-card blue clickable-card" 
-                 style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative', flex: 1 }}
-                 onClick={() => navigate('/ambulatory-staffing')}>
-                <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>Ambulatory Staffing</h2>
-                <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '320px', position: 'relative', zIndex: 2 }}>Manage daily ambulatory staff census, ratios, and gaps.</p>
-                <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
+            <div className="glass-card blue clickable-card"
+              style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative', flex: 1 }}
+              onClick={() => navigate('/ambulatory-staffing')}>
+              <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>Ambulatory Staffing</h2>
+              <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '320px', position: 'relative', zIndex: 2 }}>Manage daily ambulatory staff census, ratios, and gaps.</p>
+              <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
             </div>
           </div>
 
@@ -810,67 +809,19 @@ export default function DirectorDashboard() {
             );
           })()}
 
-          {/* Bottom Grid: Manage Requests (Interactive Feature) and Staff Directory */}
+          {/* Bottom Grid: Manage Requests and Staff Directory */}
           <div className="middle-section" style={{ marginTop: '20px' }}>
             {/* Manage Requests */}
             <div className="table-box content-box" style={{ flex: 1 }}>
-              <div className="box-header">
-                <h2 className="content-box-title">{showAllHistory ? "All Requests History" : "Pending Requests Management"}</h2>
-                <button
-                  className="btn-pill"
-                  style={{ background: 'var(--accent-blue)', color: 'white', gap: '5px' }}
-                  onClick={() => setShowAllHistory(!showAllHistory)}
-                >
-                  <FileText size={14} />
-                  {showAllHistory ? "Show Pending Only" : "View All History"}
-                </button>
-              </div>
-              <div className="custom-table" style={{ marginTop: '10px' }}>
-                <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1.5fr' }}>
-                  <span>Staff Name</span>
-                  <span>Request Type</span>
-                  <span>Submitted On</span>
-                  <span style={{ textAlign: 'center' }}>{showAllHistory ? "Status / Actions" : "Actions"}</span>
-                </div>
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                  {requests.length > 0 ? requests.map((req) => (
-                    <div className="table-row premium-row" key={req.request_id} style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1.5fr', padding: '12px 15px', marginBottom: '8px' }}>
-                      <span style={{ fontWeight: 500 }}>{req.full_name || `Nurse #${req.nurse_id}`}</span>
-                      <span style={{ color: 'var(--text-secondary)' }}>{req.request_type}</span>
-                      <span style={{ fontSize: '11px' }}>{new Date(req.submission_date).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
-                        {req.current_status === "Pending_Director" ? (
-                          <>
-                            <button
-                              className="btn-pill"
-                              style={{ backgroundColor: 'var(--accent-green)', color: 'white' }}
-                              onClick={() => handleDecision(req.request_id, "Approve")}
-                            >
-                              Approve
-                            </button>
-                            <button
-                              className="btn-pill"
-                              style={{ backgroundColor: 'var(--accent-red)', color: 'white' }}
-                              onClick={() => handleDecision(req.request_id, "Deny")}
-                            >
-                              Deny
-                            </button>
-                          </>
-                        ) : (
-                          <span className={`status ${req.current_status?.toLowerCase().replace("_", "-")}`} style={{ fontSize: '11px', padding: '4px 10px' }}>
-                            {req.current_status === "Pending" ? "Pending Supervisor" : (req.current_status === "Pending_Director" ? "Pending Director" : req.current_status)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )) : (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#8ea2b5' }}>
-                      {loading ? "Loading requests..." : "No requests found."}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <RequestsTable
+                requests={requests}
+                pendingStatus="Pending_Director"
+                apiEndpoint="/api/approvals/director"
+                modalTitle="Director Final Decision"
+                onRefresh={fetchRequests}
+                showHistory={showAllHistory}
+                onToggleHistory={() => setShowAllHistory(h => !h)}
+              />
             </div>
 
             {/* Staff Directory Preview */}
@@ -913,7 +864,7 @@ export default function DirectorDashboard() {
 
           {/* Bottom Row: Staffing Calculator & Nurse Satisfaction */}
           <div className="middle-section" style={{ marginTop: '20px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-            
+
             {/* Staffing Requirement Calculator */}
             <div className="table-box content-box" style={{ flex: 1, minWidth: '300px' }}>
               <div className="box-header">

@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-// ─── Icons ───────────────────────────────────────────────────────────────────
+// ─── Icons ────────────────────────────────────────────────────────────────────
 const I = {
   person: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
   dashboard: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>,
@@ -12,8 +12,6 @@ const I = {
   assign: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
   ratio: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>,
   report: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
-  calc: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><rect x="4" y="2" width="16" height="20" rx="2" /><line x1="8" y1="6" x2="16" y2="6" /><line x1="8" y1="10" x2="16" y2="10" /><line x1="8" y1="14" x2="12" y2="14" /></svg>,
-  patient: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>,
   staffing: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>,
   compliance: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>,
   research: <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>,
@@ -32,6 +30,10 @@ const menuConfig = {
   ],
   supervisor: [
     { label: "Dashboard", path: "/supervisor-dashboard", icon: I.dashboard },
+    { label: "Notifications", path: "/notifications", icon: I.bell },
+  ],
+  assistantDirector: [
+    { label: "Dashboard", path: "/patient-services-dashboard", icon: I.dashboard },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
   patientServices: [
@@ -68,16 +70,19 @@ export default function Sidebar({ role = "nurse", onLogout, logoSrc, unreadCount
   return (
     <div style={styles.wrapper}>
       <aside style={styles.sidebar}>
+
         {/* Logo */}
         <div style={styles.logoArea}>
-          {logoSrc ? (
-            <img src={logoSrc} alt="Logo" style={{ width: 170 }} />) : (
-            <div style={styles.logoFallback}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" width="20" height="28">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-              </svg>
-            </div>
-          )}
+          {logoSrc
+            ? <img src={logoSrc} alt="Logo" style={{ width: 170 }} />
+            : (
+              <div style={styles.logoFallback}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" width="20" height="28">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+              </div>
+            )
+          }
         </div>
 
         {/* Nav */}
@@ -91,13 +96,25 @@ export default function Sidebar({ role = "nurse", onLogout, logoSrc, unreadCount
                 ...(isActive ? styles.navItemActive : {}),
               })}
             >
-              <div style={styles.iconCircle}>
-                {item.icon}
-                {item.label === "Notifications" && unreadCount > 0 && (
-                  <div style={styles.badge}>{unreadCount > 9 ? "9+" : unreadCount}</div>
-                )}
-              </div>
-              <span style={styles.label}>{item.label}</span>
+              {({ isActive }) => (
+                <>
+                  <div
+                    className={isActive ? "sidebar-icon--active" : ""}
+                    style={styles.iconCircle}
+                  >
+                    {item.icon}
+                    {item.label === "Notifications" && unreadCount > 0 && (
+                      <div style={styles.badge}>{unreadCount > 9 ? "9+" : unreadCount}</div>
+                    )}
+                  </div>
+                  <span style={{
+                    ...styles.label,
+                    ...(isActive ? styles.labelActive : {}),
+                  }}>
+                    {item.label}
+                  </span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -113,6 +130,7 @@ export default function Sidebar({ role = "nurse", onLogout, logoSrc, unreadCount
           </div>
           <span style={styles.label}>Log out</span>
         </button>
+
       </aside>
     </div>
   );
@@ -122,14 +140,14 @@ export default function Sidebar({ role = "nurse", onLogout, logoSrc, unreadCount
 const styles = {
   wrapper: {
     width: "210px",
-    height: "100%",        // change from 100vh to 100%
+    height: "100%",
     backgroundColor: "transparent",
     display: "flex",
     alignItems: "stretch",
     padding: "16px 10px",
     boxSizing: "border-box",
     flexShrink: 0,
-    overflowY: "auto",     // add this
+    overflowY: "auto",
   },
   sidebar: {
     flex: 1,
@@ -148,12 +166,6 @@ const styles = {
     display: "flex",
     justifyContent: "center",
   },
-  logoImg: {
-    width: "80px",
-    height: "80px",
-    borderRadius: "50%",
-    objectFit: "cover",
-  },
   logoFallback: {
     width: "80px",
     height: "80px",
@@ -166,7 +178,7 @@ const styles = {
   nav: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
+    gap: "6px",
     width: "100%",
     flex: 1,
   },
@@ -174,32 +186,28 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    padding: "10px 12px",
-    borderRadius: "var(--radius-md)",
+    padding: "10px 14px",
+    borderRadius: "16px",
     textDecoration: "none",
-    color: "var(--text-secondary)",
-    fontSize: "14px",
-    fontWeight: "500",
-    transition: "var(--transition-fast)",
+    transition: "background 0.15s",
   },
   navItemActive: {
     backgroundColor: "#ffffff",
-    color: "var(--text-primary)",
-    boxShadow: "var(--shadow-premium)",
-    fontWeight: "700",
+    boxShadow: "0 4px 20px rgba(49,66,89,0.13)",
   },
   iconCircle: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "12px",
+    width: "44px",
+    height: "44px",
+    borderRadius: "14px",
     backgroundColor: "var(--accent-blue)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
     position: "relative",
-    transition: "var(--transition-fast)",
+    transition: "box-shadow 0.15s",
   },
+  iconCircleActive: {},
   badge: {
     position: "absolute",
     top: "-6px",
@@ -221,12 +229,18 @@ const styles = {
     whiteSpace: "nowrap",
     fontSize: "14px",
     fontWeight: "500",
+    color: "var(--text-secondary)",
+    transition: "color 0.15s, font-weight 0.15s",
+  },
+  labelActive: {
+    color: "var(--text-primary)",
+    fontWeight: "700",
   },
   logoutBtn: {
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    padding: "10px 12px",
+    padding: "8px 10px",
     borderRadius: "var(--radius-md)",
     background: "none",
     border: "none",
@@ -236,7 +250,6 @@ const styles = {
     fontSize: "14px",
     fontWeight: "500",
     marginTop: "8px",
-    transition: "var(--transition-fast)",
+    transition: "background 0.15s",
   },
 };
-

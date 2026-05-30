@@ -1,18 +1,11 @@
 const express = require("express");
 const router = express.Router();
+const ctrl = require("../controllers/approvalController");
 
-const approvalController = require("../controllers/approvalController");
-
-router.get("/", approvalController.getAll);
-
-// Supervisor
-router.post("/supervisor", approvalController.supervisorDecision);
-
-// Assistant
-router.post("/assistant", approvalController.assistantDecision);
-
-// Director
-router.post("/director", approvalController.directorDecision);
+router.get("/", ctrl.getAll);
+router.get("/request/:request_id", ctrl.getByRequest);
+router.post("/supervisor", ctrl.supervisorDecision);
+router.post("/assistant", ctrl.assistantDecision);
+router.post("/director", ctrl.directorDecision);
 
 module.exports = router;
-

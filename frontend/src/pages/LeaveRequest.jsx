@@ -1,23 +1,24 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import { 
-    Calendar, 
-    ChevronLeft, 
-    Upload, 
-    X, 
-    FileText, 
-    CheckCircle, 
+import {
+    Calendar,
+    ChevronLeft,
+    Upload,
+    X,
+    FileText,
+    CheckCircle,
     Clock,
     AlertCircle
 } from "lucide-react";
 import "../styles/RequestForm.css";
+import { uploadRequestFiles } from "../utils/uploadRequestFiles";
 
 export default function LeaveRequest() {
     const navigate = useNavigate();
     const [nurse, setNurse] = useState(null);
     const [leaveType, setLeaveType] = useState("planned");
-    const [uploadedFiles, setUploadedFiles] = useState([]);
+    const [uploadedFiles, setUploadedFiles] = useState([]); // File objects
     const fileInputRef = useRef();
 
     // Planned Leave
@@ -47,7 +48,7 @@ export default function LeaveRequest() {
 
     const handleFileUpload = (e) => {
         const files = Array.from(e.target.files);
-        setUploadedFiles(prev => [...prev, ...files.map(f => f.name)]);
+        setUploadedFiles(prev => [...prev, ...files]);
     };
 
     const removeFile = (fileName) => {
@@ -86,6 +87,8 @@ export default function LeaveRequest() {
             });
 
             if (res.ok) {
+                const data = await res.json();
+                await uploadRequestFiles(data.insertId, uploadedFiles);
                 alert("Request submitted successfully!");
                 navigate("/request");
             } else {
@@ -137,14 +140,14 @@ export default function LeaveRequest() {
                                     <div className="radio-pill-group">
                                         {["Annual Leave", "Comp time", "Other"].map(type => (
                                             <div key={type}>
-                                                <input 
-                                                    type="radio" 
+                                                <input
+                                                    type="radio"
                                                     id={`planned-${type}`}
-                                                    name="plannedType" 
-                                                    value={type} 
+                                                    name="plannedType"
+                                                    value={type}
                                                     className="radio-pill-input"
                                                     checked={plannedType === type}
-                                                    onChange={e => setPlannedType(e.target.value)} 
+                                                    onChange={e => setPlannedType(e.target.value)}
                                                 />
                                                 <label htmlFor={`planned-${type}`} className="radio-pill-label">{type}</label>
                                             </div>
@@ -161,7 +164,7 @@ export default function LeaveRequest() {
                                         <label className="form-label-premium">Starting Date</label>
                                         <input className="form-input-premium" type="date" value={plannedStartDate} onChange={e => setPlannedStartDate(e.target.value)} />
                                     </div>
-                                    
+
                                     {plannedType === "Comp time" && (
                                         <>
                                             <div className="form-group-premium">
@@ -187,14 +190,14 @@ export default function LeaveRequest() {
                                     <div className="radio-pill-group">
                                         {["Annual Leave", "Comp time", "Other"].map(type => (
                                             <div key={type}>
-                                                <input 
-                                                    type="radio" 
+                                                <input
+                                                    type="radio"
                                                     id={`unplanned-${type}`}
-                                                    name="unplannedType" 
-                                                    value={type} 
+                                                    name="unplannedType"
+                                                    value={type}
                                                     className="radio-pill-input"
                                                     checked={unplannedType === type}
-                                                    onChange={e => setUnplannedType(e.target.value)} 
+                                                    onChange={e => setUnplannedType(e.target.value)}
                                                 />
                                                 <label htmlFor={`unplanned-${type}`} className="radio-pill-label">{type}</label>
                                             </div>
@@ -238,11 +241,11 @@ export default function LeaveRequest() {
 
                     {/* File Chips */}
                     <div className="file-chips-container">
-                        {uploadedFiles.map((fileName, idx) => (
+                        {uploadedFiles.map((file, idx) => (
                             <div key={idx} className="file-chip">
                                 <FileText size={14} />
-                                <span>{fileName}</span>
-                                <X size={14} className="file-chip-remove" onClick={(e) => { e.stopPropagation(); removeFile(fileName); }} />
+                                <span>{file.name}</span>
+                                <X size={14} className="file-chip-remove" onClick={(e) => { e.stopPropagation(); removeFile(file); }} />
                             </div>
                         ))}
                     </div>
@@ -256,6 +259,3 @@ export default function LeaveRequest() {
         </Layout>
     );
 }
-
-
-

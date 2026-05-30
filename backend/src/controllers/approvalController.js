@@ -1,137 +1,144 @@
-
 const approvalModel = require("../models/approvalModel");
 const requestModel = require("../models/requestsModel");
 const notificationController = require("./notificationController");
 
+const getIo = (req) => req.app.get("io");
 
-
+// GET all approvals
 exports.getAll = async (req, res) => {
     try {
-        const data = await approvalModel.getAllApprovals();
-        res.json(data);
+        res.json(await approvalModel.getAllApprovals());
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 };
 
+// GET approvals trail for one request
+exports.getByRequest = async (req, res) => {
+    try {
+        res.json(await approvalModel.getApprovalsByRequestId(req.params.request_id));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
 
-
-
-// Supervisor decision
+// ── SUPERVISOR DECISION ───────────────────────────────────────────────────────
+// Always forwards to Assistant Director regardless of decision
 exports.supervisorDecision = async (req, res) => {
-    const { request_id, decision } = req.body;
-
+    const { request_id, decision, comment } = req.body;
     try {
-        await approvalModel.makeDecision(request_id, "Supervisor", decision);
-
-        if (decision === "Rejected") {
-            await requestModel.updateRequestStatus(request_id, "Rejected");
-            if (req.app.get("io")) req.app.get("io").emit("request_updated");
-
-            // Notify the nurse
-            const reqData = await requestModel.getRequestById(request_id);
-            if (reqData && reqData.nurse_id) {
-                await notificationController.createNotification({
-                    user_id: reqData.nurse_id,
-                    title: "Request Rejected",
-                    message: `Your request #${request_id} has been rejected by the Supervisor.`,
-                    notification_type: "error",
-                    priority: "high"
-                }, req.app.get("io"));
-            }
-
-            return res.json({ message: "Request rejected by Supervisor ❌" });
-        }
-
-        if (decision === "Approved") {
-            await approvalModel.createApproval(request_id, "Director");
-            await requestModel.updateRequestStatus(request_id, "Pending_Director");
-            if (req.app.get("io")) req.app.get("io").emit("request_updated");
-
-            // Notify Director (User ID 36)
-            await notificationController.createNotification({
-                user_id: 36,
-                title: "New Approval Required",
-                message: `Request #${request_id} has been approved by the Supervisor and awaits your final decision.`,
-                notification_type: "warning",
-                priority: "high"
-            }, req.app.get("io"));
-
-            return res.json({ message: "Moved to Director ✅" });
-        }
-
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// Assistant decision
-exports.assistantDecision = async (req, res) => {
-    const { request_id, decision } = req.body;
-
-    try {
-        await approvalModel.makeDecision(request_id, "Assistant Director", decision);
-
-        if (decision === "Rejected") {
-            await requestModel.updateRequestStatus(request_id, "Rejected");
-            if (req.app.get("io")) req.app.get("io").emit("request_updated");
-            return res.json({ message: "Request rejected by Assistant Director ❌" });
-        }
-
-        if (decision === "Approved") {
-            await approvalModel.createApproval(request_id, "Director");
-            if (req.app.get("io")) req.app.get("io").emit("request_updated");
-            return res.json({ message: "Moved to Director ✅" });
-        }
-
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// Director decision (Final)
-exports.directorDecision = async (req, res) => {
-    const { request_id, decision } = req.body;
-
-    try {
-        await approvalModel.makeDecision(request_id, "Director", decision);
-        await requestModel.updateRequestStatus(request_id, decision);
-
-        // Fetch request details for notifications
         const reqData = await requestModel.getRequestById(request_id);
+        if (!reqData) return res.status(404).json({ error: "Request not found" });
 
-        if (reqData) {
-            const nurseId = reqData.nurse_id;
-            const statusLabel = decision === "Approved" ? "Approved ✅" : "Rejected ❌";
-            const notificationType = decision === "Approved" ? "success" : "error";
+        await approvalModel.makeDecision(request_id, "Supervisor", decision, comment);
 
-            // 1. Notify the Nurse
+        // Always forward to Assistant Director
+        await requestModel.updateRequestStatus(request_id, "Pending_Assistant");
+        await approvalModel.createApproval(request_id, "Assistant Director");
+
+        const io = getIo(req);
+        if (io) io.emit("request_updated");
+
+        // Notify Assistant Director (role_id = 8)
+        const [assistants] = await require("../db").query(
+            `SELECT u.user_id FROM User u
+             JOIN UserRole ur ON u.user_id = ur.user_id
+             WHERE ur.role_id = 8 AND u.account_status = 'Active'`
+        );
+        for (const a of assistants) {
             await notificationController.createNotification({
-                user_id: nurseId,
-                title: `Request ${decision}`,
-                message: `Your request #${request_id} has been ${decision.toLowerCase()} by the Director.`,
-                notification_type: notificationType,
+                user_id: a.user_id,
+                title: "New Request Awaiting Your Review",
+                message: `Request #${request_id} from ${reqData.full_name} has been reviewed by the Supervisor (${decision.replace("_", " ")}) and needs your review.`,
+                notification_type: "info",
                 priority: "high",
                 category: "Requests"
-            }, req.app.get("io"));
-
-            // 2. Notify the Supervisor (User ID 20)
-            // They need to know the final outcome of the request they previously approved
-            await notificationController.createNotification({
-                user_id: 20,
-                title: `Director Decision: ${decision}`,
-                message: `The Director has ${decision.toLowerCase()} Request #${request_id} (submitted by ${reqData.full_name}).`,
-                notification_type: notificationType,
-                priority: "medium",
-                category: "Requests"
-            }, req.app.get("io"));
+            }, io);
         }
 
-        if (req.app.get("io")) req.app.get("io").emit("request_updated");
-        res.json({ message: `Final decision (${decision}) applied by Director and notifications sent ✅` });
+        // NO nurse notification at this stage
 
+        res.json({ message: `Supervisor decision (${decision}) recorded, forwarded to Assistant Director` });
     } catch (err) {
-        console.error("Director decision error:", err);
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ── ASSISTANT DIRECTOR DECISION ───────────────────────────────────────────────
+// Always forwards to Director regardless of decision
+exports.assistantDecision = async (req, res) => {
+    const { request_id, decision, comment } = req.body;
+    try {
+        const reqData = await requestModel.getRequestById(request_id);
+        if (!reqData) return res.status(404).json({ error: "Request not found" });
+
+        await approvalModel.makeDecision(request_id, "Assistant Director", decision, comment);
+
+        // Always forward to Director
+        await requestModel.updateRequestStatus(request_id, "Pending_Director");
+        await approvalModel.createApproval(request_id, "Director");
+
+        const io = getIo(req);
+        if (io) io.emit("request_updated");
+
+        // Notify Director (role_id = 4)
+        const [directors] = await require("../db").query(
+            `SELECT u.user_id FROM User u
+             JOIN UserRole ur ON u.user_id = ur.user_id
+             WHERE ur.role_id = 4 AND u.account_status = 'Active'`
+        );
+        for (const d of directors) {
+            await notificationController.createNotification({
+                user_id: d.user_id,
+                title: "New Request Awaiting Final Decision",
+                message: `Request #${request_id} from ${reqData.full_name} needs your final decision.`,
+                notification_type: "info",
+                priority: "high",
+                category: "Requests"
+            }, io);
+        }
+
+        // NO nurse notification at this stage
+
+        res.json({ message: `Assistant Director decision (${decision}) recorded, forwarded to Director` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ── DIRECTOR DECISION (FINAL) ─────────────────────────────────────────────────
+// Only here does the nurse get notified
+exports.directorDecision = async (req, res) => {
+    const { request_id, decision, comment } = req.body;
+    try {
+        const reqData = await requestModel.getRequestById(request_id);
+        if (!reqData) return res.status(404).json({ error: "Request not found" });
+
+        await approvalModel.makeDecision(request_id, "Director", decision, comment);
+        await requestModel.updateRequestStatus(request_id, decision);
+
+        const io = getIo(req);
+        const db = require("../db");
+
+        const notifType = decision === "Approved" ? "success" : decision === "For_Discussion" ? "warning" : "error";
+        const decisionLabel = decision.replace("_", " ");
+
+        // Notify nurse — ONLY final decision with director's comment
+        await notificationController.createNotification({
+            user_id: reqData.nurse_user_id,
+            title: `Final Decision: ${decisionLabel}`,
+            message: `Your request #${request_id} has received a final decision: ${decisionLabel}.${comment ? ` Director's comment: "${comment}"` : ""}`,
+            notification_type: notifType,
+            priority: "high",
+            category: "Requests"
+        }, io);
+
+        if (io) io.emit("request_updated");
+        res.json({ message: `Final decision (${decision}) recorded, nurse notified` });
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 };

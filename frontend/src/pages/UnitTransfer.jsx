@@ -1,14 +1,15 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import { 
-    Home, 
-    ChevronLeft, 
-    Upload, 
-    X, 
-    FileText 
+import {
+    Home,
+    ChevronLeft,
+    Upload,
+    X,
+    FileText
 } from "lucide-react";
 import "../styles/RequestForm.css";
+import { uploadRequestFiles } from "../utils/uploadRequestFiles";
 
 export default function UnitTransfer() {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ export default function UnitTransfer() {
 
     const handleFileUpload = (e) => {
         const files = Array.from(e.target.files);
-        setUploadedFiles(prev => [...prev, ...files.map(f => f.name)]);
+        setUploadedFiles(prev => [...prev, ...files]);
     };
 
     const removeFile = (fileName) => {
@@ -54,6 +55,8 @@ export default function UnitTransfer() {
                 }),
             });
             if (res.ok) {
+                const data = await res.json();
+                await uploadRequestFiles(data.insertId, uploadedFiles);
                 alert("Request submitted successfully!");
                 navigate("/request");
             } else {
@@ -83,21 +86,21 @@ export default function UnitTransfer() {
                     <div className="form-content">
                         <div className="form-group-premium">
                             <label className="form-label-premium">Staff Request</label>
-                            <textarea 
-                                className="form-textarea-premium" 
-                                value={request} 
-                                onChange={(e) => setRequest(e.target.value)} 
-                                placeholder="Detail the department or unit you wish to transfer to..." 
+                            <textarea
+                                className="form-textarea-premium"
+                                value={request}
+                                onChange={(e) => setRequest(e.target.value)}
+                                placeholder="Detail the department or unit you wish to transfer to..."
                             />
                         </div>
 
                         <div className="form-group-premium">
                             <label className="form-label-premium">Reason</label>
-                            <textarea 
-                                className="form-textarea-premium" 
-                                value={reason} 
-                                onChange={(e) => setReason(e.target.value)} 
-                                placeholder="Explain your motivation for this transfer..." 
+                            <textarea
+                                className="form-textarea-premium"
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                                placeholder="Explain your motivation for this transfer..."
                             />
                         </div>
                     </div>
@@ -113,11 +116,11 @@ export default function UnitTransfer() {
                     </div>
 
                     <div className="file-chips-container">
-                        {uploadedFiles.map((fileName, idx) => (
+                        {uploadedFiles.map((file, idx) => (
                             <div key={idx} className="file-chip">
                                 <FileText size={14} />
-                                <span>{fileName}</span>
-                                <X size={14} className="file-chip-remove" onClick={(e) => { e.stopPropagation(); removeFile(fileName); }} />
+                                <span>{file.name}</span>
+                                <X size={14} className="file-chip-remove" onClick={(e) => { e.stopPropagation(); removeFile(file); }} />
                             </div>
                         ))}
                     </div>

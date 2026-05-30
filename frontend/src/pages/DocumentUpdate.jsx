@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import { 
-    FileText, 
-    ChevronLeft, 
-    Upload, 
-    X 
+import {
+    FileText,
+    ChevronLeft,
+    Upload,
+    X
 } from "lucide-react";
 import "../styles/RequestForm.css";
+import { uploadRequestFiles } from "../utils/uploadRequestFiles";
 
 export default function DocumentUpdate() {
     const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function DocumentUpdate() {
 
     const handleFileUpload = (e) => {
         const files = Array.from(e.target.files);
-        setUploadedFiles(prev => [...prev, ...files.map(f => f.name)]);
+        setUploadedFiles(prev => [...prev, ...files]);
     };
 
     const removeFile = (fileName) => {
@@ -54,6 +55,8 @@ export default function DocumentUpdate() {
                 }),
             });
             if (res.ok) {
+                const data = await res.json();
+                await uploadRequestFiles(data.insertId, uploadedFiles);
                 alert("Request submitted successfully!");
                 navigate("/request");
             } else {
@@ -83,21 +86,21 @@ export default function DocumentUpdate() {
                     <div className="form-content">
                         <div className="form-group-premium">
                             <label className="form-label-premium">Staff Request</label>
-                            <textarea 
-                                className="form-textarea-premium" 
-                                value={message} 
-                                onChange={(e) => setMessage(e.target.value)} 
-                                placeholder="Detail the documents you need to update..." 
+                            <textarea
+                                className="form-textarea-premium"
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                placeholder="Detail the documents you need to update..."
                             />
                         </div>
 
                         <div className="form-group-premium">
                             <label className="form-label-premium">Reason</label>
-                            <textarea 
-                                className="form-textarea-premium" 
-                                value={reason} 
-                                onChange={(e) => setReason(e.target.value)} 
-                                placeholder="Explain why this update is required..." 
+                            <textarea
+                                className="form-textarea-premium"
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                                placeholder="Explain why this update is required..."
                             />
                         </div>
                     </div>
@@ -113,11 +116,11 @@ export default function DocumentUpdate() {
                     </div>
 
                     <div className="file-chips-container">
-                        {uploadedFiles.map((fileName, idx) => (
+                        {uploadedFiles.map((file, idx) => (
                             <div key={idx} className="file-chip">
                                 <FileText size={14} />
-                                <span>{fileName}</span>
-                                <X size={14} className="file-chip-remove" onClick={(e) => { e.stopPropagation(); removeFile(fileName); }} />
+                                <span>{file.name}</span>
+                                <X size={14} className="file-chip-remove" onClick={(e) => { e.stopPropagation(); removeFile(file); }} />
                             </div>
                         ))}
                     </div>

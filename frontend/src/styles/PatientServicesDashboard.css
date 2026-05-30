@@ -1,15 +1,10 @@
-/* Patient Services Dashboard Styles */
+/* ── Patient Services Dashboard ───────────────────────────── */
 
 .psd-container {
     padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    height: 100%;
-}
-
-.psd-header {
-    margin-bottom: 8px;
+    gap: 28px;
 }
 
 .psd-header h1 {
@@ -24,109 +19,60 @@
     margin: 0;
 }
 
-/* 1. Summary Cards Row */
+/* KPI grid — 3 cards */
 .psd-summary-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
 
-/* 2. Middle Charts Row */
-.psd-charts-grid {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 20px;
-}
+/* ── Requests Table ───────────────────────────────────────── */
 
-/* Custom Stacked Bar for Satisfaction Rate */
-.psd-stacked-bar-container {
+.psd-table-box {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    margin-top: 20px;
+    gap: 0;
+    padding: 24px;
 }
 
-.psd-stacked-bar-wrapper {
-    height: 24px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    overflow: hidden;
-    margin-bottom: 12px;
-}
-
-.psd-stacked-segment {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: white;
-    font-weight: bold;
-}
-
-.psd-stacked-legend {
+.psd-table-topbar {
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
-    color: var(--text-secondary);
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-.psd-legend-item {
+.psd-table-topbar h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.psd-history-btn {
     display: flex;
     align-items: center;
     gap: 6px;
+    background: #314259;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-.psd-legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
+.psd-history-btn:hover {
+    background: #1e2b3c;
 }
 
-/* 3. Bottom Section */
-.psd-bottom-grid {
+/* Table header */
+.psd-req-header {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.psd-staffing-overview {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.psd-kpi-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-}
-
-.psd-kpi-box {
-    background: white;
-    padding: 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(74, 106, 133, 0.1);
-    text-align: center;
-}
-
-.psd-kpi-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-}
-
-.psd-kpi-value {
-    font-size: 18px;
-    font-weight: bold;
-    color: var(--text-primary);
-}
-
-/* Satisfaction Table */
-.psd-table-header {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    padding: 12px 16px;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr;
+    padding: 14px 20px;
     background: #c7d5e5;
     border-radius: var(--radius-sm);
     font-size: 13px;
@@ -135,36 +81,119 @@
     margin-bottom: 8px;
 }
 
-.psd-table-row {
+/* Table rows */
+.psd-req-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.psd-req-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    padding: 12px 16px;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr;
+    align-items: center;
+    padding: 14px 20px;
     background: white;
     border-radius: var(--radius-sm);
     font-size: 14px;
-    margin-bottom: 6px;
-    align-items: center;
     transition: var(--transition-fast);
 }
 
-.psd-table-row:hover {
+.psd-req-row:hover {
     background: #f0f5fa;
-    transform: translateX(3px);
+    transform: translateX(2px);
 }
 
-.psd-table-trend-icon {
+.psd-req-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.psd-req-cell {
+    color: var(--text-secondary);
+}
+
+/* Attachment button */
+.psd-attach-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
     display: flex;
     align-items: center;
     gap: 4px;
-    font-weight: 500;
+    padding: 0;
 }
 
-@media (max-width: 1024px) {
+/* Action buttons */
+.psd-req-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.psd-btn-approve {
+    background: var(--accent-green);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.psd-btn-approve:hover {
+    background: #10893a;
+}
+
+.psd-btn-deny {
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.psd-btn-deny:hover {
+    background: #b71c1c;
+}
+
+.psd-empty {
+    text-align: center;
+    padding: 40px;
+    color: #8ea2b5;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
     .psd-summary-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr 1fr;
     }
-    .psd-charts-grid,
-    .psd-bottom-grid {
+
+    .psd-req-header,
+    .psd-req-row {
+        grid-template-columns: 1.5fr 1fr 1fr;
+    }
+
+    .psd-req-header span:nth-child(4),
+    .psd-req-header span:nth-child(5),
+    .psd-req-row>div:nth-child(4),
+    .psd-req-row>div:nth-child(5) {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .psd-summary-grid {
         grid-template-columns: 1fr;
     }
 }

@@ -32,7 +32,7 @@ export default function SupervisorDashboard() {
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
-                    setPendingRequests(data.filter(r => r.current_status && r.current_status === 'Pending').length);
+                    setPendingRequests(data.filter(r => r.current_status === 'Pending_Supervisor').length);
                 }
             })
             .catch(err => console.error(err));
@@ -212,17 +212,17 @@ export default function SupervisorDashboard() {
                     {/* Quick Actions */}
                     <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)', fontWeight: '700', marginTop: '30px' }}>Quick Actions</h3>
                     <div className="cards-row" style={{ marginBottom: '40px' }}>
-                        <div className="glass-card blue clickable-card" 
-                             style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative' }}
-                             onClick={() => navigate('/assign-staff')}>
+                        <div className="glass-card blue clickable-card"
+                            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative' }}
+                            onClick={() => navigate('/assign-staff')}>
                             <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>Assign Staff</h2>
                             <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '280px', position: 'relative', zIndex: 2 }}>Manage daily staff deployments across all units.</p>
                             <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
                         </div>
 
-                        <div className="glass-card blue clickable-card" 
-                             style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative' }}
-                             onClick={() => navigate('/supervisor/manage-requests')}>
+                        <div className="glass-card blue clickable-card"
+                            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative' }}
+                            onClick={() => navigate('/supervisor/manage-requests')}>
                             <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>Manage Requests</h2>
                             <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '280px', position: 'relative', zIndex: 2 }}>Review and process staff leave and scheduling requests.</p>
                             <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
@@ -258,11 +258,11 @@ export default function SupervisorDashboard() {
                                     <button
                                         className="filter-select"
                                         onClick={() => setShowUnitDropdown(!showUnitDropdown)}
-                                        style={{ 
-                                            background: 'var(--accent-blue)', 
-                                            color: 'white', 
-                                            height: '42px', 
-                                            padding: '0 20px', 
+                                        style={{
+                                            background: 'var(--accent-blue)',
+                                            color: 'white',
+                                            height: '42px',
+                                            padding: '0 20px',
                                             borderRadius: 'var(--radius-lg)',
                                             border: 'none',
                                             display: 'flex',
@@ -323,7 +323,7 @@ export default function SupervisorDashboard() {
                                     }}>Clear Filters</button>
                                 </div>
                             </div>
-                            
+
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                                 <input
                                     type="text"
@@ -338,11 +338,11 @@ export default function SupervisorDashboard() {
                                     <button
                                         className="filter-select"
                                         onClick={() => setShowStaffingDropdown(!showStaffingDropdown)}
-                                        style={{ 
-                                            background: 'var(--accent-blue)', 
-                                            color: 'white', 
-                                            height: '42px', 
-                                            padding: '0 20px', 
+                                        style={{
+                                            background: 'var(--accent-blue)',
+                                            color: 'white',
+                                            height: '42px',
+                                            padding: '0 20px',
                                             borderRadius: 'var(--radius-lg)',
                                             border: 'none',
                                             display: 'flex',
@@ -393,7 +393,7 @@ export default function SupervisorDashboard() {
                                     </div>
                                 )) : <div style={{ padding: "30px", textAlign: 'center', color: "var(--text-muted)" }}>No units data</div>}
                             </div>
-                            
+
                             <div className="legend" style={{ marginTop: '20px', justifyContent: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                                 <span className="status critical" style={{ fontSize: '11px' }}>Critical shortage</span>
                                 <span className="status high-risk" style={{ fontSize: '11px' }}>High risk</span>
@@ -494,9 +494,9 @@ export default function SupervisorDashboard() {
                             )}
                             <button
                                 className="add-nurse-btn"
-                                style={{ 
-                                    padding: '10px 20px', 
-                                    fontSize: '13px', 
+                                style={{
+                                    padding: '10px 20px',
+                                    fontSize: '13px',
                                     background: showLogForm ? 'var(--text-primary)' : 'var(--accent-blue)',
                                     color: 'white',
                                     display: 'flex',
