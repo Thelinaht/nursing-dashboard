@@ -494,7 +494,6 @@ export default function ResearcherDashboard() {
                 <div className="rd-header">
                     <div>
                         <h1>Research Dashboard</h1>
-                        <p>Research Director · Overview &amp; EBP Metrics</p>
                     </div>
                 </div>
 
