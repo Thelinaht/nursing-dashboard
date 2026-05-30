@@ -1,5 +1,22 @@
 const pool = require("../db");
 
+const unitMatches = (recordUnit, dbUnit) => {
+    if (!recordUnit || !dbUnit) return false;
+    const rU = recordUnit.toLowerCase().trim();
+    const dU = dbUnit.toLowerCase().trim();
+    if (rU === dU) return true;
+    
+    if (dU.startsWith(rU + " ") || dU.startsWith(rU + "(") || dU.includes("(" + rU + ")")) return true;
+    if (rU.startsWith(dU + " ") || rU.startsWith(dU + "(") || rU.includes("(" + dU + ")")) return true;
+    
+    // Special cases
+    if (rU === 'emergency' && dU.includes('emergency')) return true;
+    if (rU === 'ccu' && dU.includes('coronary care unit')) return true;
+    if (dU === 'ccu' && rU.includes('coronary care unit')) return true;
+    
+    return false;
+};
+
 // GET all training programs + trainee's record (if exists) using user_id
 exports.getByUserId = async (userId) => {
     // First get trainee_id from user_id
@@ -251,11 +268,96 @@ exports.getDashboardData = async () => {
             full_name AS name,
             university,
             training_type AS program,
+            unit,
+            DATE_FORMAT(start_date, '%Y-%m-%d') AS startDate,
+            DATE_FORMAT(end_date, '%Y-%m-%d') AS endDate,
             COALESCE(status, 'Active') AS status
         FROM Trainee
     `);
 
-    const [programs] = await pool.query("SELECT training_id, training_name, training_category FROM Training_program");
+    const [programs] = await pool.query("SELECT training_id, training_name, training_category, duration_hours FROM Training_program");
+
+    // 7. Staff Participation & Attendance stats calculated strictly from database
+    const [huRows] = await pool.query("SELECT unit_name FROM Hospital_unit ORDER BY unit_name ASC");
+    const dbUnits = huRows.map(r => r.unit_name);
+    const hospitalUnits = dbUnits;
+
+    const [rawParticipation] = await pool.query(`
+        SELECT 
+            st.training_id,
+            tp.training_name AS courseName,
+            tp.duration_hours,
+            st.status,
+            COALESCE(t.unit, ns.unit, 'General') AS unit
+        FROM Staff_training st
+        JOIN Training_program tp ON st.training_id = tp.training_id
+        LEFT JOIN Trainee t ON st.trainee_id = t.trainee_id
+        LEFT JOIN Nursing_staff ns ON st.nurse_id = ns.nurse_id
+    `);
+
+    const participationMap = {};
+    programs.forEach(p => {
+        participationMap[p.training_name] = {
+            courseName: p.training_name,
+            duration: parseFloat(p.duration_hours || 0),
+            records: []
+        };
+    });
+
+    rawParticipation.forEach(row => {
+        if (participationMap[row.courseName]) {
+            participationMap[row.courseName].records.push(row);
+        }
+    });
+
+    const participationStats = {};
+    const top5Units = ["ICU", "ER", "OR", "NICU", "Pediatrics"];
+    const allPossibleUnits = [...new Set([...top5Units, ...dbUnits])];
+
+    for (const [courseName, data] of Object.entries(participationMap)) {
+        const records = data.records;
+        const duration = data.duration || 4.0;
+        const total = records.length;
+        
+        const noShowRecords = records.filter(r => r.status === "Pending" || r.status === "Overdue");
+        const completedRecords = records.filter(r => r.status === "Completed");
+
+        // Overall no-show rate
+        let overallNoShowRate = 0;
+        if (total > 0) {
+            overallNoShowRate = Math.round((noShowRecords.length / total) * 1000) / 10;
+        }
+
+        // Avg training hours/staff
+        let avgHrsPerStaff = 0;
+        if (total > 0 && completedRecords.length > 0) {
+            avgHrsPerStaff = Math.round(((completedRecords.length * duration) / total) * 10) / 10;
+        }
+
+        // Calculate rate per unit
+        const unitData = [];
+        allPossibleUnits.forEach(unit => {
+            const unitRecords = records.filter(r => unitMatches(r.unit, unit));
+            if (unitRecords.length > 0) {
+                const unitNoShow = unitRecords.filter(r => r.status === "Pending" || r.status === "Overdue");
+                unitData.push({
+                    unit,
+                    rate: Math.round((unitNoShow.length / unitRecords.length) * 1000) / 10
+                });
+            } else {
+                unitData.push({
+                    unit,
+                    rate: 0.0
+                });
+            }
+        });
+
+        participationStats[courseName] = {
+            overallNoShowRate,
+            avgHrsPerStaff,
+            unitData
+        };
+    }
 
     // 6. Certs/Training count by Unit + Certificate Name (for the bar chart)
     const [certsByUnit] = await pool.query(`
@@ -291,6 +393,8 @@ exports.getDashboardData = async () => {
         internRequests,
         programs,
         certsByUnit,
+        participationStats,
+        hospitalUnits,
         stats: {
             totalTrained: mandatoryTrainings.length || 0,
             compliance: complianceRate,
@@ -428,12 +532,18 @@ exports.updateDashboardRow = async (type, id, fields) => {
         } else {
             await pool.query(
                 `UPDATE Trainee 
-                 SET full_name = ?, university = ?, training_type = ?, unit = ?, status = ? 
+                 SET full_name = ?, university = ?, training_type = ?, unit = ?, start_date = ?, end_date = ?, status = ? 
                  WHERE trainee_id = ?`,
-                [name, university, program, unit || null, status, id]
+                [name, university, program, unit || null, start_date || null, end_date || null, status, id]
             );
         }
         return { success: true };
     }
     throw new Error("Unknown update type");
+};
+
+// GET all units from Hospital_unit
+exports.getHospitalUnits = async () => {
+    const [rows] = await pool.query("SELECT unit_id, unit_name, category, description FROM Hospital_unit ORDER BY unit_name ASC");
+    return rows;
 };

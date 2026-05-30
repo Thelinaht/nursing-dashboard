@@ -40,6 +40,7 @@ import RequestHistory from "./pages/RequestHistory";
 import TrainingPage from "./pages/TrainingPage";
 import StaffDirectory from "./pages/StaffDirectory";
 import NotificationsPage from "./pages/NotificationsPage";
+import StaffParticipationDetails from "./pages/StaffParticipationDetails";
 
 function App() {
         return (
@@ -89,6 +90,7 @@ function App() {
                                 {/* training */}
                                 <Route path="/training" element={<TrainingPage />} />
                                 <Route path="/staff" element={<StaffDirectory />} />
+                                <Route path="/training/participation" element={<StaffParticipationDetails />} />
 
                                 {/* notifications */}
                                 <Route path="/notifications" element={<NotificationsPage />} />

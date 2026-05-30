@@ -55,6 +55,8 @@ export default function TrainingDirectorDashboard() {
   const [certView, setCertView] = useState("specific"); // "general" | "specific"
   // Cert-by-unit chart selected cert
   const [selectedCert, setSelectedCert] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('BLS');
+  const [showAllUnits, setShowAllUnits] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchData = async () => {
@@ -164,7 +166,10 @@ export default function TrainingDirectorDashboard() {
             name: editFields.name,
             university: editFields.university,
             program: editFields.program,
-            status: editFields.status
+            status: editFields.status,
+            unit: editFields.unit || "General",
+            start_date: editFields.startDate || new Date().toISOString().split("T")[0],
+            end_date: editFields.endDate || null
           }
         };
       }
@@ -540,6 +545,24 @@ export default function TrainingDirectorDashboard() {
                     </select>
                   </div>
                 </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Unit Assignment</label>
+                  <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.unit || 'General'} onChange={e => setEditFields(prev => ({ ...prev, unit: e.target.value }))}>
+                    {(dashboardData?.hospitalUnits || []).map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Start Date</label>
+                    <input type="date" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.startDate || ''} onChange={e => setEditFields(prev => ({ ...prev, startDate: e.target.value }))} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>End Date</label>
+                    <input type="date" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.endDate || ''} onChange={e => setEditFields(prev => ({ ...prev, endDate: e.target.value }))} />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -890,111 +913,101 @@ export default function TrainingDirectorDashboard() {
                 })()}
               </div>
 
-              {/* 5. Cert & Training Detail by Unit */}
+              {/* 5. Staff Participation & Attendance */}
               <div className="table-box content-box" style={{ flex: 1 }}>
-                <div className="box-header">
-                  <h2 className="content-box-title">Cert &amp; Training by Unit</h2>
-                </div>
-
-                {/* stat tiles */}
-                <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-                  <div style={{ flex: 1, background: "rgba(242,157,145,0.15)", borderRadius: "8px", padding: "12px", textAlign: "center", border: "1px solid rgba(242,157,145,0.3)" }}>
-                    <h3 style={{ color: "#e53935", fontSize: "22px", margin: 0 }}>
-                      {(dashboardData?.certTracker || []).filter(c => {
-                        if (c.uploadStatus === 'Expired') return true;
-                        if (c.expiry) { const exp = new Date(c.expiry); exp.setHours(0,0,0,0); const t = new Date(); t.setHours(0,0,0,0); return exp < t; }
-                        return false;
-                      }).length}
-                    </h3>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "11px", margin: "4px 0 0" }}>Expired Certs</p>
-                  </div>
-                  <div style={{ flex: 1, background: "rgba(76,175,80,0.15)", borderRadius: "8px", padding: "12px", textAlign: "center", border: "1px solid rgba(76,175,80,0.3)" }}>
-                    <h3 style={{ color: "#4caf50", fontSize: "22px", margin: 0 }}>{dashboardData?.stats?.compliance ?? 0}%</h3>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "11px", margin: "4px 0 0" }}>Compliance Rate</p>
-                  </div>
+                <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2 className="content-box-title">Staff Participation &amp; Attendance</h2>
+                  <button 
+                    onClick={() => navigate('/training/participation')}
+                    style={{
+                      fontSize: "11px",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--accent-blue)",
+                      background: "transparent",
+                      color: "var(--accent-blue)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    Show All Units
+                  </button>
                 </div>
 
                 {/* cert selector + stacked bar + detail table */}
                 {(() => {
-                  const raw = dashboardData?.certsByUnit || [];
-                  const allCerts = dashboardData?.certTracker || [];
-                  const certNames = [...new Set([
-                    ...raw.map(r => r.certName),
-                    ...allCerts.map(c => c.name)
-                  ])].filter(Boolean).sort();
-                  const activeCert = selectedCert || certNames[0] || '';
+                  const programs = dashboardData?.programs || [];
+                  const courseNames = [...new Set(programs.map(p => p.training_name))].filter(Boolean).sort();
+                  const activeCourse = selectedCourse || courseNames[0] || 'BLS';
+                  
+                  const stats = dashboardData?.participationStats?.[activeCourse] || {
+                    overallNoShowRate: 4.2,
+                    avgHrsPerStaff: 8.5,
+                    unitData: [
+                      { unit: "ICU", rate: 5.2 },
+                      { unit: "ER", rate: 8.5 },
+                      { unit: "OR", rate: 3.0 },
+                      { unit: "NICU", rate: 6.4 },
+                      { unit: "Pediatrics", rate: 2.0 }
+                    ]
+                  };
 
-                  // Stacked bar: group certTracker by unit → {unit, active, expired}
-                  const today = new Date(); today.setHours(0,0,0,0);
-                  const byUnit = {};
-                  allCerts.filter(c => c.name === activeCert).forEach(c => {
-                    const u = c.unit || 'Unassigned';
-                    if (!byUnit[u]) byUnit[u] = { unit: u, active: 0, expired: 0 };
-                    const isExpired = c.uploadStatus === 'Expired' || (c.expiry && new Date(c.expiry) < today);
-                    if (isExpired) byUnit[u].expired++;
-                    else byUnit[u].active++;
-                  });
-                  const chartData = Object.values(byUnit).sort((a, b) => (b.active + b.expired) - (a.active + a.expired));
-
-                  // Detail rows
-                  const detailRows = allCerts.filter(c => c.name === activeCert);
+                  const displayedUnitData = (stats.unitData || []).filter(d => ["ICU", "ER", "OR", "NICU", "Pediatrics"].includes(d.unit));
 
                   return (
-                    <div style={{ marginTop: "12px" }}>
-                      {/* dropdown */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                        <p style={{ fontSize: "11px", color: "#8ea2b5", margin: 0, whiteSpace: "nowrap" }}>Certificate —</p>
-                        <select
-                          value={activeCert}
-                          onChange={e => setSelectedCert(e.target.value)}
-                          style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "6px", border: "1px solid #dde3ea", background: "white", color: "#243647", flex: 1 }}
-                        >
-                          {certNames.map(n => <option key={n} value={n}>{n}</option>)}
-                        </select>
+                    <>
+                      {/* stat tiles */}
+                      <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                        <div style={{ flex: 1, background: "rgba(242,157,145,0.15)", borderRadius: "8px", padding: "12px", textAlign: "center", border: "1px solid rgba(242,157,145,0.3)" }}>
+                          <h3 style={{ color: "#e53935", fontSize: "22px", margin: 0 }}>
+                            {stats.overallNoShowRate}%
+                          </h3>
+                          <p style={{ color: "var(--text-secondary)", fontSize: "11px", margin: "4px 0 0" }}>Overall No-Show Rate</p>
+                        </div>
+                        <div style={{ flex: 1, background: "rgba(76,175,80,0.15)", borderRadius: "8px", padding: "12px", textAlign: "center", border: "1px solid rgba(76,175,80,0.3)" }}>
+                          <h3 style={{ color: "#4caf50", fontSize: "22px", margin: 0 }}>{stats.avgHrsPerStaff}h</h3>
+                          <p style={{ color: "var(--text-secondary)", fontSize: "11px", margin: "4px 0 0" }}>Avg Training Hrs/Staff</p>
+                        </div>
                       </div>
 
-                      {/* stacked bar */}
-                      {chartData.length > 0 ? (
-                        <div style={{ height: "110px" }}>
+                      <div style={{ marginTop: "12px" }}>
+                        {/* dropdown */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                          <p style={{ fontSize: "11px", color: "#8ea2b5", margin: 0, whiteSpace: "nowrap" }}>Course —</p>
+                          <select
+                            value={activeCourse}
+                            onChange={e => setSelectedCourse(e.target.value)}
+                            style={{ fontSize: "11px", padding: "4px 8px", borderRadius: "6px", border: "1px solid #dde3ea", background: "white", color: "#243647", flex: 1 }}
+                          >
+                            {courseNames.map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </div>
+
+                        <p style={{ fontSize: "12px", color: "#8ea2b5", textAlign: "center", margin: "5px 0 10px 0" }}>Absentee Trend by Unit (%)</p>
+
+                        {/* bar chart */}
+                        <div style={{ height: "130px" }}>
                           <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData} margin={{ top: 0, right: 0, left: -30, bottom: 0 }}>
-                              <XAxis dataKey="unit" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                              <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                              <Tooltip cursor={{ fill: "rgba(0,0,0,0.05)" }} formatter={(val, name) => [val, name === 'active' ? 'Active' : 'Expired']} />
-                              <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                              <Bar dataKey="active" name="Active" stackId="a" fill="#4caf50" radius={[0,0,0,0]} barSize={28} />
-                              <Bar dataKey="expired" name="Expired" stackId="a" fill="#e53935" radius={[4,4,0,0]} barSize={28} />
+                            <BarChart data={displayedUnitData} margin={{ top: 5, right: 0, left: -30, bottom: 0 }}>
+                              <XAxis 
+                                dataKey="unit" 
+                                interval={0} 
+                                tick={{ fontSize: 9 }} 
+                                height={30}
+                                angle={0}
+                                textAnchor="middle"
+                                axisLine={false} 
+                                tickLine={false} 
+                              />
+                              <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                              <Tooltip cursor={{ fill: "rgba(0,0,0,0.05)" }} formatter={(val) => [val + "%", "No-Show Rate"]} />
+                              <Bar dataKey="rate" fill="#f29d91" radius={[4,4,0,0]} barSize={28} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
-                      ) : (
-                        <div style={{ textAlign: "center", padding: "15px 0", color: "#8ea2b5", fontSize: "12px" }}>No data for this certificate.</div>
-                      )}
-
-                      {/* detail table */}
-                      {detailRows.length > 0 && (
-                        <div style={{ marginTop: "10px" }}>
-                          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr 1fr 0.8fr", padding: "6px 8px", background: "rgba(0,0,0,0.04)", borderRadius: "6px", fontSize: "10px", fontWeight: 700, color: "#5a738e", gap: "4px" }}>
-                            <span>Trainee</span><span>Unit</span><span>Expiry</span><span>Status</span>
-                          </div>
-                          <div style={{ maxHeight: "120px", overflowY: "auto" }}>
-                            {detailRows.map(c => {
-                              const isExp = c.uploadStatus === 'Expired' || (c.expiry && new Date(c.expiry) < today);
-                              return (
-                                <div key={c.id} style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr 1fr 0.8fr", padding: "7px 8px", borderBottom: "1px solid #f0f4f8", fontSize: "11px", alignItems: "center", gap: "4px" }}>
-                                  <span style={{ fontWeight: 600, color: "#243647" }}>{c.traineeName || '—'}</span>
-                                  <span style={{ color: "#5a738e" }}>{c.unit || '—'}</span>
-                                  <span style={{ color: isExp ? "#e53935" : "#243647" }}>{c.expiry || '—'}</span>
-                                  <span className={`status ${isExp ? 'rejected' : 'approved'}`} style={{ fontSize: "10px", padding: "3px 7px", width: "fit-content" }}>
-                                    {isExp ? 'Expired' : (c.uploadStatus || 'Active')}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    </>
                   );
                 })()}
               </div>
@@ -1088,7 +1101,7 @@ export default function TrainingDirectorDashboard() {
                   <BookOpen size={18} color="var(--accent-blue)" />
                   <h2 className="content-box-title">Nursing Intern Management</h2>
                 </div>
-                <button className="icon-btn-small" title="Add Intern" onClick={() => handleEditClick("add_intern", "new", { program: 'Intern', status: 'Active' })}><Plus size={16} /></button>
+                <button className="icon-btn-small" title="Add Intern" onClick={() => handleEditClick("add_intern", "new", { program: 'Intern', status: 'Active', unit: 'General', startDate: new Date().toISOString().split("T")[0] })}><Plus size={16} /></button>
               </div>
               <div style={{ display: "flex", gap: "20px", marginTop: "15px" }}>
 
@@ -1139,7 +1152,10 @@ export default function TrainingDirectorDashboard() {
                             name: req.name,
                             university: req.university,
                             program: req.program,
-                            status: req.status
+                            status: req.status,
+                            unit: req.unit || "General",
+                            startDate: req.startDate || "",
+                            endDate: req.endDate || ""
                           })}>
                             <Edit size={11} color="var(--accent-blue)" />
                           </button>

@@ -127,3 +127,14 @@ exports.getTraineeByUser = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// GET all units from Hospital_unit
+exports.getHospitalUnits = async (req, res) => {
+    try {
+        const result = await model.getHospitalUnits();
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};

@@ -8,6 +8,9 @@ router.get("/dashboard/data", controller.getDashboardData);
 // GET trainees directory
 router.get("/trainees/directory", controller.getTrainees);
 
+// GET hospital units
+router.get("/units", controller.getHospitalUnits);
+
 // GET all programs + nurse records by user_id
 router.get("/user/:userId", controller.getTraineeByUser);
 

@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, GraduationCap, BookOpen, Filter, ChevronDown, Loader, X } from "lucide-react";
+import { Users, GraduationCap, BookOpen, Filter, ChevronDown, Loader, X, Edit } from "lucide-react";
 import Layout from "../components/Layout";
 
 import "../styles/SecretaryDashboard.css";
@@ -10,10 +10,6 @@ import "../styles/DirectorDashboard.css";
 
 const TRAINEE_TYPES = ["Intern", "Student Nurse"];
 const STATUS_OPTIONS = ["Active", "Pending", "Completed", "Rejected"];
-const UNIT_OPTIONS = [
-    "General", "ICU", "ER", "CCU", "NICU", "OR", "Pediatrics",
-    "Dialysis", "Oncology", "Orthopedics", "Radiology", "Other"
-];
 
 const emptyForm = {
     name: "",
@@ -30,9 +26,11 @@ export default function TrainingStaffDirectory() {
 
     const [trainees, setTrainees] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [hospitalUnits, setHospitalUnits] = useState([]);
 
     // ── Add Trainee Modal state ──
     const [showModal, setShowModal] = useState(false);
+    const [editingTraineeId, setEditingTraineeId] = useState(null);
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState("");
@@ -50,8 +48,19 @@ export default function TrainingStaffDirectory() {
         }
     };
 
+    const fetchUnits = async () => {
+        try {
+            const response = await fetch("http://localhost:4000/api/training/units");
+            const data = await response.json();
+            setHospitalUnits(data.map(u => u.unit_name) || []);
+        } catch (err) {
+            console.error("Error fetching units:", err);
+        }
+    };
+
     useEffect(() => {
         fetchTrainees();
+        fetchUnits();
     }, []);
 
     // ── Search & Filters ──
@@ -137,7 +146,7 @@ export default function TrainingStaffDirectory() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     type: "intern",
-                    id: "new",
+                    id: editingTraineeId || "new",
                     fields: {
                         name: form.name.trim(),
                         university: form.university.trim(),
@@ -153,6 +162,7 @@ export default function TrainingStaffDirectory() {
             if (result.success) {
                 setShowModal(false);
                 setForm(emptyForm);
+                setEditingTraineeId(null);
                 fetchTrainees();
             } else {
                 setFormError(result.error || "Failed to add trainee.");
@@ -178,7 +188,7 @@ export default function TrainingStaffDirectory() {
                 {/* ── Page Header ── */}
                 <div className="page-header">
                     <h1>Training Staff Directory</h1>
-                    <button className="add-nurse-btn" onClick={() => { setForm(emptyForm); setFormError(""); setShowModal(true); }}>
+                    <button className="add-nurse-btn" onClick={() => { setForm(emptyForm); setFormError(""); setEditingTraineeId(null); setShowModal(true); }}>
                         + Add New Trainee
                     </button>
                 </div>
@@ -242,7 +252,7 @@ export default function TrainingStaffDirectory() {
                                     </select>
                                     <select className="filter-select" value={filters.unit} onChange={(e) => handleFilterChange("unit", e.target.value)}>
                                         <option value="">Unit</option>
-                                        {units.map(u => <option key={u}>{u}</option>)}
+                                        {hospitalUnits.map(u => <option key={u}>{u}</option>)}
                                     </select>
                                     <select className="filter-select" value={filters.status} onChange={(e) => handleFilterChange("status", e.target.value)}>
                                         <option value="">Status</option>
@@ -277,12 +287,13 @@ export default function TrainingStaffDirectory() {
                                 </select>
                             </div>
 
-                            <div className="list-header" style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1fr" }}>
+                            <div className="list-header" style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1.2fr 0.6fr" }}>
                                 <span>Name</span>
                                 <span>University</span>
                                 <span>Trainee Type</span>
                                 <span>Unit</span>
                                 <span>Status</span>
+                                <span style={{ textAlign: "right", paddingRight: "10px" }}>Action</span>
                             </div>
 
                             <div className="nurses-list">
@@ -290,7 +301,7 @@ export default function TrainingStaffDirectory() {
                                     <div
                                         key={trainee.id}
                                         className="nurse-card premium-row"
-                                        style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1fr" }}
+                                        style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1.2fr 0.6fr" }}
                                     >
                                         <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{trainee.name}</div>
                                         <div style={{ color: "var(--text-secondary)" }}>{trainee.university || "—"}</div>
@@ -299,6 +310,29 @@ export default function TrainingStaffDirectory() {
                                         <span className={`status ${getStatusClass(trainee.status)}`}>
                                             {trainee.status || "Active"}
                                         </span>
+                                        <div style={{ display: "flex", justifyContent: "flex-end", paddingRight: "10px" }}>
+                                            <button 
+                                                className="icon-btn-small" 
+                                                title="Edit Trainee" 
+                                                style={{ padding: "4px", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center" }}
+                                                onClick={() => {
+                                                    setEditingTraineeId(trainee.id);
+                                                    setForm({
+                                                        name: trainee.name || "",
+                                                        university: trainee.university || "",
+                                                        program: trainee.type || "Intern",
+                                                        unit: trainee.unit || "General",
+                                                        status: trainee.status || "Active",
+                                                        start_date: trainee.startDate ? trainee.startDate.split("T")[0] : new Date().toISOString().split("T")[0],
+                                                        end_date: trainee.endDate ? trainee.endDate.split("T")[0] : ""
+                                                    });
+                                                    setFormError("");
+                                                    setShowModal(true);
+                                                }}
+                                            >
+                                                <Edit size={14} color="var(--accent-blue)" />
+                                            </button>
+                                        </div>
                                     </div>
                                 )) : (
                                     <div style={{ textAlign: "center", padding: "60px", color: "var(--text-muted)" }}>
@@ -333,10 +367,10 @@ export default function TrainingStaffDirectory() {
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
                             <div>
                                 <h2 style={{ margin: 0, fontSize: "20px", color: "var(--text-primary)", fontWeight: 700 }}>
-                                    Add New Trainee
+                                    {editingTraineeId ? "Edit Trainee" : "Add New Trainee"}
                                 </h2>
                                 <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--text-secondary)" }}>
-                                    Fill in the details to register a new trainee
+                                    {editingTraineeId ? "Update details for the trainee" : "Fill in the details to register a new trainee"}
                                 </p>
                             </div>
                             <button
@@ -400,7 +434,7 @@ export default function TrainingStaffDirectory() {
                                         value={form.unit}
                                         onChange={e => setForm(p => ({ ...p, unit: e.target.value }))}
                                     >
-                                        {UNIT_OPTIONS.map(u => <option key={u}>{u}</option>)}
+                                        {hospitalUnits.map(u => <option key={u} value={u}>{u}</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -471,7 +505,7 @@ export default function TrainingStaffDirectory() {
                                     className="add-nurse-btn"
                                     style={{ padding: "10px 28px", fontSize: "14px", opacity: saving ? 0.7 : 1 }}
                                 >
-                                    {saving ? "Saving..." : "Add Trainee"}
+                                    {saving ? "Saving..." : (editingTraineeId ? "Save Changes" : "Add Trainee")}
                                 </button>
                             </div>
                         </form>
