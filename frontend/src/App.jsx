@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 
 // Dashboards
 import NurseDashboard from "./pages/NurseDashboard";
@@ -48,6 +49,8 @@ import RequestHistory from "./pages/RequestHistory";
 import TrainingPage from "./pages/TrainingPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import StaffParticipationDetails from "./pages/StaffParticipationDetails";
+import TrainingNeedsAnalysisDetails from "./pages/TrainingNeedsAnalysisDetails";
+import LearningOutcomesDetails from "./pages/LearningOutcomesDetails";
 
 // Role IDs for readability
 const NURSE = [1];
@@ -71,6 +74,7 @@ function App() {
                         <Routes>
                                 {/* ── Public ───────────────────────────────────────── */}
                                 <Route path="/" element={<Login />} />
+                                <Route path="/reset-password" element={<ResetPassword />} />
 
                                 {/* ── Nurse ────────────────────────────────────────── */}
                                 <Route path="/nurse-dashboard" element={
@@ -141,6 +145,16 @@ function App() {
                                 <Route path="/training/participation" element={
                                         <ProtectedRoute allowedRoles={TRAINING}>
                                                 <StaffParticipationDetails />
+                                        </ProtectedRoute>
+                                } />
+                                <Route path="/training/needs-analysis" element={
+                                        <ProtectedRoute allowedRoles={TRAINING}>
+                                                <TrainingNeedsAnalysisDetails />
+                                        </ProtectedRoute>
+                                } />
+                                <Route path="/training/learning-outcomes" element={
+                                        <ProtectedRoute allowedRoles={TRAINING}>
+                                                <LearningOutcomesDetails />
                                         </ProtectedRoute>
                                 } />
 

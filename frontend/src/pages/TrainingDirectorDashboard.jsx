@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Users, Activity, Award, ClipboardCheck, AlertTriangle, BookOpen,
   Calendar, GraduationCap, TrendingUp, Download, ArrowLeft, ArrowRight,
-  Filter, CheckCircle, Clock, Loader, X, Edit, Plus, Edit3
+  Filter, CheckCircle, Clock, Loader, X, Edit, Plus, Edit3, Trash2
 } from "lucide-react";
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar,
@@ -32,12 +32,25 @@ const absenteeTrend = [
   { unit: "Pediatrics", rate: 2 },
 ];
 
-const trainingEffectiveness = [
-  { course: "BLS Update", preTest: 65, postTest: 92 },
-  { course: "ACLS Protocol", preTest: 58, postTest: 88 },
-  { course: "Infection Control", preTest: 70, postTest: 95 },
-  { course: "ECG Basics", preTest: 50, postTest: 85 },
+const defaultEffectivenessFallback = [
+  { course: "BLS Update", preTest: 0, postTest: 0 },
+  { course: "ACLS Protocol", preTest: 0, postTest: 0 },
+  { course: "Infection Control", preTest: 0, postTest: 0 }
 ];
+
+const getShortName = (name) => {
+  if (!name) return "";
+  const mappings = {
+    "Advanced Ventilator Operations": "Adv. Ventilator",
+    "Aseptic Technique & Sterilization": "Aseptic Tech",
+    "Medication Safety Program": "Med. Safety",
+    "Triage Protocols & Rapid Assessment": "Triage Protocols",
+    "Ventilator Management": "Vent. Mgmt",
+    "Fire and Safety": "Fire & Safety",
+    "Infection Control": "Infection Ctrl"
+  };
+  return mappings[name] || name;
+};
 
 export default function TrainingDirectorDashboard() {
   const navigate = useNavigate();
@@ -56,8 +69,15 @@ export default function TrainingDirectorDashboard() {
   // Cert-by-unit chart selected cert
   const [selectedCert, setSelectedCert] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('BLS');
-  const [showAllUnits, setShowAllUnits] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+
+  const needs = dashboardData?.needsAnalysis || {
+    competencyGaps: [],
+    cpdCompleted: 0,
+    cpdRequired: 100,
+    newHiresMissingBasics: 0,
+    unverifiedFloatStaff: 0
+  };
 
   const fetchData = async () => {
     try {
@@ -91,6 +111,8 @@ export default function TrainingDirectorDashboard() {
       case "onboarding": return `Edit Onboarding: ${data.name}`;
       case "intern": return `Edit Intern Placement: ${data.name}`;
       case "add_intern": return "Add Intern / Trainee";
+      case "program_item": return `Edit Program Item`;
+      case "add_program_item": return "Add Training Program Item";
       default: return "Edit Record";
     }
   };
@@ -124,7 +146,9 @@ export default function TrainingDirectorDashboard() {
             training_id: editFields.training_id,
             status: editFields.status,
             renewal: editFields.renewal,
-            action: editFields.action
+            action: editFields.action,
+            pre_test_score: editFields.pre_test_score !== "" && editFields.pre_test_score !== null && editFields.pre_test_score !== undefined ? Number(editFields.pre_test_score) : null,
+            post_test_score: editFields.post_test_score !== "" && editFields.post_test_score !== null && editFields.post_test_score !== undefined ? Number(editFields.post_test_score) : null
           }
         };
       } else if (type === "certification" || type === "add_certification") {
@@ -172,6 +196,18 @@ export default function TrainingDirectorDashboard() {
             end_date: editFields.endDate || null
           }
         };
+      } else if (type === "program_item" || type === "add_program_item") {
+        bodyData = {
+          type: "program_item",
+          id: type === "add_program_item" ? "new" : id,
+          fields: {
+            category: editFields.category,
+            title: editFields.title,
+            locationProvider: editFields.locationProvider,
+            duration: editFields.duration,
+            costOrStatus: editFields.costOrStatus
+          }
+        };
       }
 
       const res = await fetch("http://localhost:4000/api/training/dashboard/update-row", {
@@ -192,6 +228,25 @@ export default function TrainingDirectorDashboard() {
       alert("❌ Error saving data");
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteProgram = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this training program item?")) return;
+    try {
+      const res = await fetch(`http://localhost:4000/api/training/dashboard/program-item/${id}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Deleted ✅");
+        fetchData();
+      } else {
+        alert("❌ Delete failed: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error deleting program item");
     }
   };
 
@@ -394,6 +449,17 @@ export default function TrainingDirectorDashboard() {
                   </div>
                 </div>
 
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Pre-Test Score (%)</label>
+                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.pre_test_score || ''} onChange={e => setEditFields(prev => ({ ...prev, pre_test_score: e.target.value }))} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Post-Test Score (%)</label>
+                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.post_test_score || ''} onChange={e => setEditFields(prev => ({ ...prev, post_test_score: e.target.value }))} />
+                  </div>
+                </div>
+
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Recommendation & Action Plan</label>
                   <textarea className="input-pill" style={{ width: '100%', height: '80px', marginTop: '5px', borderRadius: '8px', padding: '10px', resize: 'vertical' }} value={editFields.action || ''} onChange={e => setEditFields(prev => ({ ...prev, action: e.target.value }))} placeholder="e.g. Re-verify by clinical supervisor next shift." />
@@ -566,6 +632,98 @@ export default function TrainingDirectorDashboard() {
               </div>
             )}
 
+            {(type === "program_item" || type === "add_program_item") && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Category</label>
+                  <select 
+                    className="input-pill" 
+                    style={{ width: '100%', marginTop: '5px' }} 
+                    value={editFields.category || 'outside'} 
+                    onChange={e => setEditFields(prev => ({ ...prev, category: e.target.value }))}
+                  >
+                    <option value="outside">Outside Hospital</option>
+                    <option value="inside">Inside Hospital</option>
+                    <option value="cross">Cross-Training</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>
+                    {editFields.category === "outside" ? "Program / Course Title" :
+                     editFields.category === "inside" ? "Workshop / Course Title" : "Staff Name"}
+                  </label>
+                  <input 
+                    type="text" 
+                    className="input-pill" 
+                    style={{ width: '100%', marginTop: '5px' }} 
+                    value={editFields.title || ''} 
+                    onChange={e => setEditFields(prev => ({ ...prev, title: e.target.value }))} 
+                    placeholder={
+                      editFields.category === "outside" ? "e.g. Advanced Trauma Life Support" :
+                      editFields.category === "inside" ? "e.g. IV Therapy Recertification" : "e.g. M. Ali"
+                    }
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>
+                    {editFields.category === "outside" ? "Location / Provider" :
+                     editFields.category === "inside" ? "Internal Location" : "Deployment Route"}
+                  </label>
+                  <input 
+                    type="text" 
+                    className="input-pill" 
+                    style={{ width: '100%', marginTop: '5px' }} 
+                    value={editFields.locationProvider || ''} 
+                    onChange={e => setEditFields(prev => ({ ...prev, locationProvider: e.target.value }))} 
+                    placeholder={
+                      editFields.category === "outside" ? "e.g. King Fahad Hospital" :
+                      editFields.category === "inside" ? "e.g. Main Hall A" : "e.g. NICU ➔ Pediatric Ward"
+                    }
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>
+                      {editFields.category === "outside" ? "Duration" :
+                       editFields.category === "inside" ? "Duration" : "Timeline"}
+                    </label>
+                    <input 
+                      type="text" 
+                      className="input-pill" 
+                      style={{ width: '100%', marginTop: '5px' }} 
+                      value={editFields.duration || ''} 
+                      onChange={e => setEditFields(prev => ({ ...prev, duration: e.target.value }))} 
+                      placeholder={
+                        editFields.category === "outside" ? "e.g. 3 Days" :
+                        editFields.category === "inside" ? "e.g. 4 Hours" : "e.g. Starts: 2026-06-01"
+                      }
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>
+                      {editFields.category === "outside" ? "Cost / Fees" :
+                       editFields.category === "inside" ? "Notes / Status" : "Current Status"}
+                    </label>
+                    <input 
+                      type="text" 
+                      className="input-pill" 
+                      style={{ width: '100%', marginTop: '5px' }} 
+                      value={editFields.costOrStatus || ''} 
+                      onChange={e => setEditFields(prev => ({ ...prev, costOrStatus: e.target.value }))} 
+                      placeholder={
+                        editFields.category === "outside" ? "e.g. $450" :
+                        editFields.category === "inside" ? "e.g. Active" : "e.g. Active"
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
 
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '25px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
@@ -723,35 +881,59 @@ export default function TrainingDirectorDashboard() {
 
               {/* 8. Training Needs Analysis Panel (Heatmap / Gaps) */}
               <div className="table-box content-box" style={{ flex: 1 }}>
-                <div className="box-header">
+                <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h2 className="content-box-title">Training Needs Analysis</h2>
+                  <button 
+                    onClick={() => navigate('/training/needs-analysis')}
+                    style={{
+                      fontSize: "11px",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--accent-blue)",
+                      background: "transparent",
+                      color: "var(--accent-blue)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    Show All Units
+                  </button>
                 </div>
                 <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "10px" }}>Competency Gaps by Unit</p>
                 <div className="heatmap-grid">
-                  <div className="heatmap-cell" style={{ background: "#e53935" }}>ER <span className="heatmap-label">High Gap</span></div>
-                  <div className="heatmap-cell" style={{ background: "#ff9800" }}>ICU <span className="heatmap-label">Med Gap</span></div>
-                  <div className="heatmap-cell" style={{ background: "#4caf50" }}>OR <span className="heatmap-label">Low Gap</span></div>
-                  <div className="heatmap-cell" style={{ background: "#ff9800" }}>NICU <span className="heatmap-label">Med Gap</span></div>
+                  {needs.competencyGaps && needs.competencyGaps.length > 0 ? (
+                    needs.competencyGaps.slice(0, 4).map((item, idx) => (
+                      <div key={idx} className="heatmap-cell" style={{ background: item.color }}>
+                        {item.unit}
+                        <span className="heatmap-label">{item.gapLevel} ({item.gapPercent}%)</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: "10px", textAlign: "center", color: "var(--text-secondary)", gridColumn: "1 / -1" }}>
+                      No competency data available.
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ marginTop: "20px" }}>
                   <h4 style={{ fontSize: "13px", color: "#4a6a85", marginBottom: "10px" }}>CPD/CME Completion Progress</h4>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2px' }}>
-                    <span>Required: 5000 hrs</span>
-                    <span>Completed: 3450 hrs</span>
+                    <span>Required: {needs.cpdRequired} hrs</span>
+                    <span>Completed: {needs.cpdCompleted} hrs</span>
                   </div>
-                  {renderProgressBar((3450 / 5000) * 100)}
+                  {renderProgressBar((needs.cpdCompleted / (needs.cpdRequired || 1)) * 100)}
                 </div>
 
                 <div style={{ marginTop: "20px" }}>
                   <h4 style={{ fontSize: "13px", color: "#4a6a85", marginBottom: "10px" }}>High-Risk Staff Flags</h4>
                   <div className="stat-item">
                     <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>New Hires (Missing Basics)</span>
-                    <span className="badge high-risk" style={{ width: "auto" }}>14</span>
+                    <span className="badge high-risk" style={{ width: "auto" }}>{needs.newHiresMissingBasics}</span>
                   </div>
                   <div className="stat-item">
                     <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Float Staff (Unverified)</span>
-                    <span className="badge critical" style={{ width: "auto" }}>8</span>
+                    <span className="badge critical" style={{ width: "auto" }}>{needs.unverifiedFloatStaff}</span>
                   </div>
                 </div>
               </div>
@@ -787,7 +969,9 @@ export default function TrainingDirectorDashboard() {
                             training_id: c.training_id,
                             status: c.status,
                             renewal: c.renewal,
-                            action: c.action
+                            action: c.action,
+                            pre_test_score: c.pre_test_score || "",
+                            post_test_score: c.post_test_score || ""
                           })}>
                             <Edit size={11} color="var(--accent-blue)" />
                           </button>
@@ -805,15 +989,45 @@ export default function TrainingDirectorDashboard() {
 
               {/* 6. Learning Outcomes & Evaluations Panel */}
               <div className="table-box content-box" style={{ flex: 1 }}>
-                <div className="box-header">
+                <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h2 className="content-box-title">Learning Outcomes</h2>
+                  <button 
+                    onClick={() => navigate('/training/learning-outcomes')}
+                    style={{
+                      fontSize: "11px",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--accent-blue)",
+                      background: "transparent",
+                      color: "var(--accent-blue)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    Show Details
+                  </button>
                 </div>
                 <p style={{ fontSize: "12px", color: "#8ea2b5", marginTop: "10px", marginBottom: "15px" }}>Pre vs. Post Test Scores (%)</p>
-                <div style={{ height: "200px" }}>
+                <div style={{ height: "230px" }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={trainingEffectiveness} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <BarChart 
+                      data={dashboardData?.learningOutcomes && dashboardData.learningOutcomes.length > 0 
+                        ? dashboardData.learningOutcomes.map(item => ({ ...item, course: getShortName(item.course) })) 
+                        : defaultEffectivenessFallback} 
+                      margin={{ top: 5, right: 5, left: -20, bottom: 40 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                      <XAxis dataKey="course" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <XAxis 
+                        dataKey="course" 
+                        tick={{ fontSize: 9, fill: "var(--text-secondary)" }} 
+                        axisLine={false} 
+                        tickLine={false}
+                        interval={0}
+                        angle={-25}
+                        textAnchor="end"
+                        height={55}
+                      />
                       <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                       <Tooltip />
                       <Legend wrapperStyle={{ fontSize: '11px' }} />
@@ -1061,6 +1275,13 @@ export default function TrainingDirectorDashboard() {
               <div className="table-box content-box" style={{ flex: 1 }}>
                 <div className="box-header" style={{ marginBottom: "10px" }}>
                   <h2 className="content-box-title">Training Programs</h2>
+                  <button 
+                    className="icon-btn-small" 
+                    title="Add Program Item" 
+                    onClick={() => handleEditClick("add_program_item", "new", { category: activeProgramTab })}
+                  >
+                    <Plus size={16} />
+                  </button>
                 </div>
                 <div className="tab-container">
                   <button className={`tab-btn ${activeProgramTab === "outside" ? "active" : ""}`} onClick={() => setActiveProgramTab("outside")}>Outside Hospital</button>
@@ -1069,25 +1290,79 @@ export default function TrainingDirectorDashboard() {
                 </div>
 
                 <div style={{ background: "rgba(0,0,0,0.02)", borderRadius: "8px", padding: "15px", minHeight: "150px" }}>
-                  {activeProgramTab === "outside" && (
-                    <div>
-                      <h4 style={{ fontSize: "14px", color: "#243647", marginBottom: "10px" }}>Recent Outside Programs</h4>
-                      <p style={{ fontSize: "13px", color: "#5a738e" }}>• Advanced Trauma Life Support - <i>King Fahad Hospital</i> (3 Days) - $450</p>
-                      <p style={{ fontSize: "13px", color: "#5a738e", marginTop: "8px" }}>• Leadership in Nursing - <i>Virtual Seminar</i> (1 Day) - $150</p>
-                    </div>
-                  )}
-                  {activeProgramTab === "inside" && (
-                    <div>
-                      <h4 style={{ fontSize: "14px", color: "#243647", marginBottom: "10px" }}>Internal Workshops</h4>
-                      <p style={{ fontSize: "13px", color: "#5a738e" }}>• IV Therapy Recertification - <i>Main Hall A</i> (4 Hours)</p>
-                      <p style={{ fontSize: "13px", color: "#5a738e", marginTop: "8px" }}>• New EMR System Training - <i>Lab 3</i> (8 Hours)</p>
-                    </div>
-                  )}
-                  {activeProgramTab === "cross" && (
-                    <div>
-                      <h4 style={{ fontSize: "14px", color: "#243647", marginBottom: "10px" }}>Cross-Training Deployments</h4>
-                      <p style={{ fontSize: "13px", color: "#5a738e" }}>• M. Ali: NICU ➔ Pediatric Ward (Starts: 2026-06-01)</p>
-                      <p style={{ fontSize: "13px", color: "#5a738e", marginTop: "8px" }}>• S. Khan: MedSurg ➔ ER Triage (Completed)</p>
+                  <h4 style={{ fontSize: "14px", color: "#243647", marginBottom: "10px", textTransform: "capitalize" }}>
+                    {activeProgramTab === "outside" ? "Recent Outside Programs" :
+                     activeProgramTab === "inside" ? "Internal Workshops" : "Cross-Training Deployments"}
+                  </h4>
+                  {((dashboardData?.programItems || []).filter(item => item.category === activeProgramTab)).length === 0 ? (
+                    <p style={{ fontSize: "13px", color: "#8ea2b5", fontStyle: "italic", textAlign: "center", marginTop: "30px" }}>
+                      No programs recorded for this category.
+                    </p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {((dashboardData?.programItems || []).filter(item => item.category === activeProgramTab)).map(item => (
+                        <div 
+                          key={item.id} 
+                          style={{ 
+                            display: "flex", 
+                            justifyContent: "space-between", 
+                            alignItems: "center", 
+                            background: "#fff", 
+                            padding: "10px 12px", 
+                            borderRadius: "6px", 
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.05)" 
+                          }}
+                        >
+                          <div style={{ fontSize: "13px", color: "#5a738e" }}>
+                            <strong style={{ color: "#243647" }}>{item.title}</strong>
+                            {item.locationProvider && (
+                              <>
+                                {" - "}<i>{item.locationProvider}</i>
+                              </>
+                            )}
+                            {item.duration && (
+                              <span style={{ color: "#8ea2b5", marginLeft: "5px" }}>({item.duration})</span>
+                            )}
+                            {item.costOrStatus && (
+                              <span style={{ 
+                                marginLeft: "8px", 
+                                background: activeProgramTab === "outside" ? "rgba(46, 204, 113, 0.1)" : "rgba(52, 152, 219, 0.1)",
+                                color: activeProgramTab === "outside" ? "#2ecc71" : "#3498db",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                fontSize: "11px",
+                                fontWeight: "bold"
+                              }}>
+                                {item.costOrStatus}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: "flex", gap: "5px" }}>
+                            <button 
+                              className="icon-btn-small" 
+                              style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} 
+                              title="Edit Program" 
+                              onClick={() => handleEditClick("program_item", item.id, {
+                                category: item.category,
+                                title: item.title,
+                                locationProvider: item.locationProvider || '',
+                                duration: item.duration || '',
+                                costOrStatus: item.costOrStatus || ''
+                              })}
+                            >
+                              <Edit size={13} color="var(--accent-blue)" />
+                            </button>
+                            <button 
+                              className="icon-btn-small" 
+                              style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} 
+                              title="Delete Program" 
+                              onClick={() => handleDeleteProgram(item.id)}
+                            >
+                              <Trash2 size={13} color="#e74c3c" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -1137,15 +1412,16 @@ export default function TrainingDirectorDashboard() {
 
                 {/* Intern Requests Table */}
                 <div className="custom-table" style={{ flex: 2 }}>
-                  <div className="table-header" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
+                  <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1.6fr 1fr' }}>
                     <span>Applicant Name</span>
                     <span>University</span>
                     <span>Program</span>
+                    <span>Training Period</span>
                     <span>Status</span>
                   </div>
                   <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
                     {(dashboardData?.internRequests || []).map((req) => (
-                      <div className="table-row premium-row" key={req.id} style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr', padding: '12px 15px', fontSize: '13px' }}>
+                      <div className="table-row premium-row" key={req.id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1.6fr 1fr', padding: '12px 15px', fontSize: '13px' }}>
                         <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
                           {req.name}
                           <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} title="Edit Intern" onClick={() => handleEditClick("intern", req.id, {
@@ -1162,6 +1438,11 @@ export default function TrainingDirectorDashboard() {
                         </span>
                         <span>{req.university}</span>
                         <span style={{ color: "var(--text-secondary)" }}>{req.program}</span>
+                        <span style={{ color: "var(--text-secondary)", fontSize: "11px" }}>
+                          {req.startDate && req.endDate 
+                            ? `${req.startDate} to ${req.endDate}` 
+                            : req.startDate || req.endDate || "—"}
+                        </span>
                         <span className={`status ${req.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '4px 10px', textAlign: 'center', width: 'fit-content' }}>
                           {req.status}
                         </span>

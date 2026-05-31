@@ -225,7 +225,9 @@ exports.getDashboardData = async () => {
             tp.training_name AS competency,
             st.status,
             DATE_FORMAT(st.expiry_date, '%Y-%m-%d') AS renewal,
-            COALESCE(st.recommendation_action_plan, 'None') AS action
+            COALESCE(st.recommendation_action_plan, 'None') AS action,
+            st.pre_test_score,
+            st.post_test_score
         FROM Staff_training st
         JOIN Training_program tp ON st.training_id = tp.training_id
         JOIN Trainee t ON st.trainee_id = t.trainee_id
@@ -385,16 +387,137 @@ exports.getDashboardData = async () => {
     const totalCount = mandatoryTrainings.length || 1;
     const complianceRate = Math.round(((totalCount - overdueCount) / totalCount) * 100);
 
+    // --- Training Needs Analysis Calculations ---
+    const unitGapsMap = {};
+    dbUnits.forEach(unit => {
+        unitGapsMap[unit] = { total: 0, nonCompleted: 0 };
+    });
+
+    clinicalCompetencies.forEach(c => {
+        const unit = c.specialty || 'General';
+        if (!unitGapsMap[unit]) {
+            unitGapsMap[unit] = { total: 0, nonCompleted: 0 };
+        }
+        unitGapsMap[unit].total += 1;
+        if (c.status !== 'Completed') {
+            unitGapsMap[unit].nonCompleted += 1;
+        }
+    });
+
+    const competencyGaps = Object.entries(unitGapsMap).map(([unit, stats]) => {
+        let gapPercent = 0;
+        if (stats.total > 0) {
+            gapPercent = Math.round((stats.nonCompleted / stats.total) * 100);
+        }
+        
+        let gapLevel = "Low Gap";
+        let color = "#4caf50"; // Green
+        if (gapPercent >= 50) {
+            gapLevel = "High Gap";
+            color = "#e53935"; // Red
+        } else if (gapPercent >= 15) {
+            gapLevel = "Med Gap";
+            color = "#ff9800"; // Orange
+        }
+
+        return {
+            unit,
+            gapPercent,
+            gapLevel,
+            color,
+            total: stats.total,
+            nonCompleted: stats.nonCompleted
+        };
+    }).sort((a, b) => b.gapPercent - a.gapPercent);
+
+    // Calculate CPD hours completed vs required
+    const [cpdRows] = await pool.query(`
+        SELECT 
+            SUM(CASE WHEN st.status = 'Completed' THEN tp.duration_hours ELSE 0 END) AS completed,
+            SUM(tp.duration_hours) AS total
+        FROM Staff_training st
+        JOIN Training_program tp ON st.training_id = tp.training_id
+    `);
+    const cpdCompleted = Math.round(parseFloat(cpdRows[0]?.completed || 0));
+    const cpdRequired = Math.round(parseFloat(cpdRows[0]?.total || 0)) || 100; // fallback to prevent division by zero
+
+    // New Hires (Missing Basics) count
+    const [newHiresRows] = await pool.query(`
+        SELECT COUNT(DISTINCT t.trainee_id) AS count
+        FROM Trainee t
+        JOIN Staff_training st ON t.trainee_id = st.trainee_id
+        JOIN Training_program tp ON st.training_id = tp.training_id
+        WHERE t.start_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+          AND tp.mandatory = 1
+          AND st.status IN ('Pending', 'Overdue', 'In Progress')
+     `);
+    const newHiresMissingBasics = newHiresRows[0]?.count || 0;
+
+    // Unverified Float Staff count (Trainees with Pending status or unverified licenses)
+    const [floatRows] = await pool.query(`
+        SELECT COUNT(*) AS count 
+        FROM Trainee 
+        WHERE status = 'Pending' OR unit = 'Float Pool' OR unit = 'Float'
+    `);
+    const [pendingCerts] = await pool.query(`
+        SELECT COUNT(*) AS count
+        FROM Certification_License_Tracking
+        WHERE status = 'Pending'
+    `);
+    const unverifiedFloatStaff = (floatRows[0]?.count || 0) + (pendingCerts[0]?.count || 0);
+
+    const [learningOutcomes] = await pool.query(`
+        SELECT 
+            tp.training_name AS course,
+            ROUND(AVG(st.pre_test_score)) AS preTest,
+            ROUND(AVG(st.post_test_score)) AS postTest
+        FROM Staff_training st
+        JOIN Training_program tp ON st.training_id = tp.training_id
+        WHERE st.pre_test_score IS NOT NULL OR st.post_test_score IS NOT NULL
+        GROUP BY tp.training_name
+        ORDER BY tp.training_name
+    `);
+
+    const [allTestScores] = await pool.query(`
+        SELECT 
+            st.trainee_id AS traineeId,
+            st.nurse_id AS nurseId,
+            COALESCE(t.full_name, ns.full_name, 'Unknown Staff') AS nurse,
+            COALESCE(t.unit, ns.unit, 'General') AS specialty,
+            tp.training_name AS course,
+            st.pre_test_score AS preTest,
+            st.post_test_score AS postTest,
+            st.status
+        FROM Staff_training st
+        JOIN Training_program tp ON st.training_id = tp.training_id
+        LEFT JOIN Trainee t ON st.trainee_id = t.trainee_id
+        LEFT JOIN Nursing_staff ns ON st.nurse_id = ns.nurse_id
+        WHERE st.pre_test_score IS NOT NULL OR st.post_test_score IS NOT NULL
+        ORDER BY COALESCE(t.full_name, ns.full_name), tp.training_name
+    `);
+
+    const [programItems] = await pool.query("SELECT id, category, title, location_provider AS locationProvider, duration, cost_or_status AS costOrStatus FROM Training_Program_Item ORDER BY id DESC");
+
     return {
         mandatoryTrainings,
         clinicalCompetencies,
         certTracker,
+        allTestScores,
         onboardingData,
         internRequests,
         programs,
         certsByUnit,
         participationStats,
         hospitalUnits,
+        learningOutcomes,
+        programItems,
+        needsAnalysis: {
+            competencyGaps,
+            cpdCompleted,
+            cpdRequired,
+            newHiresMissingBasics,
+            unverifiedFloatStaff
+        },
         stats: {
             totalTrained: mandatoryTrainings.length || 0,
             compliance: complianceRate,
@@ -470,20 +593,20 @@ exports.updateDashboardRow = async (type, id, fields) => {
         }
         return { success: true };
     } else if (type === "competency") {
-        const { status, renewal, action, training_id } = fields;
+        const { status, renewal, action, training_id, pre_test_score, post_test_score } = fields;
         const [existing] = await pool.query(
             "SELECT 1 FROM Staff_training WHERE trainee_id = ? AND training_id = ?",
             [id, training_id]
         );
         if (existing.length > 0) {
             await pool.query(
-                "UPDATE Staff_training SET status = ?, expiry_date = ?, recommendation_action_plan = ? WHERE trainee_id = ? AND training_id = ?",
-                [status, renewal || null, action || null, id, training_id]
+                "UPDATE Staff_training SET status = ?, expiry_date = ?, recommendation_action_plan = ?, pre_test_score = ?, post_test_score = ? WHERE trainee_id = ? AND training_id = ?",
+                [status, renewal || null, action || null, pre_test_score !== undefined ? pre_test_score : null, post_test_score !== undefined ? post_test_score : null, id, training_id]
             );
         } else {
             await pool.query(
-                "INSERT INTO Staff_training (trainee_id, training_id, status, expiry_date, recommendation_action_plan) VALUES (?, ?, ?, ?, ?)",
-                [id, training_id, status, renewal || null, action || null]
+                "INSERT INTO Staff_training (trainee_id, training_id, status, expiry_date, recommendation_action_plan, pre_test_score, post_test_score) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [id, training_id, status, renewal || null, action || null, pre_test_score !== undefined ? pre_test_score : null, post_test_score !== undefined ? post_test_score : null]
             );
         }
         return { success: true };
@@ -538,8 +661,31 @@ exports.updateDashboardRow = async (type, id, fields) => {
             );
         }
         return { success: true };
+    } else if (type === "program_item") {
+        const { category, title, locationProvider, duration, costOrStatus } = fields;
+        if (id === "new") {
+            await pool.query(
+                `INSERT INTO Training_Program_Item (category, title, location_provider, duration, cost_or_status)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [category, title, locationProvider || null, duration || null, costOrStatus || null]
+            );
+        } else {
+            await pool.query(
+                `UPDATE Training_Program_Item 
+                 SET category = ?, title = ?, location_provider = ?, duration = ?, cost_or_status = ? 
+                 WHERE id = ?`,
+                [category, title, locationProvider || null, duration || null, costOrStatus || null, id]
+            );
+        }
+        return { success: true };
     }
     throw new Error("Unknown update type");
+};
+
+// DELETE program item
+exports.deleteProgramItem = async (id) => {
+    await pool.query("DELETE FROM Training_Program_Item WHERE id = ?", [id]);
+    return { success: true };
 };
 
 // GET all units from Hospital_unit

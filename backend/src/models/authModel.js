@@ -12,3 +12,10 @@ exports.getUserByEmail = async (email) => {
 
     return rows[0];
 };
+
+exports.updatePassword = async (userId, passwordHash) => {
+    await pool.query(
+        "UPDATE User SET password_hash = ? WHERE user_id = ?",
+        [passwordHash, userId]
+    );
+};

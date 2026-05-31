@@ -23,6 +23,9 @@ router.put("/", controller.upsert);
 // UPDATE dashboard row dynamically
 router.put("/dashboard/update-row", controller.updateDashboardRow);
 
+// DELETE dashboard program item
+router.delete("/dashboard/program-item/:id", controller.deleteProgramItem);
+
 // Upload certificate for a specific training
 router.post(
     "/certificate/:userId/:trainingId",

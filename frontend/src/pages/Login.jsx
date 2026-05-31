@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import logo from "../assets/logo.png";
 import "../styles/login.css";
 
 export default function Login() {
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -123,7 +125,7 @@ export default function Login() {
                             <button
                                 className="login__forgot"
                                 type="button"
-                                onClick={() => alert("Later: Forgot password flow")}
+                                onClick={() => navigate("/reset-password")}
                             >
                                 Forget Password?
                             </button>

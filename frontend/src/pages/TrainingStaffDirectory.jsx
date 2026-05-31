@@ -67,7 +67,7 @@ export default function TrainingStaffDirectory() {
     const [search, setSearch] = useState("");
     const [sortOrder, setSortOrder] = useState("az");
     const [showFilters, setShowFilters] = useState(false);
-    const [filters, setFilters] = useState({ type: "", unit: "", status: "" });
+    const [filters, setFilters] = useState({ type: "", unit: "", status: "", year: "", month: "" });
 
     const traineeTypes = [...new Set(trainees.map(n => n.type))].filter(Boolean);
     const units = [...new Set(trainees.map(n => n.unit || "General"))].filter(Boolean);
@@ -78,6 +78,8 @@ export default function TrainingStaffDirectory() {
             (!filters.type || n.type === filters.type) &&
             (!filters.unit || (n.unit || "General") === filters.unit) &&
             (!filters.status || n.status === filters.status) &&
+            (!filters.year || (n.startDate && n.startDate.startsWith(filters.year))) &&
+            (!filters.month || (n.startDate && n.startDate.split("-")[1] === filters.month)) &&
             (
                 n.name?.toLowerCase().includes(search.toLowerCase()) ||
                 n.university?.toLowerCase().includes(search.toLowerCase())
@@ -91,7 +93,7 @@ export default function TrainingStaffDirectory() {
 
     const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
     const activeFilterCount = Object.values(filters).filter(v => v !== "").length;
-    const clearAll = () => { setFilters({ type: "", unit: "", status: "" }); setSearch(""); };
+    const clearAll = () => { setFilters({ type: "", unit: "", status: "", year: "", month: "" }); setSearch(""); };
 
     // ── Stats ──
     const isIAU = (u) => u?.toLowerCase().includes("iau") || u?.toLowerCase().includes("imam abdulrahman");
@@ -110,11 +112,16 @@ export default function TrainingStaffDirectory() {
         doc.setFontSize(11);
         doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 23);
         const tableData = filteredTrainees.map(n => [
-            n.name, n.university || "N/A", n.type || "N/A", n.unit || "General", n.status || "N/A"
+            n.name, 
+            n.university || "N/A", 
+            n.type || "N/A", 
+            n.unit || "General", 
+            n.startDate && n.endDate ? `${n.startDate} to ${n.endDate}` : n.startDate || n.endDate || "N/A",
+            n.status || "N/A"
         ]);
         autoTable(doc, {
             startY: 30,
-            head: [["Name", "University", "Trainee Type", "Unit", "Status"]],
+            head: [["Name", "University", "Trainee Type", "Unit", "Training Period", "Status"]],
             body: tableData,
             theme: "grid",
             headStyles: { fillColor: [74, 106, 133] }
@@ -258,6 +265,27 @@ export default function TrainingStaffDirectory() {
                                         <option value="">Status</option>
                                         {statuses.map(s => <option key={s}>{s}</option>)}
                                     </select>
+                                    <select className="filter-select" value={filters.year} onChange={(e) => handleFilterChange("year", e.target.value)}>
+                                        <option value="">Training Year</option>
+                                        <option value="2026">2026</option>
+                                        <option value="2025">2025</option>
+                                        <option value="2024">2024</option>
+                                    </select>
+                                    <select className="filter-select" value={filters.month} onChange={(e) => handleFilterChange("month", e.target.value)}>
+                                        <option value="">Training Month</option>
+                                        <option value="01">January</option>
+                                        <option value="02">February</option>
+                                        <option value="03">March</option>
+                                        <option value="04">April</option>
+                                        <option value="05">May</option>
+                                        <option value="06">June</option>
+                                        <option value="07">July</option>
+                                        <option value="08">August</option>
+                                        <option value="09">September</option>
+                                        <option value="10">October</option>
+                                        <option value="11">November</option>
+                                        <option value="12">December</option>
+                                    </select>
                                 </div>
                             )}
 
@@ -269,7 +297,9 @@ export default function TrainingStaffDirectory() {
                                     {filters.type && <span className="filter-chip">{filters.type}<button onClick={() => handleFilterChange("type", "")}>✕</button></span>}
                                     {filters.unit && <span className="filter-chip">{filters.unit}<button onClick={() => handleFilterChange("unit", "")}>✕</button></span>}
                                     {filters.status && <span className="filter-chip">{filters.status}<button onClick={() => handleFilterChange("status", "")}>✕</button></span>}
-                                    {(filters.type || filters.unit || filters.status || search) && (
+                                    {filters.year && <span className="filter-chip">Year: {filters.year}<button onClick={() => handleFilterChange("year", "")}>✕</button></span>}
+                                    {filters.month && <span className="filter-chip">Month: {filters.month}<button onClick={() => handleFilterChange("month", "")}>✕</button></span>}
+                                    {(filters.type || filters.unit || filters.status || filters.year || filters.month || search) && (
                                         <button className="clear-btn" onClick={clearAll}>Clear all</button>
                                     )}
                                 </div>
@@ -287,11 +317,12 @@ export default function TrainingStaffDirectory() {
                                 </select>
                             </div>
 
-                            <div className="list-header" style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1.2fr 0.6fr" }}>
+                            <div className="list-header" style={{ gridTemplateColumns: "1.8fr 1.2fr 1.2fr 1fr 1.8fr 1.2fr 0.6fr" }}>
                                 <span>Name</span>
                                 <span>University</span>
                                 <span>Trainee Type</span>
                                 <span>Unit</span>
+                                <span>Training Period</span>
                                 <span>Status</span>
                                 <span style={{ textAlign: "right", paddingRight: "10px" }}>Action</span>
                             </div>
@@ -301,12 +332,17 @@ export default function TrainingStaffDirectory() {
                                     <div
                                         key={trainee.id}
                                         className="nurse-card premium-row"
-                                        style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1.2fr 0.6fr" }}
+                                        style={{ gridTemplateColumns: "1.8fr 1.2fr 1.2fr 1fr 1.8fr 1.2fr 0.6fr" }}
                                     >
                                         <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{trainee.name}</div>
                                         <div style={{ color: "var(--text-secondary)" }}>{trainee.university || "—"}</div>
                                         <div>{trainee.type || "—"}</div>
                                         <div>{trainee.unit || "General"}</div>
+                                        <span style={{ color: "var(--text-secondary)", fontSize: "12px" }}>
+                                            {trainee.startDate && trainee.endDate 
+                                                ? `${trainee.startDate} to ${trainee.endDate}` 
+                                                : trainee.startDate || trainee.endDate || "—"}
+                                        </span>
                                         <span className={`status ${getStatusClass(trainee.status)}`}>
                                             {trainee.status || "Active"}
                                         </span>
