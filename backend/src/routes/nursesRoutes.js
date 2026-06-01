@@ -15,6 +15,9 @@ router.post("/", nursesController.create);
 // UPDATE
 router.put("/:id", nursesController.update);
 
+// UPDATE unit only (for reassign)
+router.put("/:id/unit", nursesController.updateUnit);
+
 // DELETE
 router.delete("/:id", nursesController.remove);
 

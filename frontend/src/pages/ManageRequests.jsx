@@ -7,10 +7,15 @@ export default function ManageRequests() {
     const [requests, setRequests] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
     const user = JSON.parse(sessionStorage.getItem("user"));
+    const supervisorUnit = user?.unit || null;
 
     const fetchRequests = async () => {
         try {
-            const res = await fetch("http://localhost:4000/api/requests");
+            // If supervisor has a unit, fetch only requests from that unit
+            const url = supervisorUnit
+                ? `http://localhost:4000/api/requests/by-unit?unit=${encodeURIComponent(supervisorUnit)}`
+                : "http://localhost:4000/api/requests";
+            const res = await fetch(url);
             const data = await res.json();
             if (Array.isArray(data)) setRequests(data);
         } catch (err) { console.error(err); }
@@ -26,7 +31,14 @@ export default function ManageRequests() {
     return (
         <Layout role="supervisor" username={user?.full_name || "Supervisor"}>
             <div style={{ padding: 24 }}>
-                <h2 style={{ marginBottom: 24, color: "#1a2b3c" }}>Manage Requests</h2>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: 24 }}>
+                    <h2 style={{ margin: 0, color: "#1a2b3c" }}>Manage Requests</h2>
+                    {supervisorUnit && (
+                        <span style={{ background: "#dce6f2", color: "#3b4c6e", padding: "4px 14px", borderRadius: "20px", fontSize: "13px", fontWeight: 600 }}>
+                            {supervisorUnit}
+                        </span>
+                    )}
+                </div>
                 <RequestsTable
                     requests={requests}
                     pendingStatus="Pending_Supervisor"

@@ -4,6 +4,7 @@ const router = express.Router();
 const controller = require("../controllers/requestsController");
 
 router.get("/", controller.getAll);
+router.get("/by-unit", controller.getByUnit);
 router.get("/nurse/:nurse_id", controller.getByNurseId);
 router.get("/:id", controller.getOne);
 router.post("/", controller.create);

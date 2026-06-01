@@ -27,24 +27,31 @@ exports.createOrUpdateAssignment = async (nurse_id, unit, shift, assignment_date
         SELECT assignment_id FROM DailyAssignment 
         WHERE nurse_id = ? AND assignment_date = ?
     `, [nurse_id, assignment_date]);
-    
+
+    let result;
     if (existing.length > 0) {
-        // Update existing
         const assignment_id = existing[0].assignment_id;
         await pool.query(`
             UPDATE DailyAssignment 
             SET unit = ?, shift = ? 
             WHERE assignment_id = ?
         `, [unit, shift, assignment_id]);
-        return { assignment_id, nurse_id, unit, shift, assignment_date, action: 'updated' };
+        result = { assignment_id, nurse_id, unit, shift, assignment_date, action: 'updated' };
     } else {
-        // Create new
-        const [result] = await pool.query(`
+        const [insertResult] = await pool.query(`
             INSERT INTO DailyAssignment (nurse_id, unit, shift, assignment_date) 
             VALUES (?, ?, ?, ?)
         `, [nurse_id, unit, shift, assignment_date]);
-        return { assignment_id: result.insertId, nurse_id, unit, shift, assignment_date, action: 'created' };
+        result = { assignment_id: insertResult.insertId, nurse_id, unit, shift, assignment_date, action: 'created' };
     }
+
+    // ── Update nurse's unit in Nursing_staff so the new supervisor can see them ──
+    await pool.query(
+        `UPDATE Nursing_staff SET unit = ? WHERE nurse_id = ?`,
+        [unit, nurse_id]
+    );
+
+    return result;
 };
 
 exports.deleteAssignment = async (assignment_id) => {

@@ -58,3 +58,19 @@ exports.getByUserId = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// UPDATE unit only
+exports.updateUnit = async (req, res) => {
+    try {
+        const { unit } = req.body;
+        if (!unit) return res.status(400).json({ message: "Unit is required" });
+        const pool = require("../db");
+        await pool.query(
+            "UPDATE Nursing_staff SET unit = ? WHERE nurse_id = ?",
+            [unit, req.params.id]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: err.message });
+    }
+};

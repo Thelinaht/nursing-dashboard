@@ -3,10 +3,23 @@ const pool = require("../db");
 // GET all with nurse info + approval comments
 exports.getAllRequests = async () => {
     const [rows] = await pool.query(
-        `SELECT r.*, n.full_name, n.user_id as nurse_user_id
+        `SELECT r.*, n.full_name, n.unit, n.user_id as nurse_user_id
          FROM Request r
          LEFT JOIN Nursing_staff n ON r.nurse_id = n.nurse_id
          ORDER BY r.created_at DESC`
+    );
+    return rows;
+};
+
+// GET all requests filtered by unit (for supervisor)
+exports.getRequestsByUnit = async (unit) => {
+    const [rows] = await pool.query(
+        `SELECT r.*, n.full_name, n.unit, n.user_id as nurse_user_id
+         FROM Request r
+         LEFT JOIN Nursing_staff n ON r.nurse_id = n.nurse_id
+         WHERE n.unit = ?
+         ORDER BY r.created_at DESC`,
+        [unit]
     );
     return rows;
 };

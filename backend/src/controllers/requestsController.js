@@ -1,4 +1,3 @@
-
 const model = require("../models/requestsModel");
 const approvalModel = require("../models/approvalModel");
 const notificationController = require("./notificationController");
@@ -92,5 +91,20 @@ exports.remove = async (req, res) => {
         res.json(result);
     } catch (e) {
         res.status(500).json({ error: e.message });
+    }
+};
+// GET requests filtered by unit (for supervisor)
+exports.getByUnit = async (req, res) => {
+    try {
+        const { unit } = req.query;
+        if (!unit) {
+            const data = await model.getAllRequests();
+            return res.json(data);
+        }
+        const data = await model.getRequestsByUnit(unit);
+        res.json(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: err.message });
     }
 };

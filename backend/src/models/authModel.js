@@ -2,7 +2,7 @@ const pool = require("../db");
 
 exports.getUserByEmail = async (email) => {
     const [rows] = await pool.query(`
-        SELECT u.user_id, u.email, u.password_hash, ur.role_id, r.role_name, ns.nurse_id, ns.full_name
+        SELECT u.user_id, u.email, u.password_hash, ur.role_id, r.role_name, ns.nurse_id, ns.full_name, ns.unit
         FROM User u
         LEFT JOIN UserRole ur ON u.user_id = ur.user_id
         LEFT JOIN Role r ON ur.role_id = r.role_id

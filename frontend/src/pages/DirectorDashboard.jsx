@@ -53,6 +53,36 @@ export default function DirectorDashboard() {
   const [loading, setLoading] = useState(true);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [staffList, setStaffList] = useState([]);
+
+  // Assigned Staff & Daily Staffing state (moved from Supervisor)
+  const [dirSearch, setDirSearch] = useState("");
+  const [dirStaffingSearch, setDirStaffingSearch] = useState("");
+  const [dirAssignFilters, setDirAssignFilters] = useState([]);
+  const [dirStaffingFilters, setDirStaffingFilters] = useState([]);
+  const [showDirUnitDrop, setShowDirUnitDrop] = useState(false);
+  const [showDirStaffDrop, setShowDirStaffDrop] = useState(false);
+
+  // Derived from staffList
+  const dirUnits = [...new Set(staffList.map(n => n.unit).filter(Boolean))];
+  const dirAssignedStaff = staffList
+    .map((n, i) => ({ id: n.nurse_id || i, unit: n.unit || "Unassigned", name: n.full_name }))
+    .filter(s => {
+      const matchSearch = s.name.toLowerCase().includes(dirSearch.toLowerCase());
+      const matchUnit = dirAssignFilters.length === 0 || dirAssignFilters.includes(s.unit);
+      return matchSearch && matchUnit;
+    });
+  const dirDailyStaffing = dirUnits.map(unit => {
+    const available = staffList.filter(n => n.unit === unit).length;
+    const required = Math.max(available + 3, 10);
+    const pct = Math.round((available / required) * 100);
+    let status = pct < 25 ? "critical" : pct <= 50 ? "high-risk" : pct <= 75 ? "low-risk" : pct < 100 ? "safe" : "overstaffed";
+    return { unit, required, available, coverage: `${pct}%`, status };
+  });
+  const dirFilteredStaffing = dirDailyStaffing.filter(r => {
+    const matchUnit = dirStaffingFilters.length === 0 || dirStaffingFilters.includes(r.unit);
+    const matchSearch = r.unit.toLowerCase().includes(dirStaffingSearch.toLowerCase());
+    return matchUnit && matchSearch;
+  });
   const [inpatientStaffing, setInpatientStaffing] = useState([]);
   const [staffingFilter, setStaffingFilter] = useState('All');
   const [staffingPage, setStaffingPage] = useState(1);
@@ -604,10 +634,9 @@ export default function DirectorDashboard() {
             </div>
 
             {/* Card 4: Training Compliance Card */}
-            <div className={`glass-card ${
-              Number(kpis.training_compliance) >= 80 ? 'green' :
-              Number(kpis.training_compliance) >= 50 ? 'yellow' : 'red'
-            }`} style={{ flex: 1, minWidth: '260px', padding: '20px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '145px' }}>
+            <div className={`glass-card ${Number(kpis.training_compliance) >= 80 ? 'green' :
+                Number(kpis.training_compliance) >= 50 ? 'yellow' : 'red'
+              }`} style={{ flex: 1, minWidth: '260px', padding: '20px 15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '145px' }}>
               <p style={{ margin: '0 0 12px 0', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}><CheckCircle size={16} /> Training Compliance</p>
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, width: '100%' }}>
                 <h1 style={{ fontSize: '36px', fontWeight: 800, margin: 0, textAlign: 'center', lineHeight: 1.1 }}>
@@ -808,6 +837,97 @@ export default function DirectorDashboard() {
               </div>
             );
           })()}
+
+          {/* Assigned Staff & Daily Staffing Tables */}
+          <div className="middle-section" style={{ marginTop: '20px' }}>
+            {/* Assigned Staff */}
+            <div className="table-box content-box">
+              <div className="box-header" style={{ marginBottom: '20px' }}>
+                <h2 className="content-box-title">Assigned Staff</h2>
+                <div className="actions">
+                  <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }} onClick={() => { setDirSearch(""); setDirAssignFilters([]); }}>Clear Filters</button>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <input type="text" placeholder="Search name..." value={dirSearch} onChange={e => setDirSearch(e.target.value)} className="input-pill" style={{ flex: 1, height: '42px' }} />
+                <div style={{ position: 'relative' }}>
+                  <button className="filter-select" onClick={() => setShowDirUnitDrop(!showDirUnitDrop)} style={{ background: 'var(--accent-blue)', color: 'white', height: '42px', padding: '0 20px', borderRadius: 'var(--radius-lg)', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600' }}>
+                    {dirAssignFilters.length === 0 ? "All Units" : `${dirAssignFilters.length} Selected`} <span style={{ fontSize: '10px' }}>▼</span>
+                  </button>
+                  {showDirUnitDrop && (
+                    <div className="glass-card" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: '#fff', padding: '15px', zIndex: 100, display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '180px', boxShadow: 'var(--shadow-premium)' }}>
+                      {dirUnits.map(u => (
+                        <label key={u} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={dirAssignFilters.includes(u)} onChange={() => setDirAssignFilters(prev => prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u])} style={{ width: '16px', height: '16px' }} />
+                          {u}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="nurse-table-header" style={{ gridTemplateColumns: '0.5fr 1.5fr 2fr' }}>
+                <span>#</span><span>Unit</span><span>Name</span>
+              </div>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {dirAssignedStaff.length > 0 ? dirAssignedStaff.map((s, i) => (
+                  <div key={s.id} className="nurse-table-row premium-row" style={{ gridTemplateColumns: '0.5fr 1.5fr 2fr' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>{i + 1}</span>
+                    <span style={{ fontWeight: '500' }}>{s.unit}</span>
+                    <span style={{ fontWeight: '600' }}>{s.name}</span>
+                  </div>
+                )) : <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>No matching staff</div>}
+              </div>
+            </div>
+
+            {/* Daily Staffing by Unit */}
+            <div className="table-box content-box">
+              <div className="box-header" style={{ marginBottom: '20px' }}>
+                <h2 className="content-box-title">Daily Staffing by Unit</h2>
+                <div className="actions">
+                  <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white' }} onClick={() => { setDirStaffingSearch(""); setDirStaffingFilters([]); }}>Clear Filters</button>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <input type="text" placeholder="Search unit..." value={dirStaffingSearch} onChange={e => setDirStaffingSearch(e.target.value)} className="input-pill" style={{ flex: 1, height: '42px' }} />
+                <div style={{ position: 'relative' }}>
+                  <button className="filter-select" onClick={() => setShowDirStaffDrop(!showDirStaffDrop)} style={{ background: 'var(--accent-blue)', color: 'white', height: '42px', padding: '0 20px', borderRadius: 'var(--radius-lg)', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600' }}>
+                    {dirStaffingFilters.length === 0 ? "All Units" : `${dirStaffingFilters.length} Selected`} <span style={{ fontSize: '10px' }}>▼</span>
+                  </button>
+                  {showDirStaffDrop && (
+                    <div className="glass-card" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: '#fff', padding: '15px', zIndex: 100, display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '180px', boxShadow: 'var(--shadow-premium)' }}>
+                      {dirUnits.map(u => (
+                        <label key={u} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={dirStaffingFilters.includes(u)} onChange={() => setDirStaffingFilters(prev => prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u])} style={{ width: '16px', height: '16px' }} />
+                          {u}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="nurse-table-header" style={{ gridTemplateColumns: '1.5fr 1fr 1fr 1.2fr' }}>
+                <span>Unit</span><span>Required</span><span>Available</span><span>Coverage</span>
+              </div>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {dirFilteredStaffing.length > 0 ? dirFilteredStaffing.map((row, i) => (
+                  <div key={i} className="nurse-table-row premium-row" style={{ gridTemplateColumns: '1.5fr 1fr 1fr 1.2fr' }}>
+                    <span style={{ fontWeight: '600' }}>{row.unit}</span>
+                    <span style={{ textAlign: 'center' }}>{row.required}</span>
+                    <span style={{ textAlign: 'center' }}>{row.available}</span>
+                    <span style={{ display: 'flex', justifyContent: 'center' }}><span className={`status ${row.status}`}>{row.coverage}</span></span>
+                  </div>
+                )) : <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>No units data</div>}
+              </div>
+              <div className="legend" style={{ marginTop: '20px', justifyContent: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                <span className="status critical" style={{ fontSize: '11px' }}>Critical Shortage</span>
+                <span className="status high-risk" style={{ fontSize: '11px' }}>High Risk</span>
+                <span className="status low-risk" style={{ fontSize: '11px' }}>Low Risk</span>
+                <span className="status safe" style={{ fontSize: '11px' }}>Safe</span>
+                <span className="status overstaffed" style={{ fontSize: '11px' }}>Overstaffed</span>
+              </div>
+            </div>
+          </div>
 
           {/* Bottom Grid: Manage Requests and Staff Directory */}
           <div className="middle-section" style={{ marginTop: '20px' }}>

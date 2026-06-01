@@ -76,7 +76,7 @@ exports.getInpatientStaffing = async (req, res) => {
             const gap = row.available_nurses - row.total_needed;
             let status = 'Critical';
             let percentage = row.total_needed > 0 ? (row.available_nurses / row.total_needed) * 100 : 100;
-            
+
             if (percentage >= 90) status = 'OK';
             else if (percentage >= 60) status = 'Partial';
 
@@ -113,7 +113,7 @@ exports.getAmbulatoryStaffing = async (req, res) => {
             const gap = row.available_nurses - row.total_needed;
             let status = 'Critical';
             let percentage = row.total_needed > 0 ? (row.available_nurses / row.total_needed) * 100 : 100;
-            
+
             if (percentage >= 90) status = 'OK';
             else if (percentage >= 60) status = 'Partial';
 
@@ -133,14 +133,18 @@ exports.getAmbulatoryStaffing = async (req, res) => {
 
 exports.getRatioLogs = async (req, res) => {
     try {
-        const { filter } = req.query; // 'Today', 'This Week', 'All'
-        
+        const { filter, unit } = req.query; // 'Today', 'This Week', 'All' + optional unit
+
         let dateFilter = '1=1';
         if (filter === 'Today') {
             dateFilter = 'DATE(rl.created_at) = CURDATE()';
         } else if (filter === 'This Week') {
             dateFilter = 'YEARWEEK(rl.created_at, 1) = YEARWEEK(CURDATE(), 1)';
         }
+
+        // Add unit filter if provided
+        const unitFilter = unit ? `AND rl.unit = ?` : '';
+        const params = unit ? [unit] : [];
 
         const [rows] = await pool.query(`
             SELECT 
@@ -156,10 +160,10 @@ exports.getRatioLogs = async (req, res) => {
             LEFT JOIN User u ON rl.logged_by = u.user_id
             LEFT JOIN Nursing_staff ns ON u.user_id = ns.user_id
             LEFT JOIN Unit_staffing_reference usr ON rl.unit = usr.unit_name
-            WHERE ${dateFilter}
+            WHERE ${dateFilter} ${unitFilter}
             ORDER BY rl.created_at DESC
             LIMIT 100
-        `);
+        `, params);
 
         // Recalculate status dynamically using the CURRENT required_ratio
         const processedRows = rows.map(row => {
@@ -183,7 +187,7 @@ exports.getRatioLogs = async (req, res) => {
 exports.addRatioLog = async (req, res) => {
     try {
         const { unit, shift, actual_ratio, notes, logged_by, timestamp } = req.body;
-        
+
         // Fetch required ratio
         const [ref] = await pool.query('SELECT required_ratio FROM Unit_staffing_reference WHERE unit_name = ?', [unit]);
         let required_ratio = '1:3'; // default fallback
@@ -259,4 +263,3 @@ exports.updateRequiredRatio = async (req, res) => {
         res.status(500).json({ error: "Failed to update required ratio" });
     }
 };
-
