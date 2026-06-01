@@ -68,12 +68,13 @@ export default function TrainingStaffDirectory() {
     const [search, setSearch] = useState("");
     const [sortOrder, setSortOrder] = useState("az");
     const [showFilters, setShowFilters] = useState(false);
-    const [filters, setFilters] = useState({ type: "", unit: "", status: "", year: "", month: "", gender: "" });
+    const [filters, setFilters] = useState({ type: "", unit: "", status: "", year: "", month: "", gender: "", university: "" });
 
     const traineeTypes = [...new Set(trainees.map(n => n.type))].filter(Boolean);
     const units = [...new Set(trainees.map(n => n.unit || "Unassigned"))].filter(Boolean);
     const statuses = [...new Set(trainees.map(n => n.status))].filter(Boolean);
     const years = [...new Set(trainees.map(n => n.startDate ? n.startDate.split("-")[0] : null))].filter(Boolean).sort((a, b) => b - a);
+    const universities = [...new Set(trainees.map(n => n.university))].filter(Boolean).sort();
 
     const filteredTrainees = trainees
         .filter(n =>
@@ -81,6 +82,7 @@ export default function TrainingStaffDirectory() {
             (!filters.unit || (n.unit || "Unassigned") === filters.unit) &&
             (!filters.status || n.status === filters.status) &&
             (!filters.gender || n.gender === filters.gender) &&
+            (!filters.university || n.university === filters.university) &&
             (!filters.year || (n.startDate && n.startDate.startsWith(filters.year))) &&
             (!filters.month || (n.startDate && n.startDate.split("-")[1] === filters.month)) &&
             (
@@ -96,7 +98,7 @@ export default function TrainingStaffDirectory() {
 
     const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
     const activeFilterCount = Object.values(filters).filter(v => v !== "").length;
-    const clearAll = () => { setFilters({ type: "", unit: "", status: "", year: "", month: "", gender: "" }); setSearch(""); };
+    const clearAll = () => { setFilters({ type: "", unit: "", status: "", year: "", month: "", gender: "", university: "" }); setSearch(""); };
 
     // ── Stats ──
     const isIAU = (u) => u?.toLowerCase().includes("iau") || u?.toLowerCase().includes("imam abdulrahman");
@@ -271,6 +273,10 @@ export default function TrainingStaffDirectory() {
                                         <option value="">Status</option>
                                         {statuses.map(s => <option key={s}>{s}</option>)}
                                     </select>
+                                    <select className="filter-select" value={filters.university} onChange={(e) => handleFilterChange("university", e.target.value)}>
+                                        <option value="">University</option>
+                                        {universities.map(univ => <option key={univ}>{univ}</option>)}
+                                    </select>
                                     <select className="filter-select" value={filters.gender} onChange={(e) => handleFilterChange("gender", e.target.value)}>
                                         <option value="">Gender</option>
                                         <option value="Male">Male</option>
@@ -306,10 +312,11 @@ export default function TrainingStaffDirectory() {
                                     {filters.type && <span className="filter-chip">{filters.type}<button onClick={() => handleFilterChange("type", "")}>✕</button></span>}
                                     {filters.unit && <span className="filter-chip">{filters.unit}<button onClick={() => handleFilterChange("unit", "")}>✕</button></span>}
                                     {filters.status && <span className="filter-chip">{filters.status}<button onClick={() => handleFilterChange("status", "")}>✕</button></span>}
+                                    {filters.university && <span className="filter-chip">University: {filters.university}<button onClick={() => handleFilterChange("university", "")}>✕</button></span>}
                                     {filters.gender && <span className="filter-chip">Gender: {filters.gender}<button onClick={() => handleFilterChange("gender", "")}>✕</button></span>}
                                     {filters.year && <span className="filter-chip">Year: {filters.year}<button onClick={() => handleFilterChange("year", "")}>✕</button></span>}
                                     {filters.month && <span className="filter-chip">Month: {filters.month}<button onClick={() => handleFilterChange("month", "")}>✕</button></span>}
-                                    {(filters.type || filters.unit || filters.status || filters.gender || filters.year || filters.month || search) && (
+                                    {(filters.type || filters.unit || filters.status || filters.gender || filters.year || filters.month || filters.university || search) && (
                                         <button className="clear-btn" onClick={clearAll}>Clear all</button>
                                     )}
                                 </div>

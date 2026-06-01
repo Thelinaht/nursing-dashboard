@@ -77,6 +77,9 @@ export default function TrainingDirectorDashboard() {
   const [obRoleFilter, setObRoleFilter] = useState("All");
   const [obPreceptorFilter, setObPreceptorFilter] = useState("All");
 
+  // Intern filter type selection
+  const [selectedInternType, setSelectedInternType] = useState("All"); // "All" | "IAU" | "Non-IAU" | "Summer"
+
   const getStatusClass = (status) => {
     const s = (status || "").toLowerCase();
     if (s === "active") return "active";
@@ -116,6 +119,22 @@ export default function TrainingDirectorDashboard() {
     return matchesSearch && matchesUnit;
   });
 
+  // Intern Management filters & counts
+  const isIAUUniversity = (u) => u?.toLowerCase().includes('iau') || u?.toLowerCase().includes('imam abdulrahman');
+  const internRequests = dashboardData?.internRequests || [];
+  const iauCount = internRequests.filter(r => isIAUUniversity(r.university)).length;
+  const nonIauCount = internRequests.filter(r => r.program === 'Intern' && !isIAUUniversity(r.university)).length;
+  const summerCount = internRequests.filter(r => r.program === 'Student Nurse' && !isIAUUniversity(r.university)).length;
+
+  const filteredInterns = internRequests.filter(req => {
+    if (selectedInternType === "All") return true;
+    const reqIsIAU = isIAUUniversity(req.university);
+    if (selectedInternType === "IAU") return reqIsIAU;
+    if (selectedInternType === "Non-IAU") return req.program === 'Intern' && !reqIsIAU;
+    if (selectedInternType === "Summer") return req.program === 'Student Nurse' && !reqIsIAU;
+    return true;
+  });
+
   const getTraineeCompetencyStatus = (traineeId, trainingId) => {
     const record = allStaffTrainings.find(r => String(r.trainee_id) === String(traineeId) && String(r.training_id) === String(trainingId));
     return record ? record.status : "Pending";
@@ -138,8 +157,8 @@ export default function TrainingDirectorDashboard() {
     fetchData();
   }, []);
 
-  const handleEditClick = (type, id, initialData) => {
-    setEditModalData({ type, id, title: getEditModalTitle(type, initialData) });
+  const handleEditClick = (type, id, initialData, allowScoreEdit = false) => {
+    setEditModalData({ type, id, title: getEditModalTitle(type, initialData), allowScoreEdit });
     setEditFields(initialData || {});
   };
 
@@ -165,7 +184,7 @@ export default function TrainingDirectorDashboard() {
     switch(type) {
       case "mandatory": return `Edit Mandatory Trainings: ${data.name}`;
       case "competency": return `Edit Competency: ${data.nurse} - ${data.competency}`;
-      case "add_competency": return "Add Clinical Competency";
+      case "add_competency": return "Add Competency";
       case "certification": return `Edit Certification: ${data.traineeName}`;
       case "add_certification": return "Add Certification & License Tracking";
       case "onboarding": return `Edit Onboarding: ${data.name}`;
@@ -511,11 +530,29 @@ export default function TrainingDirectorDashboard() {
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Pre-Test Score (%)</label>
-                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px', background: '#f5f7fa' }} value={editFields.pre_test_score ?? ''} disabled />
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="100" 
+                      className="input-pill" 
+                      style={{ width: '100%', marginTop: '5px', background: editModalData.allowScoreEdit ? 'white' : '#f5f7fa' }} 
+                      value={editFields.pre_test_score ?? ''} 
+                      onChange={editModalData.allowScoreEdit ? (e) => setEditFields(prev => ({ ...prev, pre_test_score: e.target.value })) : undefined}
+                      disabled={!editModalData.allowScoreEdit} 
+                    />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Post-Test Score (%)</label>
-                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px', background: '#f5f7fa' }} value={editFields.post_test_score ?? ''} disabled />
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="100" 
+                      className="input-pill" 
+                      style={{ width: '100%', marginTop: '5px', background: editModalData.allowScoreEdit ? 'white' : '#f5f7fa' }} 
+                      value={editFields.post_test_score ?? ''} 
+                      onChange={editModalData.allowScoreEdit ? (e) => setEditFields(prev => ({ ...prev, post_test_score: e.target.value })) : undefined}
+                      disabled={!editModalData.allowScoreEdit} 
+                    />
                   </div>
                 </div>
 
@@ -1032,10 +1069,10 @@ export default function TrainingDirectorDashboard() {
               </div>
             </div>
 
-            {/* 3. Clinical Competency Assessment Panel */}
+            {/* 3. Competency Assessment Panel */}
             <div className="table-box content-box">
               <div className="box-header">
-                <h2 className="content-box-title">Clinical Competency Assessment</h2>
+                <h2 className="content-box-title">Competency Assessment</h2>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <select 
                     className="input-pill" 
@@ -1061,17 +1098,17 @@ export default function TrainingDirectorDashboard() {
                     <option value="In Progress">In Progress</option>
                   </select>
 
-                  <button className="icon-btn-small" title="Add Competency" onClick={() => handleEditClick("add_competency", "new", { status: 'Completed' })}><Plus size={16} /></button>
+                  <button className="icon-btn-small" title="Add Competency" onClick={() => handleEditClick("add_competency", "new", { status: 'Completed' }, true)}><Plus size={16} /></button>
                 </div>
               </div>
               <div style={{ marginTop: '10px' }}>
                 <div className="list-header" style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr', padding: '14px 18px', marginBottom: '8px' }}>
-                  <span>Trainee</span>
-                  <span>Unit</span>
-                  <span>Competency</span>
-                  <span>Status</span>
-                  <span>Renewal</span>
-                  <span>Recommendation</span>
+                  <span style={{ textAlign: 'center' }}>Trainee</span>
+                  <span style={{ textAlign: 'center' }}>Unit</span>
+                  <span style={{ textAlign: 'center' }}>Competency</span>
+                  <span style={{ textAlign: 'center' }}>Status</span>
+                  <span style={{ textAlign: 'center' }}>Renewal</span>
+                  <span style={{ textAlign: 'center' }}>Recommendation</span>
                 </div>
                 <div className="nurses-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                   {(dashboardData?.clinicalCompetencies || [])
@@ -1081,8 +1118,8 @@ export default function TrainingDirectorDashboard() {
                       return matchesUnit && matchesStatus;
                     })
                     .map((c, idx) => (
-                      <div className="nurse-card premium-row" key={idx} style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr', padding: '12px 18px', fontSize: '12px', minHeight: '50px' }}>
-                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
+                      <div className="nurse-card premium-row" key={idx} style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr', padding: '12px 18px', fontSize: '12px', minHeight: '50px', alignItems: 'center' }}>
+                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', overflow: 'hidden' }}>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.nurse}</span>
                           <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} title="Edit Competency" onClick={() => handleEditClick("competency", c.id, {
                             nurse: c.nurse,
@@ -1093,15 +1130,28 @@ export default function TrainingDirectorDashboard() {
                             action: c.action,
                             pre_test_score: c.pre_test_score ?? "",
                             post_test_score: c.post_test_score ?? ""
-                          })}>
+                          }, true)}>
                             <Edit size={11} color="var(--accent-blue)" />
                           </button>
                         </div>
-                        <div>{c.specialty}</div>
-                        <div>{c.competency}</div>
-                        <div style={{ color: c.status === "Completed" ? "#4caf50" : "#ff9800", fontWeight: "bold" }}>{c.status}</div>
-                        <div>{c.renewal}</div>
-                        <div style={{ color: "#8ea2b5", fontStyle: "italic" }}>{c.action}</div>
+                        <div style={{ textAlign: 'center' }}>{c.specialty}</div>
+                        <div style={{ textAlign: 'center' }}>{c.competency}</div>
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                          <span 
+                            className={`status ${getStatusClass(c.status)}`} 
+                            style={{ 
+                              fontSize: '11px', 
+                              padding: '4px 12px', 
+                              textAlign: 'center', 
+                              display: 'inline-block',
+                              width: 'fit-content' 
+                            }}
+                          >
+                            {c.status}
+                          </span>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>{c.renewal}</div>
+                        <div style={{ color: "#8ea2b5", fontStyle: "italic", textAlign: 'center' }}>{c.action}</div>
                       </div>
                     ))}
                   {((dashboardData?.clinicalCompetencies || []).filter(c => {
@@ -1238,11 +1288,11 @@ export default function TrainingDirectorDashboard() {
               </div>
               <div style={{ marginTop: '10px' }}>
                 <div className="list-header" style={{ gridTemplateColumns: '1fr 0.5fr 1fr 1.5fr 1fr', padding: '14px 18px', marginBottom: '8px' }}>
-                  <span>New Hire</span>
-                  <span>Role</span>
-                  <span>Preceptor</span>
-                  <span>Completion %</span>
-                  <span>Eval Score</span>
+                  <span style={{ textAlign: 'center' }}>New Hire</span>
+                  <span style={{ textAlign: 'center' }}>Role</span>
+                  <span style={{ textAlign: 'center' }}>Preceptor</span>
+                  <span style={{ textAlign: 'center' }}>Completion %</span>
+                  <span style={{ textAlign: 'center' }}>Eval Score</span>
                 </div>
                 <div className="nurses-list" style={{ maxHeight: '180px', overflowY: 'auto' }}>
                   {(dashboardData?.onboardingData || [])
@@ -1253,7 +1303,7 @@ export default function TrainingDirectorDashboard() {
                     })
                     .map((o, idx) => (
                       <div className="nurse-card premium-row" key={idx} style={{ gridTemplateColumns: '1fr 0.5fr 1fr 1.5fr 1fr', padding: '12px 18px', fontSize: '12px', minHeight: '50px', alignItems: 'center' }}>
-                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
+                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', overflow: 'hidden' }}>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span>
                           <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} title="Edit Onboarding" onClick={() => handleEditClick("onboarding", o.id, {
                             name: o.name,
@@ -1265,13 +1315,26 @@ export default function TrainingDirectorDashboard() {
                             <Edit size={11} color="var(--accent-blue)" />
                           </button>
                         </div>
-                        <div>{o.role}</div>
-                        <div>{o.preceptor}</div>
-                        <div style={{ paddingRight: "15px" }}>
-                          <div style={{ fontSize: "11px", color: "#8ea2b5" }}>{o.progress}%</div>
-                          {renderProgressBar(o.progress)}
+                        <div style={{ textAlign: 'center' }}>{o.role}</div>
+                        <div style={{ textAlign: 'center' }}>{o.preceptor}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', paddingRight: '15px' }}>
+                          <div style={{ fontSize: "11px", color: "#8ea2b5", textAlign: 'center' }}>{o.progress}%</div>
+                          <div style={{ width: '100%' }}>{renderProgressBar(o.progress)}</div>
                         </div>
-                        <div style={{ fontWeight: "bold", color: o.evalScore === "Pending" ? "#ff9800" : "#243647" }}>{o.evalScore}</div>
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                          <span 
+                            className={`status ${o.evalScore === 'Pending' ? 'pending' : 'approved'}`} 
+                            style={{ 
+                              fontSize: '11px', 
+                              padding: '4px 12px', 
+                              textAlign: 'center', 
+                              display: 'inline-block',
+                              width: 'fit-content' 
+                            }}
+                          >
+                            {o.evalScore}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   {((dashboardData?.onboardingData || []).filter(o => {
@@ -1544,82 +1607,135 @@ export default function TrainingDirectorDashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <BookOpen size={18} color="var(--accent-blue)" />
                   <h2 className="content-box-title">Nursing Intern Management</h2>
+                  {selectedInternType !== "All" && (
+                    <span 
+                      style={{ 
+                        fontSize: '11px', 
+                        background: 'rgba(59, 130, 246, 0.1)', 
+                        color: 'var(--accent-blue)', 
+                        padding: '4px 10px', 
+                        borderRadius: '12px', 
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontWeight: 600,
+                        marginLeft: '10px',
+                        transition: 'all 0.2s'
+                      }}
+                      onClick={() => setSelectedInternType("All")}
+                      title="Click to clear filter"
+                    >
+                      Filtered: {selectedInternType} <X size={12} />
+                    </span>
+                  )}
                 </div>
                 <button className="icon-btn-small" title="Add Intern" onClick={() => handleEditClick("add_intern", "new", { program: 'Intern', status: 'Active', unit: 'General', startDate: new Date().toISOString().split("T")[0] })}><Plus size={16} /></button>
               </div>
               <div style={{ display: "flex", gap: "20px", marginTop: "15px" }}>
 
-                {/* Intern Stats */}
+                {/* Intern Stats (Filter triggers) */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {(() => {
-                    const interns = dashboardData?.internRequests || [];
-                    const isIAU = (u) => u?.toLowerCase().includes('iau') || u?.toLowerCase().includes('imam abdulrahman');
-                    // IAU = any trainee (Intern or Student Nurse) from IAU university
-                    const iauCount    = interns.filter(r => isIAU(r.university)).length;
-                    // Non-IAU Interns = Interns from non-IAU universities
-                    const nonIauCount = interns.filter(r => r.program === 'Intern' && !isIAU(r.university)).length;
-                    // Summer Training = Student Nurses from non-IAU universities
-                    const summerCount = interns.filter(r => r.program === 'Student Nurse' && !isIAU(r.university)).length;
-                    return (
-                      <>
-                        <div style={{ background: "rgba(96, 130, 230, 0.1)", padding: "15px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: 500, color: "#4a6a85" }}>IAU Interns</span>
-                          <span style={{ fontSize: "20px", fontWeight: "bold", color: "#6082e6" }}>{iauCount}</span>
-                        </div>
-                        <div style={{ background: "rgba(156, 181, 241, 0.1)", padding: "15px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: 500, color: "#4a6a85" }}>Non-IAU Interns</span>
-                          <span style={{ fontSize: "20px", fontWeight: "bold", color: "#9cb5f1" }}>{nonIauCount}</span>
-                        </div>
-                        <div style={{ background: "rgba(242, 157, 145, 0.1)", padding: "15px", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: 500, color: "#4a6a85" }}>Summer Training</span>
-                          <span style={{ fontSize: "20px", fontWeight: "bold", color: "#f29d91" }}>{summerCount}</span>
-                        </div>
-                      </>
-                    );
-                  })()}
+                  <div 
+                    className="intern-filter-card"
+                    style={{ 
+                      background: "rgba(96, 130, 230, 0.1)", 
+                      padding: "15px", 
+                      borderRadius: "8px", 
+                      display: "flex", 
+                      justifyContent: "space-between", 
+                      alignItems: "center",
+                      border: selectedInternType === "IAU" ? "2px solid #6082e6" : "2px solid transparent",
+                      opacity: selectedInternType !== "All" && selectedInternType !== "IAU" ? 0.5 : 1,
+                    }}
+                    onClick={() => setSelectedInternType(prev => prev === "IAU" ? "All" : "IAU")}
+                  >
+                    <span style={{ fontWeight: 500, color: "#4a6a85" }}>IAU Interns</span>
+                    <span style={{ fontSize: "20px", fontWeight: "bold", color: "#6082e6" }}>{iauCount}</span>
+                  </div>
+                  <div 
+                    className="intern-filter-card"
+                    style={{ 
+                      background: "rgba(156, 181, 241, 0.1)", 
+                      padding: "15px", 
+                      borderRadius: "8px", 
+                      display: "flex", 
+                      justifyContent: "space-between", 
+                      alignItems: "center",
+                      border: selectedInternType === "Non-IAU" ? "2px solid #9cb5f1" : "2px solid transparent",
+                      opacity: selectedInternType !== "All" && selectedInternType !== "Non-IAU" ? 0.5 : 1,
+                    }}
+                    onClick={() => setSelectedInternType(prev => prev === "Non-IAU" ? "All" : "Non-IAU")}
+                  >
+                    <span style={{ fontWeight: 500, color: "#4a6a85" }}>Non-IAU Interns</span>
+                    <span style={{ fontSize: "20px", fontWeight: "bold", color: "#9cb5f1" }}>{nonIauCount}</span>
+                  </div>
+                  <div 
+                    className="intern-filter-card"
+                    style={{ 
+                      background: "rgba(242, 157, 145, 0.1)", 
+                      padding: "15px", 
+                      borderRadius: "8px", 
+                      display: "flex", 
+                      justifyContent: "space-between", 
+                      alignItems: "center",
+                      border: selectedInternType === "Summer" ? "2px solid #f29d91" : "2px solid transparent",
+                      opacity: selectedInternType !== "All" && selectedInternType !== "Summer" ? 0.5 : 1,
+                    }}
+                    onClick={() => setSelectedInternType(prev => prev === "Summer" ? "All" : "Summer")}
+                  >
+                    <span style={{ fontWeight: 500, color: "#4a6a85" }}>Summer Training</span>
+                    <span style={{ fontSize: "20px", fontWeight: "bold", color: "#f29d91" }}>{summerCount}</span>
+                  </div>
                 </div>
 
                 {/* Intern Requests Table */}
                 <div style={{ flex: 2 }}>
                   <div className="list-header" style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1.6fr 1fr', padding: '14px 18px', marginBottom: '8px' }}>
-                    <span>Applicant Name</span>
-                    <span>University</span>
-                    <span>Program</span>
-                    <span>Training Period</span>
-                    <span>Status</span>
+                    <span style={{ textAlign: 'center' }}>Applicant Name</span>
+                    <span style={{ textAlign: 'center' }}>University</span>
+                    <span style={{ textAlign: 'center' }}>Program</span>
+                    <span style={{ textAlign: 'center' }}>Training Period</span>
+                    <span style={{ textAlign: 'center' }}>Status</span>
                   </div>
                   <div className="nurses-list" style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                    {(dashboardData?.internRequests || []).map((req) => (
-                      <div className="nurse-card premium-row" key={req.id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1.6fr 1fr', padding: '12px 18px', fontSize: '13px', minHeight: '50px' }}>
-                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.name}</span>
-                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} title="Edit Intern" onClick={() => handleEditClick("intern", req.id, {
-                            name: req.name,
-                            university: req.university,
-                            program: req.program,
-                            status: req.status,
-                            unit: req.unit || "General",
-                            startDate: req.startDate || "",
-                            endDate: req.endDate || "",
-                            gender: req.gender || ""
-                          })}>
-                            <Edit size={11} color="var(--accent-blue)" />
-                          </button>
-                        </div>
-                        <div>{req.university}</div>
-                        <div style={{ color: "var(--text-secondary)" }}>{req.program}</div>
-                        <div style={{ color: "var(--text-secondary)", fontSize: "11px" }}>
-                          {req.startDate && req.endDate 
-                            ? `${req.startDate} to ${req.endDate}` 
-                            : req.startDate || req.endDate || "—"}
-                        </div>
-                        <div>
-                          <span className={`status ${req.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '4px 10px', textAlign: 'center', width: 'fit-content' }}>
-                            {req.status}
-                          </span>
-                        </div>
+                    {filteredInterns.length === 0 ? (
+                      <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8ea2b5', fontSize: '13px' }}>
+                        No interns found in this category.
                       </div>
-                    ))}
+                    ) : (
+                      filteredInterns.map((req) => (
+                        <div className="nurse-card premium-row" key={req.id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1.6fr 1fr', padding: '12px 18px', fontSize: '13px', minHeight: '50px', alignItems: 'center' }}>
+                          <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', overflow: 'hidden' }}>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.name}</span>
+                            <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} title="Edit Intern" onClick={() => handleEditClick("intern", req.id, {
+                              name: req.name,
+                              university: req.university,
+                              program: req.program,
+                              status: req.status,
+                              unit: req.unit || "General",
+                              startDate: req.startDate || "",
+                              endDate: req.endDate || "",
+                              gender: req.gender || ""
+                            })}>
+                              <Edit size={11} color="var(--accent-blue)" />
+                            </button>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>{req.university}</div>
+                          <div style={{ color: "var(--text-secondary)", textAlign: 'center' }}>{req.program}</div>
+                          <div style={{ color: "var(--text-secondary)", fontSize: "11px", textAlign: 'center' }}>
+                            {req.startDate && req.endDate 
+                              ? `${req.startDate} to ${req.endDate}` 
+                              : req.startDate || req.endDate || "—"}
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <span className={`status ${getStatusClass(req.status)}`} style={{ fontSize: '11px', padding: '4px 10px', textAlign: 'center', width: 'fit-content' }}>
+                              {req.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -1630,7 +1746,7 @@ export default function TrainingDirectorDashboard() {
               <div className="box-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ClipboardCheck size={20} color="var(--accent-blue)" />
-                  <h2 className="content-box-title">Clinical Competency Checklist Registry</h2>
+                  <h2 className="content-box-title">Competency Checklist Registry</h2>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <input

@@ -5,7 +5,7 @@ const { Resend } = require("resend");
 // In-memory OTP store: { email -> { otp, expiresAt, verified } }
 const otpStore = {};
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 exports.login = async (req, res) => {
@@ -40,6 +40,11 @@ exports.sendOtp = async (req, res) => {
         const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
         otpStore[email.toLowerCase()] = { otp, expiresAt };
+
+        if (!resend) {
+            console.warn(`⚠️ RESEND_API_KEY is not defined. Generated OTP for ${email}: ${otp}`);
+            return res.json({ message: "OTP sent (Dev Mode: check server console)" });
+        }
 
         const { error } = await resend.emails.send({
             from: "KFHU Nursing System <onboarding@resend.dev>",

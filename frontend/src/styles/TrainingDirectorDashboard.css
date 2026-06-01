@@ -91,3 +91,15 @@
 .stat-item:last-child {
     border-bottom: none;
 }
+
+/* Interactive filter cards */
+.intern-filter-card {
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.intern-filter-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
