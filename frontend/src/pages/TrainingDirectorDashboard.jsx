@@ -13,16 +13,10 @@ import {
 import Layout from "../components/Layout";
 import "../styles/SupervisorDashboard.css";
 import "../styles/DirectorDashboard.css";
+import "../styles/SecretaryDashboard.css";
 import "../styles/TrainingDirectorDashboard.css";
 
 // Aggregated/Static chart data that might not be easily queried yet
-const complianceTrend = [
-  { month: "Jan", compliance: 78 },
-  { month: "Feb", compliance: 82 },
-  { month: "Mar", compliance: 85 },
-  { month: "Apr", compliance: 88 },
-  { month: "May", compliance: 92 },
-];
 
 const absenteeTrend = [
   { unit: "ICU", rate: 5 },
@@ -37,7 +31,6 @@ const defaultEffectivenessFallback = [
   { course: "ACLS Protocol", preTest: 0, postTest: 0 },
   { course: "Infection Control", preTest: 0, postTest: 0 }
 ];
-
 const getShortName = (name) => {
   if (!name) return "";
   const mappings = {
@@ -71,12 +64,61 @@ export default function TrainingDirectorDashboard() {
   const [selectedCourse, setSelectedCourse] = useState('BLS');
   const [savingEdit, setSavingEdit] = useState(false);
 
+  // Competency registry filters
+  const [compSearch, setCompSearch] = useState("");
+  const [compUnitFilter, setCompUnitFilter] = useState("All");
+  const [selectedTraineeId, setSelectedTraineeId] = useState("All");
+
+  // Clinical competency assessment filters
+  const [ccaUnitFilter, setCcaUnitFilter] = useState("All");
+  const [ccaStatusFilter, setCcaStatusFilter] = useState("All");
+
+  // Onboarding tracker filters
+  const [obRoleFilter, setObRoleFilter] = useState("All");
+  const [obPreceptorFilter, setObPreceptorFilter] = useState("All");
+
+  const getStatusClass = (status) => {
+    const s = (status || "").toLowerCase();
+    if (s === "active") return "active";
+    if (s === "completed") return "transferred";
+    if (s === "pending") return "breech-of-contract";
+    if (s === "rejected") return "terminated";
+    if (s === "overdue" || s === "expired") return "terminated";
+    if (s === "in progress") return "active";
+    return "breech-of-contract";
+  };
+
   const needs = dashboardData?.needsAnalysis || {
     competencyGaps: [],
     cpdCompleted: 0,
     cpdRequired: 100,
     newHiresMissingBasics: 0,
     unverifiedFloatStaff: 0
+  };
+
+  const registry = dashboardData?.competencyRegistry || [];
+  const allStaffTrainings = dashboardData?.allStaffTrainings || [];
+
+  // Extract unique competency units dynamically
+  const competencyUnits = ["All", ...new Set(registry.map(c => c.unit).filter(Boolean))];
+
+  // Extract unique CCA units dynamically
+  const ccaUnits = [...new Set((dashboardData?.clinicalCompetencies || []).map(c => c.specialty).filter(Boolean))].sort();
+
+  // Extract unique onboarding roles and preceptors dynamically
+  const onboardingRoles = [...new Set((dashboardData?.onboardingData || []).map(o => o.role).filter(Boolean))].sort();
+  const onboardingPreceptors = [...new Set((dashboardData?.onboardingData || []).map(o => o.preceptor).filter(Boolean))].sort();
+
+  // Filter registry of competencies
+  const filteredRegistry = registry.filter(comp => {
+    const matchesSearch = comp.name?.toLowerCase().includes(compSearch.toLowerCase()) ?? false;
+    const matchesUnit = compUnitFilter === "All" || (comp.unit && comp.unit.toLowerCase().trim() === compUnitFilter.toLowerCase().trim());
+    return matchesSearch && matchesUnit;
+  });
+
+  const getTraineeCompetencyStatus = (traineeId, trainingId) => {
+    const record = allStaffTrainings.find(r => String(r.trainee_id) === String(traineeId) && String(r.training_id) === String(trainingId));
+    return record ? record.status : "Pending";
   };
 
   const fetchData = async () => {
@@ -99,6 +141,24 @@ export default function TrainingDirectorDashboard() {
   const handleEditClick = (type, id, initialData) => {
     setEditModalData({ type, id, title: getEditModalTitle(type, initialData) });
     setEditFields(initialData || {});
+  };
+
+  const handleEditCompetencyRow = (comp) => {
+    const traineeObj = (dashboardData?.internRequests || []).find(t => String(t.id) === String(selectedTraineeId));
+    if (!traineeObj) return;
+
+    const record = allStaffTrainings.find(r => String(r.trainee_id) === String(selectedTraineeId) && String(r.training_id) === String(comp.id));
+    
+    handleEditClick("competency", traineeObj.id, {
+      nurse: traineeObj.name,
+      competency: comp.name,
+      training_id: comp.id,
+      status: record ? record.status : "Pending",
+      renewal: record && record.expiry_date ? (typeof record.expiry_date === 'string' ? record.expiry_date.split("T")[0] : new Date(record.expiry_date).toISOString().split("T")[0]) : "",
+      action: record ? record.recommendation_action_plan : "",
+      pre_test_score: record ? (record.pre_test_score ?? "") : "",
+      post_test_score: record ? (record.post_test_score ?? "") : ""
+    });
   };
 
   const getEditModalTitle = (type, data) => {
@@ -191,9 +251,10 @@ export default function TrainingDirectorDashboard() {
             university: editFields.university,
             program: editFields.program,
             status: editFields.status,
-            unit: editFields.unit || "General",
+            unit: editFields.unit || "Unassigned",
             start_date: editFields.startDate || new Date().toISOString().split("T")[0],
-            end_date: editFields.endDate || null
+            end_date: editFields.endDate || null,
+            gender: editFields.gender || null
           }
         };
       } else if (type === "program_item" || type === "add_program_item") {
@@ -217,7 +278,6 @@ export default function TrainingDirectorDashboard() {
       });
       const resData = await res.json();
       if (resData.success) {
-        alert("Saved ✅");
         setEditModalData(null);
         fetchData();
       } else {
@@ -239,7 +299,6 @@ export default function TrainingDirectorDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        alert("Deleted ✅");
         fetchData();
       } else {
         alert("❌ Delete failed: " + (data.error || "Unknown error"));
@@ -452,11 +511,11 @@ export default function TrainingDirectorDashboard() {
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Pre-Test Score (%)</label>
-                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.pre_test_score || ''} onChange={e => setEditFields(prev => ({ ...prev, pre_test_score: e.target.value }))} />
+                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px', background: '#f5f7fa' }} value={editFields.pre_test_score ?? ''} disabled />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Post-Test Score (%)</label>
-                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.post_test_score || ''} onChange={e => setEditFields(prev => ({ ...prev, post_test_score: e.target.value }))} />
+                    <input type="number" min="0" max="100" className="input-pill" style={{ width: '100%', marginTop: '5px', background: '#f5f7fa' }} value={editFields.post_test_score ?? ''} disabled />
                   </div>
                 </div>
 
@@ -602,6 +661,17 @@ export default function TrainingDirectorDashboard() {
                     </select>
                   </div>
                   <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Gender</label>
+                    <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.gender || ''} onChange={e => setEditFields(prev => ({ ...prev, gender: e.target.value }))}>
+                      <option value="">-- Choose Gender --</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Status</label>
                     <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.status || 'Active'} onChange={e => setEditFields(prev => ({ ...prev, status: e.target.value }))}>
                       <option value="Active">Active</option>
@@ -610,13 +680,13 @@ export default function TrainingDirectorDashboard() {
                       <option value="Rejected">Rejected</option>
                     </select>
                   </div>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Unit Assignment</label>
-                  <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.unit || 'General'} onChange={e => setEditFields(prev => ({ ...prev, unit: e.target.value }))}>
-                    {(dashboardData?.hospitalUnits || []).map(u => <option key={u} value={u}>{u}</option>)}
-                  </select>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Unit Assignment</label>
+                    <select className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.unit || 'Unassigned'} onChange={e => setEditFields(prev => ({ ...prev, unit: e.target.value }))}>
+                      <option value="Unassigned">Unassigned</option>
+                      {(dashboardData?.hospitalUnits || []).map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -743,13 +813,36 @@ export default function TrainingDirectorDashboard() {
 
 
 {/* Loading State */}
-        {loading ? (
+        {loading && !dashboardData ? (
           <div style={{ textAlign: 'center', padding: '100px 0' }}>
             <Loader className="spin" size={40} color="var(--accent-blue)" />
             <p style={{ marginTop: '15px', color: 'var(--text-secondary)' }}>Loading Dashboard Data...</p>
           </div>
         ) : (
           <>
+            {/* Background reload indicator */}
+            {loading && (
+              <div style={{
+                position: 'fixed',
+                top: '15px',
+                right: '20px',
+                background: 'rgba(255, 255, 255, 0.95)',
+                border: '1px solid rgba(0,0,0,0.1)',
+                padding: '8px 16px',
+                borderRadius: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '12px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                zIndex: 1000,
+                color: '#2c3e50',
+                fontWeight: 600
+              }}>
+                <Loader className="spin" size={14} color="var(--accent-blue)" />
+                Updating dashboard data...
+              </div>
+            )}
             {/* 1. Overview KPI Cards */}
             <div className="cards-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '15px' }}>
               <div className="glass-card blue clickable-card" onClick={() => window.scrollTo({ top: 300, behavior: 'smooth' })}>
@@ -817,23 +910,23 @@ export default function TrainingDirectorDashboard() {
                   </div>
                 </div>
 
-                <div className="custom-table" style={{ marginTop: '10px' }}>
-                  <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1fr 1fr 1fr 0.5fr', fontSize: '11px', padding: '10px 5px' }}>
+                <div style={{ marginTop: '10px' }}>
+                  <div className="list-header" style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1fr 1fr 1fr 0.5fr', padding: '14px 18px', fontSize: '11px', marginBottom: '8px' }}>
                     <span>Name</span>
                     <span>Saudi Council</span>
                     <span>BLS</span>
-                    <span>Fire and Safety</span>
-                    <span>Infection Control</span>
-                    <span>Medication Safety Program</span>
+                    <span>Fire & Safety</span>
+                    <span>Infection Ctrl</span>
+                    <span>Med. Safety</span>
                     <span>BISCL</span>
                     <span>FMS</span>
                   </div>
-                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  <div className="nurses-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {(dashboardData?.mandatoryTrainings || []).map((t) => (
-                      <div className="table-row premium-row" key={t.id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1fr 1fr 1fr 0.5fr', padding: '10px 5px', fontSize: '11px' }}>
-                        <span style={{ fontWeight: 600, color: t.isRed ? '#e53935' : 'inherit', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {t.name}
-                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} title="Edit Trainings" onClick={() => handleEditClick("mandatory", t.id, {
+                      <div className="nurse-card premium-row" key={t.id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1fr 1fr 1fr 1fr 0.5fr', padding: '12px 18px', fontSize: '11px', minHeight: '50px' }}>
+                        <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} title="Edit Trainings" onClick={() => handleEditClick("mandatory", t.id, {
                             name: t.name,
                             saudiCouncilExpiry: t.saudiCouncil?.split("T")[0] || "",
                             saudiCouncilStatus: t.saudiCouncil ? "Valid" : "Expired",
@@ -851,14 +944,14 @@ export default function TrainingDirectorDashboard() {
                           })}>
                             <Edit size={11} color="var(--accent-blue)" />
                           </button>
-                        </span>
-                        <span style={{ color: t.isRed && t.saudiCouncil?.includes('2024') ? '#e53935' : 'inherit' }}>{t.saudiCouncil || '—'}</span>
-                        <span style={{ color: t.isRed && t.bls?.includes('2024') ? '#e53935' : 'inherit' }}>{t.bls || '—'}</span>
-                        <span style={{ color: t.isRed && t.fireSafety?.includes('2024') ? '#e53935' : 'inherit' }}>{t.fireSafety || '—'}</span>
-                        <span style={{ color: t.isRed && t.infectionControl?.includes('2024') ? '#e53935' : 'inherit' }}>{t.infectionControl || '—'}</span>
-                        <span style={{ color: t.isRed && t.medicationSafety?.includes('2024') ? '#e53935' : 'inherit' }}>{t.medicationSafety || '—'}</span>
-                        <span style={{ color: t.isRed && t.biscl?.includes('2024') ? '#e53935' : 'inherit' }}>{t.biscl || '—'}</span>
-                        <span>{t.fms}</span>
+                        </div>
+                        <div style={{ color: t.saudiCouncilRed ? '#e53935' : 'inherit' }}>{t.saudiCouncil || '—'}</div>
+                        <div style={{ color: t.blsRed ? '#e53935' : 'inherit' }}>{t.bls || '—'}</div>
+                        <div style={{ color: t.fireSafetyRed ? '#e53935' : 'inherit' }}>{t.fireSafety || '—'}</div>
+                        <div style={{ color: t.infectionControlRed ? '#e53935' : 'inherit' }}>{t.infectionControl || '—'}</div>
+                        <div style={{ color: t.medicationSafetyRed ? '#e53935' : 'inherit' }}>{t.medicationSafety || '—'}</div>
+                        <div style={{ color: t.bisclRed ? '#e53935' : 'inherit' }}>{t.biscl || '—'}</div>
+                        <div style={{ color: t.fmsRed ? '#e53935' : 'inherit' }}>{t.fms}</div>
                       </div>
                     ))}
                   </div>
@@ -868,7 +961,7 @@ export default function TrainingDirectorDashboard() {
                 <div style={{ height: "180px", marginTop: "20px" }}>
                   <p style={{ fontSize: "12px", color: "#8ea2b5", marginBottom: "5px" }}>Compliance Trend Over Time</p>
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={complianceTrend} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                    <AreaChart data={dashboardData?.complianceTrend || []} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                       <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} domain={['dataMin - 5', 100]} />
@@ -939,54 +1032,263 @@ export default function TrainingDirectorDashboard() {
               </div>
             </div>
 
-            <div className="panel-row">
-              {/* 3. Clinical Competency Assessment Panel */}
-              <div className="table-box content-box" style={{ flex: 2 }}>
-                <div className="box-header">
-                  <h2 className="content-box-title">Clinical Competency Assessment</h2>
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <button className="icon-btn-small" title="Add Competency" onClick={() => handleEditClick("add_competency", "new", { status: 'Completed' })}><Plus size={16} /></button>
-                    <button className="icon-btn-small" title="Filter" onClick={() => alert("Filter functionality would open a modal here")}><Filter size={16} /></button>
-                  </div>
+            {/* 3. Clinical Competency Assessment Panel */}
+            <div className="table-box content-box">
+              <div className="box-header">
+                <h2 className="content-box-title">Clinical Competency Assessment</h2>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <select 
+                    className="input-pill" 
+                    value={ccaUnitFilter} 
+                    onChange={(e) => setCcaUnitFilter(e.target.value)}
+                    style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
+                  >
+                    <option value="All">All Units</option>
+                    {ccaUnits.map(unit => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
+                  </select>
+
+                  <select 
+                    className="input-pill" 
+                    value={ccaStatusFilter} 
+                    onChange={(e) => setCcaStatusFilter(e.target.value)}
+                    style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
+                  >
+                    <option value="All">All Statuses</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                  </select>
+
+                  <button className="icon-btn-small" title="Add Competency" onClick={() => handleEditClick("add_competency", "new", { status: 'Completed' })}><Plus size={16} /></button>
                 </div>
-                <div className="custom-table" style={{ marginTop: '10px' }}>
-                  <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr' }}>
-                    <span>Trainee</span>
-                    <span>Unit</span>
-                    <span>Competency</span>
-                    <span>Status</span>
-                    <span>Renewal</span>
-                    <span>Recommendation</span>
-                  </div>
-                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                    {(dashboardData?.clinicalCompetencies || []).map((c, idx) => (
-                      <div className="table-row premium-row" key={idx} style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr', padding: '12px 10px', fontSize: '12px' }}>
-                        <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {c.nurse}
-                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} title="Edit Competency" onClick={() => handleEditClick("competency", c.id, {
+              </div>
+              <div style={{ marginTop: '10px' }}>
+                <div className="list-header" style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr', padding: '14px 18px', marginBottom: '8px' }}>
+                  <span>Trainee</span>
+                  <span>Unit</span>
+                  <span>Competency</span>
+                  <span>Status</span>
+                  <span>Renewal</span>
+                  <span>Recommendation</span>
+                </div>
+                <div className="nurses-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  {(dashboardData?.clinicalCompetencies || [])
+                    .filter(c => {
+                      const matchesUnit = ccaUnitFilter === "All" || (c.specialty && c.specialty.toLowerCase().trim() === ccaUnitFilter.toLowerCase().trim());
+                      const matchesStatus = ccaStatusFilter === "All" || (c.status && c.status.toLowerCase().trim() === ccaStatusFilter.toLowerCase().trim());
+                      return matchesUnit && matchesStatus;
+                    })
+                    .map((c, idx) => (
+                      <div className="nurse-card premium-row" key={idx} style={{ gridTemplateColumns: '1.2fr 1fr 1.5fr 1fr 1fr 1.5fr', padding: '12px 18px', fontSize: '12px', minHeight: '50px' }}>
+                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.nurse}</span>
+                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} title="Edit Competency" onClick={() => handleEditClick("competency", c.id, {
                             nurse: c.nurse,
                             competency: c.competency,
                             training_id: c.training_id,
                             status: c.status,
                             renewal: c.renewal,
                             action: c.action,
-                            pre_test_score: c.pre_test_score || "",
-                            post_test_score: c.post_test_score || ""
+                            pre_test_score: c.pre_test_score ?? "",
+                            post_test_score: c.post_test_score ?? ""
                           })}>
                             <Edit size={11} color="var(--accent-blue)" />
                           </button>
-                        </span>
-                        <span>{c.specialty}</span>
-                        <span>{c.competency}</span>
-                        <span style={{ color: c.status === "Completed" ? "#4caf50" : "#ff9800", fontWeight: "bold" }}>{c.status}</span>
-                        <span>{c.renewal}</span>
-                        <span style={{ color: "#8ea2b5", fontStyle: "italic" }}>{c.action}</span>
+                        </div>
+                        <div>{c.specialty}</div>
+                        <div>{c.competency}</div>
+                        <div style={{ color: c.status === "Completed" ? "#4caf50" : "#ff9800", fontWeight: "bold" }}>{c.status}</div>
+                        <div>{c.renewal}</div>
+                        <div style={{ color: "#8ea2b5", fontStyle: "italic" }}>{c.action}</div>
                       </div>
                     ))}
+                  {((dashboardData?.clinicalCompetencies || []).filter(c => {
+                    const matchesUnit = ccaUnitFilter === "All" || (c.specialty && c.specialty.toLowerCase().trim() === ccaUnitFilter.toLowerCase().trim());
+                    const matchesStatus = ccaStatusFilter === "All" || (c.status && c.status.toLowerCase().trim() === ccaStatusFilter.toLowerCase().trim());
+                    return matchesUnit && matchesStatus;
+                  })).length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
+                      No matching assessments found.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Certification & License Tracking Panel */}
+            <div className="table-box content-box">
+              <div className="box-header">
+                <h2 className="content-box-title">Certification & License Tracking</h2>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {/* General / Specific toggle */}
+                  <div style={{ display: 'flex', background: 'rgba(0,0,0,0.06)', borderRadius: '8px', padding: '3px', gap: '2px' }}>
+                    <button
+                      onClick={() => setCertView('general')}
+                      style={{
+                        padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        background: certView === 'general' ? 'var(--accent-blue)' : 'transparent',
+                        color: certView === 'general' ? 'white' : 'var(--text-secondary)'
+                      }}
+                    >General</button>
+                    <button
+                      onClick={() => setCertView('specific')}
+                      style={{
+                        padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        background: certView === 'specific' ? 'var(--accent-blue)' : 'transparent',
+                        color: certView === 'specific' ? 'white' : 'var(--text-secondary)'
+                      }}
+                    >Specific</button>
                   </div>
+                  <button className="icon-btn-small" title="Add Certification" onClick={() => handleEditClick("add_certification", "new", { compliance: 100, uploadStatus: 'Active' })}><Plus size={16} /></button>
+                  <button className="icon-btn-small" title="Export" onClick={() => window.print()}><Download size={16} /></button>
                 </div>
               </div>
 
+              {/* ── Shared cert table: filtered by scope from Certification_License_Tracking ── */}
+              {(() => {
+                const allCerts = dashboardData?.certTracker || [];
+                // Filter by scope field (add scope column to DB: ALTER TABLE Certification_License_Tracking ADD COLUMN scope ENUM('General','Specific') DEFAULT 'General')
+                const rows = allCerts.filter(c =>
+                  c.scope ? c.scope === (certView === 'general' ? 'General' : 'Specific') : true
+                );
+                return (
+                  <div style={{ marginTop: '10px' }}>
+                    <div className="list-header" style={{ gridTemplateColumns: '1.2fr 1fr 1.2fr 1.2fr 1fr 1fr', padding: '14px 18px', marginBottom: '8px' }}>
+                      <span>Trainee Name</span>
+                      <span>Cert Name</span>
+                      <span>Number</span>
+                      <span>Expiry Date</span>
+                      <span>Compliance %</span>
+                      <span>Status</span>
+                    </div>
+                    <div className="nurses-list" style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                      {rows.map(c => (
+                        <div className="nurse-card premium-row" key={c.id}
+                          style={{ gridTemplateColumns: '1.2fr 1fr 1.2fr 1.2fr 1fr 1fr', padding: '12px 18px', fontSize: '12px', minHeight: '50px' }}>
+                          <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.traineeName || '—'}</span>
+                            <button className="icon-btn-small"
+                              style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }}
+                              title="Edit Certificate"
+                              onClick={() => handleEditClick("certification", c.id, {
+                                traineeName: c.traineeName, name: c.name, number: c.number,
+                                expiry: c.expiry, compliance: c.compliance, uploadStatus: c.uploadStatus
+                              })}>
+                              <Edit size={11} color="var(--accent-blue)" />
+                            </button>
+                          </div>
+                          <div>{c.name || '—'}</div>
+                          <div>{c.number || '—'}</div>
+                          <div>{c.expiry || '—'}</div>
+                          <div style={{ fontWeight: 'bold', color: Number(c.compliance) >= 80 ? '#4caf50' : Number(c.compliance) >= 50 ? '#ff9800' : '#e53935' }}>
+                            {Number(c.compliance || 0).toFixed(0)}%
+                          </div>
+                          <div>
+                            <span className={`status ${c.uploadStatus === 'Active' || c.uploadStatus === 'Verified' ? 'approved' : c.uploadStatus === 'Expired' ? 'rejected' : 'pending'}`}
+                              style={{ fontSize: '11px', padding: '4px 10px', width: 'fit-content', textAlign: 'center' }}>
+                              {c.uploadStatus || 'Pending'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      {rows.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '30px', color: '#8ea2b5' }}>
+                          No {certView} certifications found.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* 9. Onboarding & Orientation Tracker */}
+            <div className="table-box content-box">
+              <div className="box-header">
+                <h2 className="content-box-title">Onboarding & Orientation Tracker</h2>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <select 
+                    className="input-pill" 
+                    value={obRoleFilter} 
+                    onChange={(e) => setObRoleFilter(e.target.value)}
+                    style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
+                  >
+                    <option value="All">All Roles</option>
+                    {onboardingRoles.map(role => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </select>
+
+                  <select 
+                    className="input-pill" 
+                    value={obPreceptorFilter} 
+                    onChange={(e) => setObPreceptorFilter(e.target.value)}
+                    style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
+                  >
+                    <option value="All">All Preceptors</option>
+                    {onboardingPreceptors.map(prec => (
+                      <option key={prec} value={prec}>{prec}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div style={{ marginTop: '10px' }}>
+                <div className="list-header" style={{ gridTemplateColumns: '1fr 0.5fr 1fr 1.5fr 1fr', padding: '14px 18px', marginBottom: '8px' }}>
+                  <span>New Hire</span>
+                  <span>Role</span>
+                  <span>Preceptor</span>
+                  <span>Completion %</span>
+                  <span>Eval Score</span>
+                </div>
+                <div className="nurses-list" style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                  {(dashboardData?.onboardingData || [])
+                    .filter(o => {
+                      const matchesRole = obRoleFilter === "All" || (o.role && o.role.toLowerCase().trim() === obRoleFilter.toLowerCase().trim());
+                      const matchesPreceptor = obPreceptorFilter === "All" || (o.preceptor && o.preceptor.toLowerCase().trim() === obPreceptorFilter.toLowerCase().trim());
+                      return matchesRole && matchesPreceptor;
+                    })
+                    .map((o, idx) => (
+                      <div className="nurse-card premium-row" key={idx} style={{ gridTemplateColumns: '1fr 0.5fr 1fr 1.5fr 1fr', padding: '12px 18px', fontSize: '12px', minHeight: '50px', alignItems: 'center' }}>
+                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span>
+                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} title="Edit Onboarding" onClick={() => handleEditClick("onboarding", o.id, {
+                            name: o.name,
+                            role: o.role,
+                            preceptor: o.preceptor,
+                            progress: o.progress,
+                            evalScore: o.evalScore
+                          })}>
+                            <Edit size={11} color="var(--accent-blue)" />
+                          </button>
+                        </div>
+                        <div>{o.role}</div>
+                        <div>{o.preceptor}</div>
+                        <div style={{ paddingRight: "15px" }}>
+                          <div style={{ fontSize: "11px", color: "#8ea2b5" }}>{o.progress}%</div>
+                          {renderProgressBar(o.progress)}
+                        </div>
+                        <div style={{ fontWeight: "bold", color: o.evalScore === "Pending" ? "#ff9800" : "#243647" }}>{o.evalScore}</div>
+                      </div>
+                    ))}
+                  {((dashboardData?.onboardingData || []).filter(o => {
+                    const matchesRole = obRoleFilter === "All" || (o.role && o.role.toLowerCase().trim() === obRoleFilter.toLowerCase().trim());
+                    const matchesPreceptor = obPreceptorFilter === "All" || (o.preceptor && o.preceptor.toLowerCase().trim() === obPreceptorFilter.toLowerCase().trim());
+                    return matchesRole && matchesPreceptor;
+                  })).length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
+                      No onboarding records found.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Visualization & Programs Row */}
+            <div className="panel-row">
               {/* 6. Learning Outcomes & Evaluations Panel */}
               <div className="table-box content-box" style={{ flex: 1 }}>
                 <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1008,133 +1310,44 @@ export default function TrainingDirectorDashboard() {
                     Show Details
                   </button>
                 </div>
-                <p style={{ fontSize: "12px", color: "#8ea2b5", marginTop: "10px", marginBottom: "15px" }}>Pre vs. Post Test Scores (%)</p>
-                <div style={{ height: "230px" }}>
+                <p style={{ fontSize: "11px", color: "#8ea2b5", marginTop: "8px", marginBottom: "10px" }}>Pre vs. Post Test Scores (%)</p>
+                <div style={{ flex: 1, minHeight: '180px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart 
                       data={dashboardData?.learningOutcomes && dashboardData.learningOutcomes.length > 0 
                         ? dashboardData.learningOutcomes.map(item => ({ ...item, course: getShortName(item.course) })) 
                         : defaultEffectivenessFallback} 
-                      margin={{ top: 5, right: 5, left: -20, bottom: 40 }}
+                      margin={{ top: 5, right: 5, left: -25, bottom: 35 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                       <XAxis 
                         dataKey="course" 
-                        tick={{ fontSize: 9, fill: "var(--text-secondary)" }} 
+                        tick={{ fontSize: 8, fill: "var(--text-secondary)" }} 
                         axisLine={false} 
                         tickLine={false}
                         interval={0}
-                        angle={-25}
+                        angle={-35}
                         textAnchor="end"
-                        height={55}
+                        height={50}
                       />
-                      <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                       <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: '11px' }} />
+                      <Legend wrapperStyle={{ fontSize: '10px' }} />
                       <Bar dataKey="preTest" name="Pre-Test" fill="#9cb5f1" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="postTest" name="Post-Test" fill="#6082e6" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
-            </div>
-
-            <div className="panel-row">
-              {/* 7. Certification & License Tracking Panel */}
-              <div className="table-box content-box" style={{ flex: 2 }}>
-                <div className="box-header">
-                  <h2 className="content-box-title">Certification & License Tracking</h2>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {/* General / Specific toggle */}
-                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.06)', borderRadius: '8px', padding: '3px', gap: '2px' }}>
-                      <button
-                        onClick={() => setCertView('general')}
-                        style={{
-                          padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
-                          cursor: 'pointer', transition: 'all 0.2s',
-                          background: certView === 'general' ? 'var(--accent-blue)' : 'transparent',
-                          color: certView === 'general' ? 'white' : 'var(--text-secondary)'
-                        }}
-                      >General</button>
-                      <button
-                        onClick={() => setCertView('specific')}
-                        style={{
-                          padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
-                          cursor: 'pointer', transition: 'all 0.2s',
-                          background: certView === 'specific' ? 'var(--accent-blue)' : 'transparent',
-                          color: certView === 'specific' ? 'white' : 'var(--text-secondary)'
-                        }}
-                      >Specific</button>
-                    </div>
-                    <button className="icon-btn-small" title="Add Certification" onClick={() => handleEditClick("add_certification", "new", { compliance: 100, uploadStatus: 'Active' })}><Plus size={16} /></button>
-                    <button className="icon-btn-small" title="Export" onClick={() => window.print()}><Download size={16} /></button>
-                  </div>
-                </div>
-
-                {/* ── Shared cert table: filtered by scope from Certification_License_Tracking ── */}
-                {(() => {
-                  const allCerts = dashboardData?.certTracker || [];
-                  // Filter by scope field (add scope column to DB: ALTER TABLE Certification_License_Tracking ADD COLUMN scope ENUM('General','Specific') DEFAULT 'General')
-                  const rows = allCerts.filter(c =>
-                    c.scope ? c.scope === (certView === 'general' ? 'General' : 'Specific') : true
-                  );
-                  return (
-                    <div className="custom-table" style={{ marginTop: '10px' }}>
-                      <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1.2fr 1.2fr 1fr 1fr' }}>
-                        <span>Trainee Name</span>
-                        <span>Cert Name</span>
-                        <span>Number</span>
-                        <span>Expiry Date</span>
-                        <span>Compliance %</span>
-                        <span>Status</span>
-                      </div>
-                      <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                        {rows.map(c => (
-                          <div className="table-row premium-row" key={c.id}
-                            style={{ gridTemplateColumns: '1.2fr 1fr 1.2fr 1.2fr 1fr 1fr', padding: '12px 10px', fontSize: '12px' }}>
-                            <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              {c.traineeName || '—'}
-                              <button className="icon-btn-small"
-                                style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }}
-                                title="Edit Certificate"
-                                onClick={() => handleEditClick("certification", c.id, {
-                                  traineeName: c.traineeName, name: c.name, number: c.number,
-                                  expiry: c.expiry, compliance: c.compliance, uploadStatus: c.uploadStatus
-                                })}>
-                                <Edit size={11} color="var(--accent-blue)" />
-                              </button>
-                            </span>
-                            <span>{c.name || '—'}</span>
-                            <span>{c.number || '—'}</span>
-                            <span>{c.expiry || '—'}</span>
-                            <span style={{ fontWeight: 'bold', color: Number(c.compliance) >= 80 ? '#4caf50' : Number(c.compliance) >= 50 ? '#ff9800' : '#e53935' }}>
-                              {Number(c.compliance || 0).toFixed(0)}%
-                            </span>
-                            <span className={`status ${c.uploadStatus === 'Active' || c.uploadStatus === 'Verified' ? 'approved' : c.uploadStatus === 'Expired' ? 'rejected' : 'pending'}`}
-                              style={{ fontSize: '11px', padding: '4px 10px', width: 'fit-content', textAlign: 'center' }}>
-                              {c.uploadStatus || 'Pending'}
-                            </span>
-                          </div>
-                        ))}
-                        {rows.length === 0 && (
-                          <div style={{ textAlign: 'center', padding: '30px', color: '#8ea2b5' }}>
-                            No {certView} certifications found.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
 
               {/* 5. Staff Participation & Attendance */}
               <div className="table-box content-box" style={{ flex: 1 }}>
-                <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h2 className="content-box-title">Staff Participation &amp; Attendance</h2>
+                <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <h2 className="content-box-title" style={{ fontSize: '15px', marginBottom: 0 }}>Staff Participation & Attendance</h2>
                   <button 
                     onClick={() => navigate('/training/participation')}
                     style={{
-                      fontSize: "11px",
+                      fontSize: "10px",
                       padding: "4px 8px",
                       borderRadius: "6px",
                       border: "1px solid var(--accent-blue)",
@@ -1142,7 +1355,8 @@ export default function TrainingDirectorDashboard() {
                       color: "var(--accent-blue)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      transition: "all 0.2s"
+                      whiteSpace: "nowrap",
+                      flexShrink: 0
                     }}
                   >
                     Show All Units
@@ -1172,36 +1386,36 @@ export default function TrainingDirectorDashboard() {
                   return (
                     <>
                       {/* stat tiles */}
-                      <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-                        <div style={{ flex: 1, background: "rgba(242,157,145,0.15)", borderRadius: "8px", padding: "12px", textAlign: "center", border: "1px solid rgba(242,157,145,0.3)" }}>
-                          <h3 style={{ color: "#e53935", fontSize: "22px", margin: 0 }}>
+                      <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                        <div style={{ flex: 1, background: "rgba(242,157,145,0.15)", borderRadius: "8px", padding: "8px 6px", textAlign: "center", border: "1px solid rgba(242,157,145,0.3)" }}>
+                          <h3 style={{ color: "#e53935", fontSize: "18px", margin: 0 }}>
                             {stats.overallNoShowRate}%
                           </h3>
-                          <p style={{ color: "var(--text-secondary)", fontSize: "11px", margin: "4px 0 0" }}>Overall No-Show Rate</p>
+                          <p style={{ color: "var(--text-secondary)", fontSize: "10px", margin: "3px 0 0" }}>No-Show Rate</p>
                         </div>
-                        <div style={{ flex: 1, background: "rgba(76,175,80,0.15)", borderRadius: "8px", padding: "12px", textAlign: "center", border: "1px solid rgba(76,175,80,0.3)" }}>
-                          <h3 style={{ color: "#4caf50", fontSize: "22px", margin: 0 }}>{stats.avgHrsPerStaff}h</h3>
-                          <p style={{ color: "var(--text-secondary)", fontSize: "11px", margin: "4px 0 0" }}>Avg Training Hrs/Staff</p>
+                        <div style={{ flex: 1, background: "rgba(76,175,80,0.15)", borderRadius: "8px", padding: "8px 6px", textAlign: "center", border: "1px solid rgba(76,175,80,0.3)" }}>
+                          <h3 style={{ color: "#4caf50", fontSize: "18px", margin: 0 }}>{stats.avgHrsPerStaff}h</h3>
+                          <p style={{ color: "var(--text-secondary)", fontSize: "10px", margin: "3px 0 0" }}>Avg Hrs/Staff</p>
                         </div>
                       </div>
 
-                      <div style={{ marginTop: "12px" }}>
+                      <div style={{ marginTop: "8px" }}>
                         {/* dropdown */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                          <p style={{ fontSize: "11px", color: "#8ea2b5", margin: 0, whiteSpace: "nowrap" }}>Course —</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                          <p style={{ fontSize: "10px", color: "#8ea2b5", margin: 0, whiteSpace: "nowrap" }}>Course —</p>
                           <select
                             value={activeCourse}
                             onChange={e => setSelectedCourse(e.target.value)}
-                            style={{ fontSize: "11px", padding: "4px 8px", borderRadius: "6px", border: "1px solid #dde3ea", background: "white", color: "#243647", flex: 1 }}
+                            style={{ fontSize: "10px", padding: "3px 6px", borderRadius: "6px", border: "1px solid #dde3ea", background: "white", color: "#243647", width: '100%', maxWidth: '150px' }}
                           >
                             {courseNames.map(n => <option key={n} value={n}>{n}</option>)}
                           </select>
                         </div>
 
-                        <p style={{ fontSize: "12px", color: "#8ea2b5", textAlign: "center", margin: "5px 0 10px 0" }}>Absentee Trend by Unit (%)</p>
+                        <p style={{ fontSize: "11px", color: "#8ea2b5", textAlign: "center", margin: "4px 0 6px 0" }}>Absentee Trend by Unit (%)</p>
 
                         {/* bar chart */}
-                        <div style={{ height: "130px" }}>
+                        <div style={{ height: "110px" }}>
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={displayedUnitData} margin={{ top: 5, right: 0, left: -30, bottom: 0 }}>
                               <XAxis 
@@ -1226,51 +1440,6 @@ export default function TrainingDirectorDashboard() {
                 })()}
               </div>
 
-
-            </div>
-
-            <div className="panel-row">
-              {/* 9. Onboarding & Orientation Tracker */}
-              <div className="table-box content-box" style={{ flex: 2 }}>
-                <div className="box-header">
-                  <h2 className="content-box-title">Onboarding & Orientation Tracker</h2>
-                </div>
-                <div className="custom-table" style={{ marginTop: '10px' }}>
-                  <div className="table-header" style={{ gridTemplateColumns: '1fr 0.5fr 1fr 1.5fr 1fr' }}>
-                    <span>New Hire</span>
-                    <span>Role</span>
-                    <span>Preceptor</span>
-                    <span>Completion %</span>
-                    <span>Eval Score</span>
-                  </div>
-                  <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                    {(dashboardData?.onboardingData || []).map((o, idx) => (
-                      <div className="table-row premium-row" key={idx} style={{ gridTemplateColumns: '1fr 0.5fr 1fr 1.5fr 1fr', padding: '12px 10px', fontSize: '12px', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {o.name}
-                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} title="Edit Onboarding" onClick={() => handleEditClick("onboarding", o.id, {
-                            name: o.name,
-                            role: o.role,
-                            preceptor: o.preceptor,
-                            progress: o.progress,
-                            evalScore: o.evalScore
-                          })}>
-                            <Edit size={11} color="var(--accent-blue)" />
-                          </button>
-                        </span>
-                        <span>{o.role}</span>
-                        <span>{o.preceptor}</span>
-                        <div style={{ paddingRight: "15px" }}>
-                          <span style={{ fontSize: "11px", color: "#8ea2b5" }}>{o.progress}%</span>
-                          {renderProgressBar(o.progress)}
-                        </div>
-                        <span style={{ fontWeight: "bold", color: o.evalScore === "Pending" ? "#ff9800" : "#243647" }}>{o.evalScore}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
               {/* 4. Training Programs Section (Tabbed) */}
               <div className="table-box content-box" style={{ flex: 1 }}>
                 <div className="box-header" style={{ marginBottom: "10px" }}>
@@ -1283,13 +1452,13 @@ export default function TrainingDirectorDashboard() {
                     <Plus size={16} />
                   </button>
                 </div>
-                <div className="tab-container">
-                  <button className={`tab-btn ${activeProgramTab === "outside" ? "active" : ""}`} onClick={() => setActiveProgramTab("outside")}>Outside Hospital</button>
-                  <button className={`tab-btn ${activeProgramTab === "inside" ? "active" : ""}`} onClick={() => setActiveProgramTab("inside")}>Inside Hospital</button>
-                  <button className={`tab-btn ${activeProgramTab === "cross" ? "active" : ""}`} onClick={() => setActiveProgramTab("cross")}>Cross-Training</button>
+                <div className="tab-container" style={{ flexWrap: 'wrap' }}>
+                  <button className={`tab-btn ${activeProgramTab === "outside" ? "active" : ""}`} style={{ fontSize: '11px', padding: '6px 12px' }} onClick={() => setActiveProgramTab("outside")}>Outside</button>
+                  <button className={`tab-btn ${activeProgramTab === "inside" ? "active" : ""}`} style={{ fontSize: '11px', padding: '6px 12px' }} onClick={() => setActiveProgramTab("inside")}>Inside</button>
+                  <button className={`tab-btn ${activeProgramTab === "cross" ? "active" : ""}`} style={{ fontSize: '11px', padding: '6px 12px' }} onClick={() => setActiveProgramTab("cross")}>Cross-Training</button>
                 </div>
 
-                <div style={{ background: "rgba(0,0,0,0.02)", borderRadius: "8px", padding: "15px", minHeight: "150px" }}>
+                <div style={{ background: "rgba(0,0,0,0.02)", borderRadius: "8px", padding: "10px 12px", flex: 1, maxHeight: '220px', overflowY: 'auto' }}>
                   <h4 style={{ fontSize: "14px", color: "#243647", marginBottom: "10px", textTransform: "capitalize" }}>
                     {activeProgramTab === "outside" ? "Recent Outside Programs" :
                      activeProgramTab === "inside" ? "Internal Workshops" : "Cross-Training Deployments"}
@@ -1313,7 +1482,7 @@ export default function TrainingDirectorDashboard() {
                             boxShadow: "0 1px 3px rgba(0,0,0,0.05)" 
                           }}
                         >
-                          <div style={{ fontSize: "13px", color: "#5a738e" }}>
+                          <div style={{ fontSize: "12px", color: "#5a738e", overflow: "hidden", textOverflow: "ellipsis" }}>
                             <strong style={{ color: "#243647" }}>{item.title}</strong>
                             {item.locationProvider && (
                               <>
@@ -1411,46 +1580,169 @@ export default function TrainingDirectorDashboard() {
                 </div>
 
                 {/* Intern Requests Table */}
-                <div className="custom-table" style={{ flex: 2 }}>
-                  <div className="table-header" style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1.6fr 1fr' }}>
+                <div style={{ flex: 2 }}>
+                  <div className="list-header" style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1.6fr 1fr', padding: '14px 18px', marginBottom: '8px' }}>
                     <span>Applicant Name</span>
                     <span>University</span>
                     <span>Program</span>
                     <span>Training Period</span>
                     <span>Status</span>
                   </div>
-                  <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                  <div className="nurses-list" style={{ maxHeight: '180px', overflowY: 'auto' }}>
                     {(dashboardData?.internRequests || []).map((req) => (
-                      <div className="table-row premium-row" key={req.id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1.6fr 1fr', padding: '12px 15px', fontSize: '13px' }}>
-                        <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {req.name}
-                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} title="Edit Intern" onClick={() => handleEditClick("intern", req.id, {
+                      <div className="nurse-card premium-row" key={req.id} style={{ gridTemplateColumns: '1.2fr 1fr 1fr 1.6fr 1fr', padding: '12px 18px', fontSize: '13px', minHeight: '50px' }}>
+                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.name}</span>
+                          <button className="icon-btn-small" style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} title="Edit Intern" onClick={() => handleEditClick("intern", req.id, {
                             name: req.name,
                             university: req.university,
                             program: req.program,
                             status: req.status,
                             unit: req.unit || "General",
                             startDate: req.startDate || "",
-                            endDate: req.endDate || ""
+                            endDate: req.endDate || "",
+                            gender: req.gender || ""
                           })}>
                             <Edit size={11} color="var(--accent-blue)" />
                           </button>
-                        </span>
-                        <span>{req.university}</span>
-                        <span style={{ color: "var(--text-secondary)" }}>{req.program}</span>
-                        <span style={{ color: "var(--text-secondary)", fontSize: "11px" }}>
+                        </div>
+                        <div>{req.university}</div>
+                        <div style={{ color: "var(--text-secondary)" }}>{req.program}</div>
+                        <div style={{ color: "var(--text-secondary)", fontSize: "11px" }}>
                           {req.startDate && req.endDate 
                             ? `${req.startDate} to ${req.endDate}` 
                             : req.startDate || req.endDate || "—"}
-                        </span>
-                        <span className={`status ${req.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '4px 10px', textAlign: 'center', width: 'fit-content' }}>
-                          {req.status}
-                        </span>
+                        </div>
+                        <div>
+                          <span className={`status ${req.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '4px 10px', textAlign: 'center', width: 'fit-content' }}>
+                            {req.status}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
+              </div>
+            </div>
+
+            <div className="table-box content-box">
+              <div className="box-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ClipboardCheck size={20} color="var(--accent-blue)" />
+                  <h2 className="content-box-title">Clinical Competency Checklist Registry</h2>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    placeholder="🔍 Search..."
+                    value={compSearch}
+                    onChange={(e) => setCompSearch(e.target.value)}
+                    className="input-pill"
+                    style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', width: '160px', minWidth: '120px' }}
+                  />
+                  <select
+                    className="input-pill"
+                    value={selectedTraineeId}
+                    onChange={(e) => setSelectedTraineeId(e.target.value)}
+                    style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
+                  >
+                    <option value="All">All Trainees</option>
+                    {(dashboardData?.internRequests || []).map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="input-pill"
+                    value={compUnitFilter}
+                    onChange={(e) => setCompUnitFilter(e.target.value)}
+                    style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
+                  >
+                    {competencyUnits.map(u => (
+                      <option key={u} value={u}>{u === "All" ? "All Units" : u}</option>
+                    ))}
+                  </select>
+                  {(compSearch || compUnitFilter !== "All" || selectedTraineeId !== "All") && (
+                    <button
+                      className="icon-btn-small"
+                      title="Clear all filters"
+                      onClick={() => { setCompSearch(""); setCompUnitFilter("All"); setSelectedTraineeId("All"); }}
+                      style={{ height: '32px', width: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div style={{ padding: '6px 18px', fontSize: '11px', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color, #e2e8f0)' }}>
+                {filteredRegistry.length} competency result{filteredRegistry.length !== 1 ? "s" : ""}
+              </div>
+
+              <div className="list-header" style={{ gridTemplateColumns: selectedTraineeId === "All" ? '2.5fr 1.2fr 1.2fr 1.5fr' : '2.5fr 1.2fr 1.2fr 1.2fr 0.5fr', padding: '14px 18px' }}>
+                <span>Competency Name</span>
+                <span>Category</span>
+                <span>Unit Scope</span>
+                {selectedTraineeId === "All" ? (
+                  <span>Completed Staff</span>
+                ) : (
+                  <>
+                    <span>Completion Status</span>
+                    <span style={{ textAlign: 'right', paddingRight: '10px' }}>Action</span>
+                  </>
+                )}
+              </div>
+              
+              <div className="nurses-list" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                {filteredRegistry.map((comp) => {
+                  let statusCol;
+                  let actionCol = null;
+                  
+                  if (selectedTraineeId === "All") {
+                    statusCol = (
+                      <span style={{ fontWeight: 'bold', color: comp.completedCount > 0 ? 'var(--accent-blue)' : '#7f8c8d' }}>
+                        {comp.completedCount} {comp.completedCount === 1 ? 'staff member' : 'staff members'}
+                      </span>
+                    );
+                  } else {
+                    const status = getTraineeCompetencyStatus(selectedTraineeId, comp.id);
+                    statusCol = (
+                      <span className={`status ${getStatusClass(status)}`} style={{ fontSize: '11px', padding: '4px 10px', width: 'fit-content', textAlign: 'center' }}>
+                        {status}
+                      </span>
+                    );
+                    actionCol = (
+                      <div style={{ display: "flex", justifyContent: "flex-end", paddingRight: "10px" }}>
+                        <button 
+                          className="icon-btn-small" 
+                          title="Edit Competency Status"
+                          style={{ padding: "4px", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center" }}
+                          onClick={() => handleEditCompetencyRow(comp)}
+                        >
+                          <Edit size={14} color="var(--accent-blue)" />
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div 
+                      className="nurse-card premium-row" 
+                      key={comp.id} 
+                      style={{ gridTemplateColumns: selectedTraineeId === "All" ? '2.5fr 1.2fr 1.2fr 1.5fr' : '2.5fr 1.2fr 1.2fr 1.2fr 0.5fr' }}
+                    >
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{comp.name}</div>
+                      <div style={{ color: 'var(--text-secondary)' }}>{comp.category}</div>
+                      <div style={{ color: 'var(--text-secondary)' }}>{comp.unit}</div>
+                      <div>{statusCol}</div>
+                      {actionCol}
+                    </div>
+                  );
+                })}
+                {filteredRegistry.length === 0 && (
+                  <div style={{ padding: '40px', textAlign: 'center', color: '#8ea2b5', fontSize: '14px' }}>
+                    No competencies found matching current filters.
+                  </div>
+                )}
               </div>
             </div>
           </>

@@ -15,10 +15,11 @@ const emptyForm = {
     name: "",
     university: "",
     program: "Intern",
-    unit: "General",
+    unit: "",
     status: "Active",
     start_date: new Date().toISOString().split("T")[0],
-    end_date: ""
+    end_date: "",
+    gender: ""
 };
 
 export default function TrainingStaffDirectory() {
@@ -67,17 +68,19 @@ export default function TrainingStaffDirectory() {
     const [search, setSearch] = useState("");
     const [sortOrder, setSortOrder] = useState("az");
     const [showFilters, setShowFilters] = useState(false);
-    const [filters, setFilters] = useState({ type: "", unit: "", status: "", year: "", month: "" });
+    const [filters, setFilters] = useState({ type: "", unit: "", status: "", year: "", month: "", gender: "" });
 
     const traineeTypes = [...new Set(trainees.map(n => n.type))].filter(Boolean);
-    const units = [...new Set(trainees.map(n => n.unit || "General"))].filter(Boolean);
+    const units = [...new Set(trainees.map(n => n.unit || "Unassigned"))].filter(Boolean);
     const statuses = [...new Set(trainees.map(n => n.status))].filter(Boolean);
+    const years = [...new Set(trainees.map(n => n.startDate ? n.startDate.split("-")[0] : null))].filter(Boolean).sort((a, b) => b - a);
 
     const filteredTrainees = trainees
         .filter(n =>
             (!filters.type || n.type === filters.type) &&
-            (!filters.unit || (n.unit || "General") === filters.unit) &&
+            (!filters.unit || (n.unit || "Unassigned") === filters.unit) &&
             (!filters.status || n.status === filters.status) &&
+            (!filters.gender || n.gender === filters.gender) &&
             (!filters.year || (n.startDate && n.startDate.startsWith(filters.year))) &&
             (!filters.month || (n.startDate && n.startDate.split("-")[1] === filters.month)) &&
             (
@@ -93,7 +96,7 @@ export default function TrainingStaffDirectory() {
 
     const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
     const activeFilterCount = Object.values(filters).filter(v => v !== "").length;
-    const clearAll = () => { setFilters({ type: "", unit: "", status: "", year: "", month: "" }); setSearch(""); };
+    const clearAll = () => { setFilters({ type: "", unit: "", status: "", year: "", month: "", gender: "" }); setSearch(""); };
 
     // ── Stats ──
     const isIAU = (u) => u?.toLowerCase().includes("iau") || u?.toLowerCase().includes("imam abdulrahman");
@@ -115,13 +118,14 @@ export default function TrainingStaffDirectory() {
             n.name, 
             n.university || "N/A", 
             n.type || "N/A", 
-            n.unit || "General", 
+            n.gender || "N/A",
+            n.unit || "Unassigned", 
             n.startDate && n.endDate ? `${n.startDate} to ${n.endDate}` : n.startDate || n.endDate || "N/A",
             n.status || "N/A"
         ]);
         autoTable(doc, {
             startY: 30,
-            head: [["Name", "University", "Trainee Type", "Unit", "Training Period", "Status"]],
+            head: [["Name", "University", "Trainee Type", "Gender", "Unit", "Training Period", "Status"]],
             body: tableData,
             theme: "grid",
             headStyles: { fillColor: [74, 106, 133] }
@@ -145,6 +149,7 @@ export default function TrainingStaffDirectory() {
         setFormError("");
         if (!form.name.trim()) { setFormError("Full name is required."); return; }
         if (!form.university.trim()) { setFormError("University is required."); return; }
+        if (!form.gender) { setFormError("Gender is required."); return; }
 
         setSaving(true);
         try {
@@ -161,7 +166,8 @@ export default function TrainingStaffDirectory() {
                         unit: form.unit,
                         status: form.status,
                         start_date: form.start_date || null,
-                        end_date: form.end_date || null
+                        end_date: form.end_date || null,
+                        gender: form.gender
                     }
                 })
             });
@@ -265,11 +271,14 @@ export default function TrainingStaffDirectory() {
                                         <option value="">Status</option>
                                         {statuses.map(s => <option key={s}>{s}</option>)}
                                     </select>
+                                    <select className="filter-select" value={filters.gender} onChange={(e) => handleFilterChange("gender", e.target.value)}>
+                                        <option value="">Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
                                     <select className="filter-select" value={filters.year} onChange={(e) => handleFilterChange("year", e.target.value)}>
                                         <option value="">Training Year</option>
-                                        <option value="2026">2026</option>
-                                        <option value="2025">2025</option>
-                                        <option value="2024">2024</option>
+                                        {years.map(y => <option key={y} value={y}>{y}</option>)}
                                     </select>
                                     <select className="filter-select" value={filters.month} onChange={(e) => handleFilterChange("month", e.target.value)}>
                                         <option value="">Training Month</option>
@@ -297,9 +306,10 @@ export default function TrainingStaffDirectory() {
                                     {filters.type && <span className="filter-chip">{filters.type}<button onClick={() => handleFilterChange("type", "")}>✕</button></span>}
                                     {filters.unit && <span className="filter-chip">{filters.unit}<button onClick={() => handleFilterChange("unit", "")}>✕</button></span>}
                                     {filters.status && <span className="filter-chip">{filters.status}<button onClick={() => handleFilterChange("status", "")}>✕</button></span>}
+                                    {filters.gender && <span className="filter-chip">Gender: {filters.gender}<button onClick={() => handleFilterChange("gender", "")}>✕</button></span>}
                                     {filters.year && <span className="filter-chip">Year: {filters.year}<button onClick={() => handleFilterChange("year", "")}>✕</button></span>}
                                     {filters.month && <span className="filter-chip">Month: {filters.month}<button onClick={() => handleFilterChange("month", "")}>✕</button></span>}
-                                    {(filters.type || filters.unit || filters.status || filters.year || filters.month || search) && (
+                                    {(filters.type || filters.unit || filters.status || filters.gender || filters.year || filters.month || search) && (
                                         <button className="clear-btn" onClick={clearAll}>Clear all</button>
                                     )}
                                 </div>
@@ -317,10 +327,11 @@ export default function TrainingStaffDirectory() {
                                 </select>
                             </div>
 
-                            <div className="list-header" style={{ gridTemplateColumns: "1.8fr 1.2fr 1.2fr 1fr 1.8fr 1.2fr 0.6fr" }}>
+                            <div className="list-header" style={{ gridTemplateColumns: "1.5fr 1.1fr 1.1fr 0.8fr 0.9fr 1.6fr 1.1fr 0.5fr" }}>
                                 <span>Name</span>
                                 <span>University</span>
                                 <span>Trainee Type</span>
+                                <span>Gender</span>
                                 <span>Unit</span>
                                 <span>Training Period</span>
                                 <span>Status</span>
@@ -332,12 +343,17 @@ export default function TrainingStaffDirectory() {
                                     <div
                                         key={trainee.id}
                                         className="nurse-card premium-row"
-                                        style={{ gridTemplateColumns: "1.8fr 1.2fr 1.2fr 1fr 1.8fr 1.2fr 0.6fr" }}
+                                        style={{ gridTemplateColumns: "1.5fr 1.1fr 1.1fr 0.8fr 0.9fr 1.6fr 1.1fr 0.5fr" }}
                                     >
                                         <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{trainee.name}</div>
                                         <div style={{ color: "var(--text-secondary)" }}>{trainee.university || "—"}</div>
                                         <div>{trainee.type || "—"}</div>
-                                        <div>{trainee.unit || "General"}</div>
+                                        <div style={{ color: !trainee.gender ? "#e53935" : "var(--text-secondary)", fontWeight: !trainee.gender ? 600 : "normal" }}>
+                                            {trainee.gender || "—"}
+                                        </div>
+                                        <div style={{ color: !trainee.unit ? "#e53935" : "inherit", fontWeight: !trainee.unit ? 600 : "normal" }}>
+                                            {trainee.unit || "Unassigned"}
+                                        </div>
                                         <span style={{ color: "var(--text-secondary)", fontSize: "12px" }}>
                                             {trainee.startDate && trainee.endDate 
                                                 ? `${trainee.startDate} to ${trainee.endDate}` 
@@ -357,10 +373,11 @@ export default function TrainingStaffDirectory() {
                                                         name: trainee.name || "",
                                                         university: trainee.university || "",
                                                         program: trainee.type || "Intern",
-                                                        unit: trainee.unit || "General",
+                                                        unit: trainee.unit || "",
                                                         status: trainee.status || "Active",
                                                         start_date: trainee.startDate ? trainee.startDate.split("T")[0] : new Date().toISOString().split("T")[0],
-                                                        end_date: trainee.endDate ? trainee.endDate.split("T")[0] : ""
+                                                        end_date: trainee.endDate ? trainee.endDate.split("T")[0] : "",
+                                                        gender: trainee.gender || ""
                                                     });
                                                     setFormError("");
                                                     setShowModal(true);
@@ -470,22 +487,38 @@ export default function TrainingStaffDirectory() {
                                         value={form.unit}
                                         onChange={e => setForm(p => ({ ...p, unit: e.target.value }))}
                                     >
+                                        <option value="">Unassigned</option>
                                         {hospitalUnits.map(u => <option key={u} value={u}>{u}</option>)}
                                     </select>
                                 </div>
                             </div>
 
-                            {/* Status */}
-                            <div>
-                                <label style={labelStyle}>Status</label>
-                                <select
-                                    className="search-input"
-                                    style={inputStyle}
-                                    value={form.status}
-                                    onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
-                                >
-                                    {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
-                                </select>
+                            {/* Status & Gender */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                                <div>
+                                    <label style={labelStyle}>Status</label>
+                                    <select
+                                        className="search-input"
+                                        style={inputStyle}
+                                        value={form.status}
+                                        onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
+                                    >
+                                        {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Gender</label>
+                                    <select
+                                        className="search-input"
+                                        style={inputStyle}
+                                        value={form.gender}
+                                        onChange={e => setForm(p => ({ ...p, gender: e.target.value }))}
+                                    >
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Start Date + End Date */}

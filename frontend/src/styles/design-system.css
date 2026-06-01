@@ -154,6 +154,7 @@ body {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-soft);
     transition: var(--transition-fast);
+    overflow: hidden;
 }
 
 .content-box:hover {

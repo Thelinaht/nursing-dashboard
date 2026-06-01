@@ -119,3 +119,42 @@
     color: var(--accent-blue);
     text-decoration: underline;
 }
+
+/* Split Card Layout Styles */
+.rd-kpi-split {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    width: 100%;
+    flex: 1;
+}
+
+.rd-kpi-split-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    text-align: center;
+    justify-content: space-between;
+}
+
+.rd-kpi-split-col.clickable-col {
+    cursor: pointer;
+    padding: 8px 4px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+.rd-kpi-split-col.clickable-col:hover {
+    background: rgba(30, 58, 95, 0.06);
+}
+
+.rd-kpi-split-col.clickable-col.active {
+    background: rgba(30, 58, 95, 0.12);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.rd-kpi-split-divider {
+    background: rgba(74, 106, 133, 0.15);
+    width: 1px;
+}

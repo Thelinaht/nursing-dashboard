@@ -89,6 +89,7 @@ CREATE TABLE `Trainee` (
   full_name VARCHAR(150) NOT NULL,
   university VARCHAR(150),
   training_type ENUM('Intern','Student Nurse') NOT NULL,
+  gender ENUM('Male','Female') NULL,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL
 ) ENGINE=InnoDB;

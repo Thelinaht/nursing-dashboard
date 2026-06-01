@@ -17,6 +17,21 @@ const unitMatches = (recordUnit, dbUnit) => {
     return false;
 };
 
+const getCompetencyUnitScope = (traineeUnit) => {
+    if (!traineeUnit) return "General";
+    const u = traineeUnit.toUpperCase().trim();
+    if (u === 'ER' || u.includes('EMERGENCY')) return 'Emergency Room';
+    if (u === 'OR' || u.includes('OPERATING ROOM') || u.includes('DS') || u.includes('ENDOSCOPY')) return 'OR / DS / Endoscopy';
+    if (u === 'MICU' || u === 'ICU' || u === 'NICU' || u === 'CCU' || u.includes('CRITICAL') || u.includes('INTENSIVE')) return 'Critical Care';
+    if (u.includes('PEDIATRIC') || u.includes('PEDS')) return 'Pediatric';
+    if (u.includes('MEDICAL') || u.includes('SURGICAL') || u.includes('WARD')) return 'Medical/Surgical';
+    if (u.includes('PSYCHIATRY') || u.includes('PSYCH')) return 'Psychiatry';
+    if (u.includes('OPD') || u.includes('OUTPATIENT')) return 'OPD';
+    if (u.includes('CSSD')) return 'CSSD';
+    if (u.includes('DIALYSIS')) return 'Dialysis Unit';
+    return 'General';
+};
+
 // GET all training programs + trainee's record (if exists) using user_id
 exports.getByUserId = async (userId) => {
     // First get trainee_id from user_id
@@ -37,6 +52,7 @@ exports.getByUserId = async (userId) => {
             tp.training_type,
             tp.duration_hours,
             tp.mandatory,
+            tp.unit_of_training,
             st.trainee_id,
             st.start_date,
             st.completion_date,
@@ -60,6 +76,75 @@ exports.getByUserId = async (userId) => {
     return { rows, traineeId };
 };
 
+const updateTraineeOnboardingProgress = async (traineeId) => {
+    try {
+        // Run select queries in parallel
+        const [
+            [traineeRows],
+            [programs],
+            [completedTrainings],
+            [saudiCerts]
+        ] = await Promise.all([
+            pool.query("SELECT unit FROM Trainee WHERE trainee_id = ?", [traineeId]),
+            pool.query("SELECT training_id, training_name, training_category, unit_of_training, mandatory FROM Training_program"),
+            pool.query("SELECT training_id FROM Staff_training WHERE trainee_id = ? AND status = 'Completed'", [traineeId]),
+            pool.query("SELECT 1 FROM Staff_certificate WHERE trainee_id = ? AND certificate_type_id = 1 AND status = 'Valid'", [traineeId])
+        ]);
+
+        if (!traineeRows[0]) return;
+        const tUnit = traineeRows[0].unit ? traineeRows[0].unit.toLowerCase().trim() : "";
+        const completedIds = new Set(completedTrainings.map(r => r.training_id));
+        const hasSaudiCouncil = saudiCerts.length > 0;
+
+        // 5. Determine total required programs
+        // Mandatory programs
+        const mandatoryProgs = programs.filter(p => p.mandatory === 1);
+        // General competencies
+        const generalProgs = programs.filter(p => p.training_category === 'Competency' && (!p.unit_of_training || p.unit_of_training === 'General'));
+        // Unit specific competencies (mapped using getCompetencyUnitScope)
+        const targetScope = getCompetencyUnitScope(traineeRows[0].unit);
+        const unitProgs = programs.filter(p => p.training_category === 'Competency' && p.unit_of_training && p.unit_of_training.toLowerCase().trim() === targetScope.toLowerCase().trim());
+
+        const totalRequired = mandatoryProgs.length + 1 + generalProgs.length + unitProgs.length; // +1 for Saudi Council
+        
+        // Compute completed
+        let completedCount = 0;
+        if (hasSaudiCouncil) completedCount++;
+        
+        mandatoryProgs.forEach(p => {
+            if (completedIds.has(p.training_id)) completedCount++;
+        });
+        generalProgs.forEach(p => {
+            if (completedIds.has(p.training_id)) completedCount++;
+        });
+        unitProgs.forEach(p => {
+            if (completedIds.has(p.training_id)) completedCount++;
+        });
+
+        // Calculate progress percentage
+        let progressPercent = 0;
+        if (totalRequired > 0) {
+            progressPercent = Math.round((completedCount / totalRequired) * 100);
+        }
+
+        // 6. Update onboarding progress in database
+        // Also if progress is 100%, update status to 'Completed'
+        if (progressPercent >= 100) {
+            await pool.query(
+                "UPDATE Trainee SET onboarding_progress = ?, status = 'Completed' WHERE trainee_id = ?",
+                [progressPercent, traineeId]
+            );
+        } else {
+            await pool.query(
+                "UPDATE Trainee SET onboarding_progress = ? WHERE trainee_id = ?",
+                [progressPercent, traineeId]
+            );
+        }
+    } catch (err) {
+        console.error("Error updating trainee onboarding progress:", err);
+    }
+};
+
 // UPDATE or INSERT a training record
 exports.upsertTraining = async (traineeId, trainingId, data) => {
     // Try update first
@@ -68,6 +153,7 @@ exports.upsertTraining = async (traineeId, trainingId, data) => {
         [traineeId, trainingId]
     );
 
+    let result;
     if (existing.length > 0) {
         // UPDATE
         const allowed = [
@@ -81,14 +167,14 @@ exports.upsertTraining = async (traineeId, trainingId, data) => {
                 filteredData[field] = data[field] === "" ? null : data[field];
             }
         }
-        const [result] = await pool.query(
+        const [updateRes] = await pool.query(
             "UPDATE Staff_training SET ? WHERE trainee_id = ? AND training_id = ?",
             [filteredData, traineeId, trainingId]
         );
-        return result;
+        result = updateRes;
     } else {
         // INSERT
-        const [result] = await pool.query(
+        const [insertRes] = await pool.query(
             `INSERT INTO Staff_training 
              (trainee_id, training_id, start_date, completion_date, due_date, expiry_date, preceptor_name, recommendation_action_plan, status)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -103,8 +189,12 @@ exports.upsertTraining = async (traineeId, trainingId, data) => {
                 data.status || "Pending"
             ]
         );
-        return result;
+        result = insertRes;
     }
+
+    // Auto-update onboarding progress
+    await updateTraineeOnboardingProgress(traineeId);
+    return result;
 };
 
 // Upload certificate path
@@ -128,35 +218,241 @@ exports.updateCertificatePath = async (traineeId, trainingId, filePath) => {
 
 // GET Dashboard Data
 exports.getDashboardData = async () => {
-    // 0. Get all Trainees to pre-populate
-    const [allTrainees] = await pool.query("SELECT trainee_id AS id, full_name AS name FROM Trainee");
+    // Execute all independent database queries in parallel using Promise.all
+    const [
+        [allTrainees],
+        [rawTrainings],
+        [rawCerts],
+        [clinicalCompetencies],
+        [certTracker],
+        [onboardingData],
+        [internRequests],
+        [programs],
+        [huRows],
+        [rawParticipation],
+        [certsByUnit],
+        [cpdRows],
+        [newHiresRows],
+        [floatRows],
+        [pendingCerts],
+        [learningOutcomes],
+        [allTestScores],
+        [programItems],
+        [competencyRegistry],
+        [allStaffTrainings],
+        [traineeDates],
+        [dbTrainings],
+        [dbCerts]
+    ] = await Promise.all([
+        pool.query("SELECT trainee_id AS id, full_name AS name, unit FROM Trainee"),
+        pool.query(`
+            SELECT 
+                st.trainee_id AS id,
+                t.full_name AS name,
+                tp.training_name AS course,
+                CASE
+                    WHEN st.status = 'Completed' AND st.expiry_date IS NOT NULL AND st.expiry_date < CURDATE() THEN 'Expired'
+                    WHEN (st.status = 'Pending' OR st.status = 'In Progress' OR st.status IS NULL) 
+                         AND st.due_date IS NOT NULL AND st.due_date < CURDATE() THEN 'Overdue'
+                    WHEN st.expiry_date IS NOT NULL AND st.expiry_date < CURDATE() THEN 'Expired'
+                    ELSE COALESCE(st.status, 'Pending')
+                END AS status,
+                DATE_FORMAT(st.expiry_date, '%M %d %Y') AS expiry
+            FROM Staff_training st
+            JOIN Training_program tp ON st.training_id = tp.training_id
+            JOIN Trainee t ON st.trainee_id = t.trainee_id
+            WHERE tp.mandatory = 1
+        `),
+        pool.query(`
+            SELECT 
+                sc.trainee_id AS id,
+                t.full_name AS name,
+                ct.certificate_name AS course,
+                CASE
+                    WHEN sc.expiry_date IS NOT NULL AND sc.expiry_date < CURDATE() THEN 'Expired'
+                    ELSE COALESCE(sc.status, 'Pending')
+                END AS status,
+                DATE_FORMAT(sc.expiry_date, '%M %d %Y') AS expiry
+            FROM Staff_certificate sc
+            JOIN Certificate_type ct ON sc.certificate_type_id = ct.certificate_type_id
+            JOIN Trainee t ON sc.trainee_id = t.trainee_id
+            WHERE ct.certificate_name = 'Saudi Council'
+        `),
+        pool.query(`
+            SELECT 
+                st.trainee_id AS id,
+                st.training_id,
+                t.full_name AS nurse,
+                t.unit AS specialty,
+                tp.training_name AS competency,
+                st.status,
+                DATE_FORMAT(st.expiry_date, '%Y-%m-%d') AS renewal,
+                COALESCE(st.recommendation_action_plan, 'None') AS action,
+                st.pre_test_score,
+                st.post_test_score
+            FROM Staff_training st
+            JOIN Training_program tp ON st.training_id = tp.training_id
+            JOIN Trainee t ON st.trainee_id = t.trainee_id
+            WHERE tp.training_category = 'Competency'
+        `),
+        pool.query(`
+            SELECT 
+                clt.tracking_id AS id,
+                t.full_name AS traineeName,
+                COALESCE(t.unit, 'Unassigned') AS unit,
+                clt.cert_name AS name,
+                clt.cert_number AS number,
+                DATE_FORMAT(clt.expiry_date, '%Y-%m-%d') AS expiry,
+                clt.status AS uploadStatus,
+                clt.compliance_percentage AS compliance,
+                clt.scope
+            FROM Certification_License_Tracking clt
+            LEFT JOIN Trainee t ON clt.trainee_id = t.trainee_id
+        `),
+        pool.query(`
+            SELECT 
+                t.trainee_id AS id,
+                t.full_name AS name,
+                t.training_type AS role,
+                COALESCE(t.onboarding_preceptor, 'Assigned Preceptor') AS preceptor,
+                COALESCE(t.onboarding_progress, 0) AS progress,
+                COALESCE(t.onboarding_eval_score, 'Pending') AS evalScore
+            FROM Trainee t
+            WHERE t.start_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        `),
+        pool.query(`
+            SELECT 
+                trainee_id AS id,
+                full_name AS name,
+                university,
+                training_type AS program,
+                unit,
+                DATE_FORMAT(start_date, '%Y-%m-%d') AS startDate,
+                DATE_FORMAT(end_date, '%Y-%m-%d') AS endDate,
+                COALESCE(status, 'Active') AS status,
+                gender
+            FROM Trainee
+        `),
+        pool.query("SELECT training_id, training_name, training_category, duration_hours, unit_of_training, mandatory FROM Training_program"),
+        pool.query("SELECT unit_name FROM Hospital_unit ORDER BY unit_name ASC"),
+        pool.query(`
+            SELECT 
+                st.training_id,
+                tp.training_name AS courseName,
+                tp.duration_hours,
+                st.status,
+                COALESCE(t.unit, ns.unit, 'Unassigned') AS unit
+            FROM Staff_training st
+            JOIN Training_program tp ON st.training_id = tp.training_id
+            LEFT JOIN Trainee t ON st.trainee_id = t.trainee_id
+            LEFT JOIN Nursing_staff ns ON st.nurse_id = ns.nurse_id
+        `),
+        pool.query(`
+            SELECT
+                COALESCE(t.unit, 'Unassigned') AS unit,
+                clt.cert_name AS certName,
+                COUNT(DISTINCT clt.trainee_id) AS count
+            FROM Certification_License_Tracking clt
+            JOIN Trainee t ON clt.trainee_id = t.trainee_id
+            WHERE clt.cert_name IS NOT NULL AND t.unit IS NOT NULL
+            GROUP BY t.unit, clt.cert_name
+            UNION ALL
+            SELECT
+                COALESCE(t.unit, 'Unassigned') AS unit,
+                tp.training_name AS certName,
+                COUNT(DISTINCT st.trainee_id) AS count
+            FROM Staff_training st
+            JOIN Training_program tp ON st.training_id = tp.training_id
+            JOIN Trainee t ON st.trainee_id = t.trainee_id
+            WHERE tp.training_name IS NOT NULL AND t.unit IS NOT NULL
+            GROUP BY t.unit, tp.training_name
+        `),
+        pool.query(`
+            SELECT 
+                SUM(CASE WHEN st.status = 'Completed' THEN tp.duration_hours ELSE 0 END) AS completed,
+                SUM(tp.duration_hours) AS total
+            FROM Staff_training st
+            JOIN Training_program tp ON st.training_id = tp.training_id
+        `),
+        pool.query(`
+            SELECT COUNT(DISTINCT t.trainee_id) AS count
+            FROM Trainee t
+            JOIN Staff_training st ON t.trainee_id = st.trainee_id
+            JOIN Training_program tp ON st.training_id = tp.training_id
+            WHERE t.start_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+              AND tp.mandatory = 1
+              AND st.status IN ('Pending', 'Overdue', 'In Progress')
+        `),
+        pool.query(`
+            SELECT COUNT(*) AS count 
+            FROM Trainee 
+            WHERE status = 'Pending' OR unit = 'Float Pool' OR unit = 'Float'
+        `),
+        pool.query(`
+            SELECT COUNT(*) AS count
+            FROM Certification_License_Tracking
+            WHERE status = 'Pending'
+        `),
+        pool.query(`
+            SELECT 
+                tp.training_name AS course,
+                ROUND(AVG(st.pre_test_score)) AS preTest,
+                ROUND(AVG(st.post_test_score)) AS postTest
+            FROM Staff_training st
+            JOIN Training_program tp ON st.training_id = tp.training_id
+            WHERE st.pre_test_score IS NOT NULL OR st.post_test_score IS NOT NULL
+            GROUP BY tp.training_name
+            ORDER BY tp.training_name
+        `),
+        pool.query(`
+            SELECT 
+                st.trainee_id AS traineeId,
+                st.nurse_id AS nurseId,
+                COALESCE(t.full_name, ns.full_name, 'Unknown Staff') AS nurse,
+                COALESCE(t.unit, ns.unit, 'Unassigned') AS specialty,
+                tp.training_name AS course,
+                st.pre_test_score AS preTest,
+                st.post_test_score AS postTest,
+                st.status
+            FROM Staff_training st
+            JOIN Training_program tp ON st.training_id = tp.training_id
+            LEFT JOIN Trainee t ON st.trainee_id = t.trainee_id
+            LEFT JOIN Nursing_staff ns ON st.nurse_id = ns.nurse_id
+            WHERE st.pre_test_score IS NOT NULL OR st.post_test_score IS NOT NULL
+            ORDER BY COALESCE(t.full_name, ns.full_name), tp.training_name
+        `),
+        pool.query("SELECT id, category, title, location_provider AS locationProvider, duration, cost_or_status AS costOrStatus FROM Training_Program_Item ORDER BY id DESC"),
+        pool.query(`
+            SELECT 
+                tp.training_id AS id,
+                tp.training_name AS name,
+                tp.training_category AS category,
+                COALESCE(tp.unit_of_training, 'General') AS unit,
+                COUNT(DISTINCT t.trainee_id) AS completedCount
+            FROM Training_program tp
+            LEFT JOIN Staff_training st ON tp.training_id = st.training_id AND st.status = 'Completed'
+            LEFT JOIN Trainee t ON st.trainee_id = t.trainee_id
+            GROUP BY tp.training_id
+            ORDER BY tp.training_category, tp.unit_of_training, tp.training_name
+        `),
+        pool.query("SELECT trainee_id, training_id, status, DATE_FORMAT(expiry_date, '%Y-%m-%d') AS expiry_date, recommendation_action_plan, pre_test_score, post_test_score FROM Staff_training"),
+        pool.query("SELECT trainee_id, start_date FROM Trainee"),
+        pool.query(`
+            SELECT st.trainee_id, st.status, st.completion_date, st.expiry_date, st.due_date
+            FROM Staff_training st
+            JOIN Training_program tp ON st.training_id = tp.training_id
+            WHERE tp.mandatory = 1
+        `),
+        pool.query(`
+            SELECT sc.trainee_id, sc.status, sc.expiry_date
+            FROM Staff_certificate sc
+            JOIN Certificate_type ct ON sc.certificate_type_id = ct.certificate_type_id
+            WHERE ct.certificate_name = 'Saudi Council'
+        `)
+    ]);
 
-    // 1. Mandatory Trainings (Grid Format)
-    const [rawTrainings] = await pool.query(`
-        SELECT 
-            st.trainee_id AS id,
-            t.full_name AS name,
-            tp.training_name AS course,
-            st.status,
-            DATE_FORMAT(st.expiry_date, '%M %d %Y') AS expiry
-        FROM Staff_training st
-        JOIN Training_program tp ON st.training_id = tp.training_id
-        JOIN Trainee t ON st.trainee_id = t.trainee_id
-        WHERE tp.mandatory = 1
-    `);
-
-    const [rawCerts] = await pool.query(`
-        SELECT 
-            sc.trainee_id AS id,
-            t.full_name AS name,
-            ct.certificate_name AS course,
-            sc.status,
-            DATE_FORMAT(sc.expiry_date, '%M %d %Y') AS expiry
-        FROM Staff_certificate sc
-        JOIN Certificate_type ct ON sc.certificate_type_id = ct.certificate_type_id
-        JOIN Trainee t ON sc.trainee_id = t.trainee_id
-        WHERE ct.certificate_name = 'Saudi Council'
-    `);
+    const dbUnits = huRows.map(r => r.unit_name);
+    const hospitalUnits = dbUnits;
 
     // Grouping by Trainee ID
     const traineeMap = {};
@@ -167,12 +463,19 @@ exports.getDashboardData = async () => {
             id: t.id,
             name: t.name,
             saudiCouncil: '-',
+            saudiCouncilRed: false,
             bls: '-',
+            blsRed: false,
             fireSafety: '-',
+            fireSafetyRed: false,
             infectionControl: '-',
+            infectionControlRed: false,
             medicationSafety: '-',
+            medicationSafetyRed: false,
             biscl: '-',
+            bisclRed: false,
             fms: '-',
+            fmsRed: false,
             isFMSCheck: false,
             isRed: false
         };
@@ -184,12 +487,19 @@ exports.getDashboardData = async () => {
                 id: record.id,
                 name: record.name,
                 saudiCouncil: '-',
+                saudiCouncilRed: false,
                 bls: '-',
+                blsRed: false,
                 fireSafety: '-',
+                fireSafetyRed: false,
                 infectionControl: '-',
+                infectionControlRed: false,
                 medicationSafety: '-',
+                medicationSafetyRed: false,
                 biscl: '-',
+                bisclRed: false,
                 fms: '-',
+                fmsRed: false,
                 isFMSCheck: false,
                 isRed: false
             };
@@ -201,101 +511,38 @@ exports.getDashboardData = async () => {
         const isExpired = record.status === 'Expired' || record.status === 'Overdue';
         if (isExpired) n.isRed = true;
 
-        if (record.course === 'Saudi Council') n.saudiCouncil = record.expiry || '-';
-        if (record.course === 'BLS') n.bls = record.expiry || '-';
-        if (record.course === 'Fire and Safety') n.fireSafety = record.expiry || '-';
-        if (record.course === 'Infection Control') n.infectionControl = record.expiry || '-';
-        if (record.course === 'Medication Safety Program') n.medicationSafety = record.expiry || '-';
-        if (record.course === 'BISCL') n.biscl = record.expiry || '-';
+        if (record.course === 'Saudi Council') {
+            n.saudiCouncil = record.expiry || '-';
+            n.saudiCouncilRed = isExpired;
+        }
+        if (record.course === 'BLS') {
+            n.bls = record.expiry || '-';
+            n.blsRed = isExpired;
+        }
+        if (record.course === 'Fire and Safety') {
+            n.fireSafety = record.expiry || '-';
+            n.fireSafetyRed = isExpired;
+        }
+        if (record.course === 'Infection Control') {
+            n.infectionControl = record.expiry || '-';
+            n.infectionControlRed = isExpired;
+        }
+        if (record.course === 'Medication Safety Program') {
+            n.medicationSafety = record.expiry || '-';
+            n.medicationSafetyRed = isExpired;
+        }
+        if (record.course === 'BISCL') {
+            n.biscl = record.expiry || '-';
+            n.bisclRed = isExpired;
+        }
         if (record.course === 'FMS') {
             n.fms = '✓';
             n.isFMSCheck = true;
+            n.fmsRed = isExpired;
         }
     });
 
     const mandatoryTrainings = Object.values(traineeMap);
-
-    // 2. Clinical Competencies
-    const [clinicalCompetencies] = await pool.query(`
-        SELECT 
-            st.trainee_id AS id,
-            st.training_id,
-            t.full_name AS nurse,
-            t.unit AS specialty,
-            tp.training_name AS competency,
-            st.status,
-            DATE_FORMAT(st.expiry_date, '%Y-%m-%d') AS renewal,
-            COALESCE(st.recommendation_action_plan, 'None') AS action,
-            st.pre_test_score,
-            st.post_test_score
-        FROM Staff_training st
-        JOIN Training_program tp ON st.training_id = tp.training_id
-        JOIN Trainee t ON st.trainee_id = t.trainee_id
-        WHERE tp.training_category = 'Competency'
-    `);
-
-    // 3. Certifications
-    const [certTracker] = await pool.query(`
-        SELECT 
-            clt.tracking_id AS id,
-            t.full_name AS traineeName,
-            COALESCE(t.unit, 'Unassigned') AS unit,
-            clt.cert_name AS name,
-            clt.cert_number AS number,
-            DATE_FORMAT(clt.expiry_date, '%Y-%m-%d') AS expiry,
-            clt.status AS uploadStatus,
-            clt.compliance_percentage AS compliance,
-            clt.scope
-        FROM Certification_License_Tracking clt
-        LEFT JOIN Trainee t ON clt.trainee_id = t.trainee_id
-    `);
-
-    // 4. Onboarding Data
-    const [onboardingData] = await pool.query(`
-        SELECT 
-            t.trainee_id AS id,
-            t.full_name AS name,
-            t.training_type AS role,
-            COALESCE(t.onboarding_preceptor, 'Assigned Preceptor') AS preceptor,
-            COALESCE(t.onboarding_progress, 80) AS progress,
-            COALESCE(t.onboarding_eval_score, 'Pending') AS evalScore
-        FROM Trainee t
-        WHERE t.start_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-    `);
-
-    // 5. Interns (Trainees)
-    const [internRequests] = await pool.query(`
-        SELECT 
-            trainee_id AS id,
-            full_name AS name,
-            university,
-            training_type AS program,
-            unit,
-            DATE_FORMAT(start_date, '%Y-%m-%d') AS startDate,
-            DATE_FORMAT(end_date, '%Y-%m-%d') AS endDate,
-            COALESCE(status, 'Active') AS status
-        FROM Trainee
-    `);
-
-    const [programs] = await pool.query("SELECT training_id, training_name, training_category, duration_hours FROM Training_program");
-
-    // 7. Staff Participation & Attendance stats calculated strictly from database
-    const [huRows] = await pool.query("SELECT unit_name FROM Hospital_unit ORDER BY unit_name ASC");
-    const dbUnits = huRows.map(r => r.unit_name);
-    const hospitalUnits = dbUnits;
-
-    const [rawParticipation] = await pool.query(`
-        SELECT 
-            st.training_id,
-            tp.training_name AS courseName,
-            tp.duration_hours,
-            st.status,
-            COALESCE(t.unit, ns.unit, 'General') AS unit
-        FROM Staff_training st
-        JOIN Training_program tp ON st.training_id = tp.training_id
-        LEFT JOIN Trainee t ON st.trainee_id = t.trainee_id
-        LEFT JOIN Nursing_staff ns ON st.nurse_id = ns.nurse_id
-    `);
 
     const participationMap = {};
     programs.forEach(p => {
@@ -361,28 +608,6 @@ exports.getDashboardData = async () => {
         };
     }
 
-    // 6. Certs/Training count by Unit + Certificate Name (for the bar chart)
-    const [certsByUnit] = await pool.query(`
-        SELECT
-            COALESCE(t.unit, 'Unassigned') AS unit,
-            clt.cert_name AS certName,
-            COUNT(DISTINCT clt.trainee_id) AS count
-        FROM Certification_License_Tracking clt
-        JOIN Trainee t ON clt.trainee_id = t.trainee_id
-        WHERE clt.cert_name IS NOT NULL AND t.unit IS NOT NULL
-        GROUP BY t.unit, clt.cert_name
-        UNION ALL
-        SELECT
-            COALESCE(t.unit, 'Unassigned') AS unit,
-            tp.training_name AS certName,
-            COUNT(DISTINCT st.trainee_id) AS count
-        FROM Staff_training st
-        JOIN Training_program tp ON st.training_id = tp.training_id
-        JOIN Trainee t ON st.trainee_id = t.trainee_id
-        WHERE tp.training_name IS NOT NULL AND t.unit IS NOT NULL
-        GROUP BY t.unit, tp.training_name
-    `);
-
     const overdueCount = mandatoryTrainings.filter(m => m.isRed).length;
     const totalCount = mandatoryTrainings.length || 1;
     const complianceRate = Math.round(((totalCount - overdueCount) / totalCount) * 100);
@@ -394,7 +619,7 @@ exports.getDashboardData = async () => {
     });
 
     clinicalCompetencies.forEach(c => {
-        const unit = c.specialty || 'General';
+        const unit = c.specialty || 'Unassigned';
         if (!unitGapsMap[unit]) {
             unitGapsMap[unit] = { total: 0, nonCompleted: 0 };
         }
@@ -430,73 +655,103 @@ exports.getDashboardData = async () => {
         };
     }).sort((a, b) => b.gapPercent - a.gapPercent);
 
-    // Calculate CPD hours completed vs required
-    const [cpdRows] = await pool.query(`
-        SELECT 
-            SUM(CASE WHEN st.status = 'Completed' THEN tp.duration_hours ELSE 0 END) AS completed,
-            SUM(tp.duration_hours) AS total
-        FROM Staff_training st
-        JOIN Training_program tp ON st.training_id = tp.training_id
-    `);
     const cpdCompleted = Math.round(parseFloat(cpdRows[0]?.completed || 0));
-    const cpdRequired = Math.round(parseFloat(cpdRows[0]?.total || 0)) || 100; // fallback to prevent division by zero
+    const cpdRequired = Math.round(parseFloat(cpdRows[0]?.total || 0)) || 100;
 
-    // New Hires (Missing Basics) count
-    const [newHiresRows] = await pool.query(`
-        SELECT COUNT(DISTINCT t.trainee_id) AS count
-        FROM Trainee t
-        JOIN Staff_training st ON t.trainee_id = st.trainee_id
-        JOIN Training_program tp ON st.training_id = tp.training_id
-        WHERE t.start_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-          AND tp.mandatory = 1
-          AND st.status IN ('Pending', 'Overdue', 'In Progress')
-     `);
     const newHiresMissingBasics = newHiresRows[0]?.count || 0;
-
-    // Unverified Float Staff count (Trainees with Pending status or unverified licenses)
-    const [floatRows] = await pool.query(`
-        SELECT COUNT(*) AS count 
-        FROM Trainee 
-        WHERE status = 'Pending' OR unit = 'Float Pool' OR unit = 'Float'
-    `);
-    const [pendingCerts] = await pool.query(`
-        SELECT COUNT(*) AS count
-        FROM Certification_License_Tracking
-        WHERE status = 'Pending'
-    `);
     const unverifiedFloatStaff = (floatRows[0]?.count || 0) + (pendingCerts[0]?.count || 0);
 
-    const [learningOutcomes] = await pool.query(`
-        SELECT 
-            tp.training_name AS course,
-            ROUND(AVG(st.pre_test_score)) AS preTest,
-            ROUND(AVG(st.post_test_score)) AS postTest
-        FROM Staff_training st
-        JOIN Training_program tp ON st.training_id = tp.training_id
-        WHERE st.pre_test_score IS NOT NULL OR st.post_test_score IS NOT NULL
-        GROUP BY tp.training_name
-        ORDER BY tp.training_name
-    `);
+    const traineeChecklists = allTrainees.map(t => {
+        const mRecord = traineeMap[t.id];
+        let mandatoryCompleted = 0;
+        if (mRecord) {
+            if (mRecord.saudiCouncil !== '-' && !mRecord.saudiCouncilRed) mandatoryCompleted++;
+            if (mRecord.bls !== '-' && !mRecord.blsRed) mandatoryCompleted++;
+            if (mRecord.fireSafety !== '-' && !mRecord.fireSafetyRed) mandatoryCompleted++;
+            if (mRecord.infectionControl !== '-' && !mRecord.infectionControlRed) mandatoryCompleted++;
+            if (mRecord.medicationSafety !== '-' && !mRecord.medicationSafetyRed) mandatoryCompleted++;
+            if (mRecord.biscl !== '-' && !mRecord.bisclRed) mandatoryCompleted++;
+            if (mRecord.fms === '✓' && !mRecord.fmsRed) mandatoryCompleted++;
+        }
 
-    const [allTestScores] = await pool.query(`
-        SELECT 
-            st.trainee_id AS traineeId,
-            st.nurse_id AS nurseId,
-            COALESCE(t.full_name, ns.full_name, 'Unknown Staff') AS nurse,
-            COALESCE(t.unit, ns.unit, 'General') AS specialty,
-            tp.training_name AS course,
-            st.pre_test_score AS preTest,
-            st.post_test_score AS postTest,
-            st.status
-        FROM Staff_training st
-        JOIN Training_program tp ON st.training_id = tp.training_id
-        LEFT JOIN Trainee t ON st.trainee_id = t.trainee_id
-        LEFT JOIN Nursing_staff ns ON st.nurse_id = ns.nurse_id
-        WHERE st.pre_test_score IS NOT NULL OR st.post_test_score IS NOT NULL
-        ORDER BY COALESCE(t.full_name, ns.full_name), tp.training_name
-    `);
+        const generalProgs = programs.filter(p => p.training_category === 'Competency' && (!p.unit_of_training || p.unit_of_training === 'General'));
+        const generalTotal = generalProgs.length;
+        const completedProgs = allStaffTrainings.filter(r => r.trainee_id === t.id && r.status === 'Completed');
+        const completedIds = new Set(completedProgs.map(r => r.training_id));
+        const generalCompleted = generalProgs.filter(p => completedIds.has(p.training_id)).length;
 
-    const [programItems] = await pool.query("SELECT id, category, title, location_provider AS locationProvider, duration, cost_or_status AS costOrStatus FROM Training_Program_Item ORDER BY id DESC");
+        const targetScope = getCompetencyUnitScope(t.unit);
+        const unitProgs = programs.filter(p => p.training_category === 'Competency' && p.unit_of_training && p.unit_of_training.toLowerCase().trim() === targetScope.toLowerCase().trim());
+        const unitTotal = unitProgs.length;
+        const unitCompleted = unitProgs.filter(p => completedIds.has(p.training_id)).length;
+
+        return {
+            id: t.id,
+            name: t.name,
+            unit: t.unit || "Unassigned",
+            mandatoryCompleted,
+            mandatoryTotal: 7,
+            generalCompleted,
+            generalTotal,
+            unitCompleted,
+            unitTotal
+        };
+    });
+
+    const months = [
+        { name: 'Jan', date: '2026-01-31' },
+        { name: 'Feb', date: '2026-02-28' },
+        { name: 'Mar', date: '2026-03-31' },
+        { name: 'Apr', date: '2026-04-30' },
+        { name: 'May', date: '2026-05-31' }
+    ];
+
+    const dynamicTrend = months.map(m => {
+        const endD = new Date(m.date);
+        const activeTrainees = traineeDates.filter(t => new Date(t.start_date) <= endD);
+        if (activeTrainees.length === 0) {
+            return { month: m.name, compliance: 100 };
+        }
+
+        let nonCompliantCount = 0;
+        activeTrainees.forEach(t => {
+            let hasRed = false;
+
+            const tTrainings = dbTrainings.filter(tr => tr.trainee_id === t.trainee_id);
+            tTrainings.forEach(tr => {
+                const completionDate = tr.completion_date ? new Date(tr.completion_date) : null;
+                const expiryDate = tr.expiry_date ? new Date(tr.expiry_date) : null;
+                const dueDate = tr.due_date ? new Date(tr.due_date) : null;
+
+                const isExpired = completionDate && completionDate <= endD && expiryDate && expiryDate < endD;
+                const isOverdue = (!completionDate || completionDate > endD) && dueDate && dueDate < endD;
+
+                if (isExpired || isOverdue) {
+                    hasRed = true;
+                }
+            });
+
+            const tCerts = dbCerts.filter(c => c.trainee_id === t.trainee_id);
+            tCerts.forEach(c => {
+                const expiryDate = c.expiry_date ? new Date(c.expiry_date) : null;
+                const isExpired = expiryDate && expiryDate < endD;
+                if (isExpired) {
+                    hasRed = true;
+                }
+            });
+
+            if (hasRed) {
+                nonCompliantCount++;
+            }
+        });
+
+        const compliance = Math.round(((activeTrainees.length - nonCompliantCount) / activeTrainees.length) * 100);
+        return { month: m.name, compliance };
+    });
+
+    if (dynamicTrend.length > 0) {
+        dynamicTrend[dynamicTrend.length - 1].compliance = complianceRate;
+    }
 
     return {
         mandatoryTrainings,
@@ -511,6 +766,10 @@ exports.getDashboardData = async () => {
         hospitalUnits,
         learningOutcomes,
         programItems,
+        competencyRegistry,
+        traineeChecklists,
+        allStaffTrainings,
+        complianceTrend: dynamicTrend,
         needsAnalysis: {
             competencyGaps,
             cpdCompleted,
@@ -539,7 +798,8 @@ exports.getTrainees = async () => {
             COALESCE(status, 'Active') AS status,
             DATE_FORMAT(start_date, '%Y-%m-%d') AS startDate,
             DATE_FORMAT(end_date, '%Y-%m-%d') AS endDate,
-            unit
+            unit,
+            gender
         FROM Trainee
     `);
     return rows;
@@ -548,49 +808,87 @@ exports.getTrainees = async () => {
 // UPDATE dashboard rows dynamically
 exports.updateDashboardRow = async (type, id, fields) => {
     if (type === "mandatory") {
-        for (const [courseName, value] of Object.entries(fields)) {
-            if (courseName === "Saudi Council") {
-                const [existing] = await pool.query(
-                    "SELECT 1 FROM Staff_certificate WHERE trainee_id = ? AND certificate_type_id = 1",
-                    [id]
-                );
-                if (existing.length > 0) {
-                    await pool.query(
-                        "UPDATE Staff_certificate SET expiry_date = ?, status = ? WHERE trainee_id = ? AND certificate_type_id = 1",
-                        [value.expiry_date || null, value.status || "Valid", id]
-                    );
-                } else {
-                    await pool.query(
-                        "INSERT INTO Staff_certificate (trainee_id, certificate_type_id, expiry_date, status, issue_date) VALUES (?, 1, ?, ?, CURDATE())",
-                        [id, value.expiry_date || null, value.status || "Valid"]
-                    );
-                }
-            } else {
-                const [prog] = await pool.query("SELECT training_id FROM Training_program WHERE training_name = ?", [courseName]);
-                if (prog[0]) {
-                    const trainingId = prog[0].training_id;
-                    let dbStatus = value.status || "Pending";
-                    if (dbStatus === "✓") dbStatus = "Completed";
-                    if (dbStatus === "—") dbStatus = "Pending";
+        const courseNames = Object.keys(fields).filter(name => name !== "Saudi Council");
+        
+        // Fetch all program IDs, existing staff trainings, and existing saudi certs in parallel
+        const dbPromises = [];
+        let programMap = {};
+        let existingTrainingIds = new Set();
+        let hasSaudiCouncil = false;
 
-                    const [existing] = await pool.query(
-                        "SELECT 1 FROM Staff_training WHERE trainee_id = ? AND training_id = ?",
-                        [id, trainingId]
-                    );
-                    if (existing.length > 0) {
-                        await pool.query(
-                            "UPDATE Staff_training SET expiry_date = ?, status = ? WHERE trainee_id = ? AND training_id = ?",
-                            [value.expiry_date || null, dbStatus, id, trainingId]
-                        );
-                    } else {
-                        await pool.query(
-                            "INSERT INTO Staff_training (trainee_id, training_id, expiry_date, status) VALUES (?, ?, ?, ?)",
-                            [id, trainingId, value.expiry_date || null, dbStatus]
-                        );
-                    }
+        const parallelQueries = [
+            pool.query("SELECT 1 FROM Staff_certificate WHERE trainee_id = ? AND certificate_type_id = 1", [id])
+        ];
+
+        if (courseNames.length > 0) {
+            parallelQueries.push(pool.query("SELECT training_id, training_name FROM Training_program WHERE training_name IN (?)", [courseNames]));
+        }
+
+        const queryResults = await Promise.all(parallelQueries);
+        const [existingSaudiCerts] = queryResults[0];
+        hasSaudiCouncil = existingSaudiCerts.length > 0;
+
+        if (courseNames.length > 0) {
+            const [programs] = queryResults[1];
+            programs.forEach(p => {
+                programMap[p.training_name] = p.training_id;
+            });
+            const trainingIds = Object.values(programMap);
+            if (trainingIds.length > 0) {
+                const [existingTrainings] = await pool.query(
+                    "SELECT training_id FROM Staff_training WHERE trainee_id = ? AND training_id IN (?)",
+                    [id, trainingIds]
+                );
+                existingTrainings.forEach(t => {
+                    existingTrainingIds.add(t.training_id);
+                });
+            }
+        }
+
+        // Saudi Council update/insert
+        if (fields["Saudi Council"]) {
+            const scValue = fields["Saudi Council"];
+            if (hasSaudiCouncil) {
+                dbPromises.push(pool.query(
+                    "UPDATE Staff_certificate SET expiry_date = ?, status = ? WHERE trainee_id = ? AND certificate_type_id = 1",
+                    [scValue.expiry_date || null, scValue.status || "Valid", id]
+                ));
+            } else {
+                dbPromises.push(pool.query(
+                    "INSERT INTO Staff_certificate (trainee_id, certificate_type_id, expiry_date, status, issue_date) VALUES (?, 1, ?, ?, CURDATE())",
+                    [id, scValue.expiry_date || null, scValue.status || "Valid"]
+                ));
+            }
+        }
+
+        // Other courses
+        for (const [courseName, value] of Object.entries(fields)) {
+            if (courseName === "Saudi Council") continue;
+            const trainingId = programMap[courseName];
+            if (trainingId) {
+                let dbStatus = value.status || "Pending";
+                if (dbStatus === "✓") dbStatus = "Completed";
+                if (dbStatus === "—") dbStatus = "Pending";
+
+                if (existingTrainingIds.has(trainingId)) {
+                    dbPromises.push(pool.query(
+                        "UPDATE Staff_training SET expiry_date = ?, status = ? WHERE trainee_id = ? AND training_id = ?",
+                        [value.expiry_date || null, dbStatus, id, trainingId]
+                    ));
+                } else {
+                    dbPromises.push(pool.query(
+                        "INSERT INTO Staff_training (trainee_id, training_id, expiry_date, status) VALUES (?, ?, ?, ?)",
+                        [id, trainingId, value.expiry_date || null, dbStatus]
+                    ));
                 }
             }
         }
+
+        if (dbPromises.length > 0) {
+            await Promise.all(dbPromises);
+        }
+
+        await updateTraineeOnboardingProgress(id);
         return { success: true };
     } else if (type === "competency") {
         const { status, renewal, action, training_id, pre_test_score, post_test_score } = fields;
@@ -609,6 +907,7 @@ exports.updateDashboardRow = async (type, id, fields) => {
                 [id, training_id, status, renewal || null, action || null, pre_test_score !== undefined ? pre_test_score : null, post_test_score !== undefined ? post_test_score : null]
             );
         }
+        await updateTraineeOnboardingProgress(id);
         return { success: true };
     } else if (type === "certification") {
         const { trainee_id, name, number, expiry, compliance, uploadStatus, scope } = fields;
@@ -637,11 +936,11 @@ exports.updateDashboardRow = async (type, id, fields) => {
         );
         return { success: true };
     } else if (type === "intern") {
-        const { name, university, program, status, unit, start_date, end_date } = fields;
+        const { name, university, program, status, unit, start_date, end_date, gender } = fields;
         if (id === "new") {
             await pool.query(
-                `INSERT INTO Trainee (full_name, university, training_type, unit, start_date, end_date, status)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO Trainee (full_name, university, training_type, unit, start_date, end_date, status, gender)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     name,
                     university,
@@ -649,15 +948,16 @@ exports.updateDashboardRow = async (type, id, fields) => {
                     unit || null,
                     start_date || new Date().toISOString().split("T")[0],
                     end_date || null,
-                    status
+                    status,
+                    gender || null
                 ]
             );
         } else {
             await pool.query(
                 `UPDATE Trainee 
-                 SET full_name = ?, university = ?, training_type = ?, unit = ?, start_date = ?, end_date = ?, status = ? 
+                 SET full_name = ?, university = ?, training_type = ?, unit = ?, start_date = ?, end_date = ?, status = ?, gender = ? 
                  WHERE trainee_id = ?`,
-                [name, university, program, unit || null, start_date || null, end_date || null, status, id]
+                [name, university, program, unit || null, start_date || null, end_date || null, status, gender || null, id]
             );
         }
         return { success: true };
