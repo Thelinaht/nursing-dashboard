@@ -13,6 +13,7 @@ export default function StaffProfile() {
     const [nurse, setNurse] = useState(null);
     const [formData, setFormData] = useState({});
     const [isEditing, setIsEditing] = useState(false);
+    const [units, setUnits] = useState([]);
 
     // refs for each file input
     const fileRefs = {
@@ -24,6 +25,11 @@ export default function StaffProfile() {
     };
 
     useEffect(() => {
+        fetch(`${BASE_URL}/api/training/units`)
+            .then(res => res.json())
+            .then(data => setUnits(Array.isArray(data) ? data : []))
+            .catch(err => console.error(err));
+
         fetch(`${BASE_URL}/api/information/${id}`)
             .then(res => res.json())
             .then(data => {
@@ -117,11 +123,19 @@ export default function StaffProfile() {
             const data = await res.json();
 
             if (data.success) {
-                // refresh nurse data to show updated path
-                const updated = await fetch(`${BASE_URL}/api/information/${id}`);
-                const fresh = await updated.json();
-                setNurse(fresh);
-                setFormData(fresh || {});
+                // Only update the file path field — don't reload all data
+                const pathField = {
+                    picture: "picture_path",
+                    cv: "cv_path",
+                    hospital_id: "hospital_id_path",
+                    national_id: "national_id_path",
+                    passport: "passport_path"
+                }[docType];
+
+                if (pathField) {
+                    setFormData(prev => ({ ...prev, [pathField]: data.path }));
+                    setNurse(prev => ({ ...prev, [pathField]: data.path }));
+                }
                 alert(`✅ File uploaded successfully`);
             } else {
                 alert("❌ Upload failed: " + (data.error || "Unknown error"));
@@ -218,7 +232,20 @@ export default function StaffProfile() {
 
                     {renderInput("Job Title", "job_title")}
                     {renderInput("Position Title", "position_title")}
-                    {renderInput("Unit", "unit")}
+                    <div>
+                        <label>Unit</label>
+                        <select
+                            value={formData.unit ?? ""}
+                            onChange={e => setFormData(p => ({ ...p, unit: e.target.value }))}
+                            disabled={!isEditing}
+                            className={isEditing ? "editing" : ""}
+                        >
+                            <option value="">Select Unit</option>
+                            {units.map(u => (
+                                <option key={u.unit_id} value={u.unit_name}>{u.unit_name}</option>
+                            ))}
+                        </select>
+                    </div>
 
                     {renderInput("Hospital ID Number", "hospital_id_number")}
                     {renderInput("Payroll Number", "payroll_number")}

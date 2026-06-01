@@ -1,3 +1,4 @@
+/* ── Container ── */
 .qual-container {
     background: #e0eaf2;
     padding: 30px;
@@ -11,10 +12,51 @@
     margin-bottom: 20px;
 }
 
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+.qual-header h1 {
+    font-size: 32px;
+    color: #2f3e55;
+    margin: 0;
+}
+
+/* ── Back button ── */
+.back-btn {
+    background: transparent;
+    border: none;
+    color: #2f3e55;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: 0.2s;
+}
+
+.back-btn:hover {
+    color: #5a6f87;
+    transform: translateX(-3px);
+}
+
+/* ── Edit / Save buttons ── */
+.edit-btn,
+.save-btn {
+    background: #5a6f87;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.edit-btn:hover,
+.save-btn:hover {
+    background: #44596f;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.edit-btn:active,
+.save-btn:active {
+    transform: scale(0.95);
+    box-shadow: none;
 }
 
 /* ── Tabs ── */
@@ -28,15 +70,12 @@
 .qual-tab {
     background: #b8cad8;
     border: none;
-    padding: 8px 16px;
+    padding: 8px 20px;
     border-radius: 20px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
     color: #2f3e55;
-    display: flex;
-    align-items: center;
-    gap: 6px;
     transition: 0.2s;
 }
 
@@ -49,14 +88,7 @@
     color: white;
 }
 
-.tab-count {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
-    padding: 1px 7px;
-    font-size: 11px;
-}
-
-/* ── Table ── */
+/* ── Table wrapper ── */
 .qual-table {
     background: white;
     border-radius: 20px;
@@ -64,173 +96,125 @@
     overflow-x: auto;
 }
 
-.qual-row {
+/* ── Cert table header ── */
+.sq-cert-header {
     display: grid;
-    grid-template-columns: 3fr 1fr 1.2fr 1.2fr 1fr;
-    gap: 8px;
-    align-items: center;
-    padding: 8px 4px;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.qual-row:last-child {
-    border-bottom: none;
-}
-
-.qual-row.header {
-    font-weight: 700;
-    font-size: 12px;
-    color: #5a6f87;
-    text-transform: uppercase;
-    border-bottom: 2px solid #dce6f2;
-    padding-bottom: 12px;
+    grid-template-columns: 2.5fr 1.5fr 1.5fr 2fr;
+    gap: 10px;
+    background: #5a6f87;
+    color: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
     margin-bottom: 4px;
 }
 
-.qual-row input,
-.qual-row select {
-    padding: 7px 8px;
-    border-radius: 8px;
-    border: none;
-    background: #f0f4f9;
-    font-size: 12px;
-    width: 100%;
+/* ── Cert table rows ── */
+.sq-cert-row {
+    display: grid;
+    grid-template-columns: 2.5fr 1.5fr 1.5fr 2fr;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e8eef5;
+    transition: background 0.15s;
 }
 
-.qual-row input.editing,
-.qual-row select.editing {
-    background: white;
-    border: 1.5px solid #5a6f87;
+.sq-cert-row:hover {
+    background: #f5f8fb;
 }
 
-.qual-row input:disabled,
-.qual-row select:disabled {
-    background: #f0f4f9;
-    color: #444;
-    cursor: default;
+.sq-cert-row:last-of-type {
+    border-bottom: none;
 }
 
-/* ── Training name ── */
-.training-name {
+/* ── Cert name ── */
+.sq-cert-name {
     font-size: 13px;
     font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    color: #2f3e55;
 }
 
-.badge-mandatory {
-    background: #e74c3c;
-    color: white;
-    border-radius: 4px;
-    padding: 1px 5px;
-    font-size: 10px;
-    font-weight: 700;
-}
-
-.training-type {
+/* ── Inputs inside cert rows ── */
+.sq-cert-row input[type="text"],
+.sq-cert-row input[type="date"] {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: none;
+    background: #dce6f2;
     font-size: 12px;
-    color: #666;
+    color: #2f3e55;
+    transition: 0.2s;
+    box-sizing: border-box;
 }
 
-/* ── Status colors ── */
-.status-completed {
-    color: #27ae60;
+.sq-cert-row input[type="text"]:focus,
+.sq-cert-row input[type="date"]:focus {
+    outline: none;
+    background: white;
+    border: 2px solid #5a6f87;
+    box-shadow: 0 0 5px rgba(90, 111, 135, 0.3);
 }
 
-.status-pending {
-    color: #f39c12;
-}
-
-.status-expired {
-    color: #e74c3c;
-}
-
-.status-overdue {
-    color: #c0392b;
-}
-
-.status-in-progress {
-    color: #2980b9;
-}
-
-/* ── Certificate cell ── */
-.cert-cell {
+/* ── Upload cell ── */
+.sq-upload-cell {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
-.cert-view {
+.sq-upload-cell input[type="file"] {
+    font-size: 11px;
+    flex: 1;
+    color: #2f3e55;
+}
+
+.sq-view-link {
     background: #5a6f87;
     color: white;
-    padding: 4px 8px;
-    border-radius: 6px;
+    padding: 5px 10px;
+    border-radius: 8px;
     font-size: 11px;
     text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s;
 }
 
-.cert-view:hover {
-    background: #3e536b;
+.sq-view-link:hover {
+    background: #44596f;
 }
 
-.cert-upload-btn {
-    background: #dce6f2;
-    border: none;
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: 0.2s;
+/* ── Save row ── */
+.sq-save-row {
+    padding: 16px 16px 4px;
+    display: flex;
+    justify-content: flex-start;
 }
 
-.cert-upload-btn:hover {
+.sq-save-btn {
     background: #5a6f87;
     color: white;
-}
-
-.cert-none {
-    color: #aaa;
-    font-size: 13px;
-}
-
-.qual-empty {
-    text-align: center;
-    padding: 30px;
-    color: #888;
-    font-size: 14px;
-}
-
-/* ── Buttons ── */
-.back-btn {
-    background: #dce6f2;
     border: none;
-    padding: 8px 14px;
+    padding: 10px 28px;
     border-radius: 10px;
     cursor: pointer;
-    transition: 0.3s;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.25s ease;
 }
 
-.back-btn:hover {
-    background: #5a6f87;
-    color: white;
-}
-
-.edit-btn,
-.save-btn {
-    background: #5a6f87;
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.edit-btn:hover,
-.save-btn:hover {
-    background: #3e536b;
+.sq-save-btn:hover {
+    background: #44596f;
     transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.sq-save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* ── Saudi Council Card ── */
@@ -277,18 +261,20 @@
     padding: 10px 12px;
     border-radius: 10px;
     border: none;
-    background: #f0f4f9;
+    background: #dce6f2;
     font-size: 13px;
     color: #2f3e55;
+    transition: 0.2s;
 }
 
 .saudi-field input.editing {
     background: white;
-    border: 1.5px solid #5a6f87;
+    border: 2px solid #5a6f87;
+    box-shadow: 0 0 5px rgba(90, 111, 135, 0.4);
 }
 
 .saudi-field input:disabled {
-    background: #f0f4f9;
+    background: #dce6f2;
     color: #444;
     cursor: default;
 }
@@ -303,4 +289,94 @@
     font-size: 12px;
     font-weight: 600;
     color: #5a6f87;
+}
+
+.cert-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cert-view {
+    background: #5a6f87;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.cert-view:hover {
+    background: #44596f;
+}
+
+.cert-upload-btn {
+    background: #dce6f2;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #2f3e55;
+    transition: 0.2s;
+}
+
+.cert-upload-btn:hover {
+    background: #5a6f87;
+    color: white;
+}
+
+.cert-none {
+    color: #aaa;
+    font-size: 13px;
+}
+
+/* ── Styled Upload Button ── */
+.sq-upload-btn {
+    background: #5a6f87;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.sq-upload-btn:hover {
+    background: #44596f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Input states ── */
+.sq-input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: none;
+    background: #dce6f2;
+    font-size: 13px;
+    color: #2f3e55;
+    box-sizing: border-box;
+    transition: 0.2s;
+}
+
+.sq-input:disabled {
+    cursor: default;
+    color: #555;
+}
+
+.sq-input.editing {
+    background: white;
+    border: 2px solid #5a6f87;
+    box-shadow: 0 0 5px rgba(90, 111, 135, 0.3);
+}
+
+.sq-input.editing:focus {
+    outline: none;
+    border-color: #3f556d;
 }

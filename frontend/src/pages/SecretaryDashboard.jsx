@@ -12,6 +12,7 @@ export default function SecretaryDashboard() {
     const navigate = useNavigate();
     const [nurses, setNurses] = useState([]);
     const [expiredLicenses, setExpiredLicenses] = useState(0);
+    const [dbUnits, setDbUnits] = useState([]);
 
     //  search
     const [search, setSearch] = useState("");
@@ -52,6 +53,11 @@ export default function SecretaryDashboard() {
 
     //  fetch data
     useEffect(() => {
+        fetch("http://localhost:4000/api/training/units")
+            .then(res => res.json())
+            .then(data => setDbUnits(Array.isArray(data) ? data : []))
+            .catch(err => console.error(err));
+
         fetch("http://localhost:4000/api/nurses")
             .then(res => res.json())
             .then(data => setNurses(Array.isArray(data) ? data : []))
@@ -211,7 +217,7 @@ export default function SecretaryDashboard() {
                             </select>
                             <select className="filter-select" value={filters.unit} onChange={(e) => handleFilterChange("unit", e.target.value)}>
                                 <option value="">Unit</option>
-                                {units.map(u => <option key={u}>{u}</option>)}
+                                {dbUnits.map(u => <option key={u.unit_id} value={u.unit_name}>{u.unit_name}</option>)}
                             </select>
                             <select className="filter-select" value={filters.status} onChange={(e) => handleFilterChange("status", e.target.value)}>
                                 <option value="">Status</option>

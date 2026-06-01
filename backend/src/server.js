@@ -22,7 +22,7 @@ const researchRoutes = require("./routes/researchRoutes");
 const notificationsRoutes = require("./routes/notificationsRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const qualityRoutes = require("./routes/qualityRoutes");
-
+const certificateRoutes = require("./routes/certificateRoutes");
 
 
 
@@ -114,7 +114,7 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/quality", qualityRoutes);
 
-
+app.use("/api/certificates", certificateRoutes);
 
 
 const PORT = 4000;
