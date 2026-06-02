@@ -117,7 +117,7 @@ const getCompletionStats = async (year, surveyType) => {
     const [rows] = await pool.query(
         `SELECT
        COUNT(DISTINCT ss.user_id)                             AS completed_count,
-       (SELECT COUNT(*) FROM User WHERE role_id != 4)         AS total_staff
+       (SELECT COUNT(*) FROM UserRole WHERE role_id != 4)         AS total_staff
      FROM survey_submissions ss
      JOIN survey_periods sp ON sp.period_id = ss.period_id
      WHERE sp.year        = ?
