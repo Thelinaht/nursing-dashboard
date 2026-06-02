@@ -35,6 +35,7 @@ export default function Layout({
   };
 
   const [unreadCount, setUnreadCount] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchUnreadCount = async () => {
     try {
@@ -73,9 +74,13 @@ export default function Layout({
     socket.on("new_notification", handleNewNotification);
     window.addEventListener("notifications_updated", fetchUnreadCount);
 
+    const handleSoftRefresh = () => setRefreshKey(k => k + 1);
+    window.addEventListener("soft_refresh", handleSoftRefresh);
+
     return () => {
       socket.off("new_notification", handleNewNotification);
       window.removeEventListener("notifications_updated", fetchUnreadCount);
+      window.removeEventListener("soft_refresh", handleSoftRefresh);
     };
   }, [currentUser.user_id, currentUser.id]);
 
@@ -84,7 +89,7 @@ export default function Layout({
       <Navbar username={displayUsername} />
       <div style={styles.body}>
         <Sidebar role={role} onLogout={handleLogout} logoSrc={logoSrc} unreadCount={unreadCount} />
-        <div style={styles.content}>{children}</div>
+        <div style={styles.content} key={refreshKey}>{children}</div>
       </div>
 
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize, Minimize, RefreshCw } from "lucide-react";
 
 export default function Navbar({ username = "User" }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -45,6 +45,13 @@ export default function Navbar({ username = "User" }) {
           <span style={styles.date}>{dateStr}</span>
         </div>
         <div style={styles.divider} />
+        <button 
+          style={styles.iconBtn} 
+          onClick={() => window.dispatchEvent(new Event('soft_refresh'))}
+          title="Refresh Data"
+        >
+          <RefreshCw size={16} color="#7a8fa6" strokeWidth={2} />
+        </button>
         <button style={styles.iconBtn} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"} onClick={toggleFullscreen}>
           {isFullscreen ? (
             <Minimize size={16} color="#7a8fa6" strokeWidth={2} />
