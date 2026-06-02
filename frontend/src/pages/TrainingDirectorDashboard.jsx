@@ -1742,6 +1742,54 @@ export default function TrainingDirectorDashboard() {
               </div>
             </div>
 
+            {/* Staff Directory Overview Card */}
+            <div className="table-box content-box" style={{ flex: 1, padding: '24px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Staff Directory Overview
+                </h3>
+                <button
+                  className="rd-primary-btn"
+                  onClick={() => navigate('/training-staff')}
+                >
+                  <Users size={14} />
+                  View Full Directory
+                </button>
+              </div>
+              <div className="rd-table-scroll" style={{ marginTop: '10px', maxHeight: '300px', overflowY: 'auto' }}>
+                <table className="rd-table">
+                  <thead>
+                    <tr className="rd-thead-row">
+                      <th className="rd-th-sticky" style={{ textAlign: "center" }}>Name</th>
+                      <th className="rd-th-sticky" style={{ textAlign: "center" }}>University</th>
+                      <th className="rd-th-sticky" style={{ textAlign: "center" }}>Unit</th>
+                      <th className="rd-th-sticky" style={{ textAlign: "center" }}>Role</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {internRequests.length > 0 ? internRequests.map((staff) => (
+                      <tr className="rd-tr" key={staff.id}>
+                        <td className="rd-td rd-td--title" style={{ textAlign: "center" }}>{staff.name}</td>
+                        <td className="rd-td" style={{ textAlign: "center" }}>{staff.university || "—"}</td>
+                        <td className="rd-td" style={{ textAlign: "center" }}>{staff.unit || "General"}</td>
+                        <td className="rd-td" style={{ textAlign: "center" }}>
+                          <span className="rd-badge rd-badge-blue">
+                            {staff.program}
+                          </span>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={4} className="rd-empty-td" style={{ textAlign: 'center' }}>
+                          Loading staff...
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <div className="table-box content-box">
               <div className="box-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

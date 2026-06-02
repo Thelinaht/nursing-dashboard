@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, GraduationCap, BookOpen, Filter, ChevronDown, Loader, X, Edit } from "lucide-react";
+import { Users, GraduationCap, BookOpen, Filter, ChevronDown, ChevronLeft, Loader, X, Edit, ArrowLeft } from "lucide-react";
 import Layout from "../components/Layout";
 
 import "../styles/SecretaryDashboard.css";
@@ -200,9 +200,32 @@ export default function TrainingStaffDirectory() {
         >
             <div className="main">
 
+                <div style={{ marginBottom: '16px' }}>
+                    <button 
+                        onClick={() => navigate('/training-director-dashboard')} 
+                        style={{ 
+                            background: 'transparent', 
+                            border: 'none', 
+                            cursor: 'pointer', 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '8px',
+                            color: '#183c5e',
+                            fontSize: '18px',
+                            fontWeight: 500,
+                            padding: 0,
+                            fontFamily: 'inherit'
+                        }}
+                    >
+                        <ChevronLeft size={20} strokeWidth={2.5} />
+                        Back to Dashboard
+                    </button>
+                </div>
+
                 {/* ── Page Header ── */}
-                <div className="page-header">
-                    <h1>Training Staff Directory</h1>
+                <div className="page-header" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <h1 style={{ margin: 0 }}>Training Staff Directory</h1>
+                    <div style={{ flex: 1 }} />
                     <button className="add-nurse-btn" onClick={() => { setForm(emptyForm); setFormError(""); setEditingTraineeId(null); setShowModal(true); }}>
                         + Add New Trainee
                     </button>

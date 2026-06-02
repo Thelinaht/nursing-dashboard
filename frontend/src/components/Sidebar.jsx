@@ -58,7 +58,6 @@ const menuConfig = {
   ],
   trainingDirector: [
     { label: "Dashboard", path: "/training-director-dashboard", icon: I.dashboard },
-    { label: "Staff Directory", path: "/training-staff", icon: I.staff },
     { label: "Notifications", path: "/notifications", icon: I.bell },
   ],
 };
