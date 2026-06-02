@@ -128,9 +128,49 @@ const getCompletionStats = async (year, surveyType) => {
     return rows[0];
 };
 
+const getAllPeriods = async () => {
+    const [rows] = await pool.query(
+        `SELECT period_id, year, survey_type, opens_at, closes_at, is_active 
+         FROM survey_periods 
+         ORDER BY year DESC, survey_type`
+    );
+    return rows;
+};
+
+const createPeriod = async (year, surveyType, opensAt, closesAt, isActive) => {
+    const [res] = await pool.query(
+        `INSERT INTO survey_periods (year, survey_type, opens_at, closes_at, is_active)
+         VALUES (?, ?, ?, ?, ?)`,
+        [year, surveyType, opensAt, closesAt, isActive ? 1 : 0]
+    );
+    return res.insertId;
+};
+
+const updatePeriod = async (periodId, year, surveyType, opensAt, closesAt, isActive) => {
+    await pool.query(
+        `UPDATE survey_periods 
+         SET year = ?, survey_type = ?, opens_at = ?, closes_at = ?, is_active = ?
+         WHERE period_id = ?`,
+        [year, surveyType, opensAt, closesAt, isActive ? 1 : 0, periodId]
+    );
+    return true;
+};
+
+const deletePeriod = async (periodId) => {
+    await pool.query(
+        `DELETE FROM survey_periods WHERE period_id = ?`,
+        [periodId]
+    );
+    return true;
+};
+
 module.exports = {
     getPendingSurveys,
     submitSurvey,
     getAggregatedResults,
     getCompletionStats,
+    getAllPeriods,
+    createPeriod,
+    updatePeriod,
+    deletePeriod,
 };

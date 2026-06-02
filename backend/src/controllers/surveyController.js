@@ -76,4 +76,82 @@ const getResults = async (req, res) => {
     }
 };
 
-module.exports = { getPending, submit, getResults };
+// GET /api/surveys/periods?role_id=4
+const getPeriods = async (req, res) => {
+    try {
+        const role_id = Number(req.query.role_id);
+        if (role_id !== 4) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        const periods = await surveyModel.getAllPeriods();
+        res.json({ periods });
+    } catch (err) {
+        console.error("getPeriods error:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// POST /api/surveys/periods
+// body: { role_id, year, survey_type, opens_at, closes_at, is_active }
+const createPeriod = async (req, res) => {
+    try {
+        const { role_id, year, survey_type, opens_at, closes_at, is_active } = req.body;
+        if (Number(role_id) !== 4) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        if (!year || !survey_type || !opens_at || !closes_at) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+        const periodId = await surveyModel.createPeriod(year, survey_type, opens_at, closes_at, is_active);
+        res.json({ message: "Period created successfully", periodId });
+    } catch (err) {
+        console.error("createPeriod error:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// PUT /api/surveys/periods/:id
+// body: { role_id, year, survey_type, opens_at, closes_at, is_active }
+const updatePeriod = async (req, res) => {
+    try {
+        const periodId = req.params.id;
+        const { role_id, year, survey_type, opens_at, closes_at, is_active } = req.body;
+        if (Number(role_id) !== 4) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        if (!year || !survey_type || !opens_at || !closes_at) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+        await surveyModel.updatePeriod(periodId, year, survey_type, opens_at, closes_at, is_active);
+        res.json({ message: "Period updated successfully" });
+    } catch (err) {
+        console.error("updatePeriod error:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// DELETE /api/surveys/periods/:id?role_id=4
+const deletePeriod = async (req, res) => {
+    try {
+        const periodId = req.params.id;
+        const role_id = Number(req.query.role_id);
+        if (role_id !== 4) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        await surveyModel.deletePeriod(periodId);
+        res.json({ message: "Period deleted successfully" });
+    } catch (err) {
+        console.error("deletePeriod error:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+module.exports = { 
+    getPending, 
+    submit, 
+    getResults,
+    getPeriods,
+    createPeriod,
+    updatePeriod,
+    deletePeriod
+};

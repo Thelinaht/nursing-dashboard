@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, ClipboardList, Activity, Download, Calculator, FileText, TrendingUp, AlertTriangle, AlertCircle, CheckCircle, X, Info, ChevronRight, FileDown, Filter } from "lucide-react";
+import { Users, ClipboardList, Activity, Download, Calculator, FileText, TrendingUp, AlertTriangle, AlertCircle, CheckCircle, X, Info, ChevronRight, FileDown, Filter, Plus, Trash2 } from "lucide-react";
 import RequestsTable from "../components/RequestsTable";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -81,6 +81,210 @@ const renderCompactBar = (color, key) => (props) => {
 
 export default function DirectorDashboard() {
   const navigate = useNavigate();
+
+  // Live Survey states
+  const [surveyYear, setSurveyYear] = useState(new Date().getFullYear());
+  const [surveyType, setSurveyType] = useState("pes_nwi");
+  const [surveyResults, setSurveyResults] = useState([]);
+  const [surveyStats, setSurveyStats] = useState(null);
+  const [surveyLoading, setSurveyLoading] = useState(true);
+
+  // Survey Period Management states
+  const [periods, setPeriods] = useState([]);
+  const [periodsLoading, setPeriodsLoading] = useState(true);
+  const [showPeriodModal, setShowPeriodModal] = useState(false);
+  const [editingPeriod, setEditingPeriod] = useState(null);
+  const [periodForm, setPeriodForm] = useState({
+    year: new Date().getFullYear(),
+    survey_type: "pes_nwi",
+    opens_at: "",
+    closes_at: "",
+    is_active: true
+  });
+  const [periodError, setPeriodError] = useState("");
+  const [periodSaving, setPeriodSaving] = useState(false);
+
+  const fetchSurveyResults = useCallback(async () => {
+    try {
+      setSurveyLoading(true);
+      const res = await fetch(`http://localhost:4000/api/surveys/results?year=${surveyYear}&type=${surveyType}&role_id=4`);
+      if (res.ok) {
+        const data = await res.json();
+        setSurveyResults(data.results || []);
+        setSurveyStats(data.stats || null);
+      }
+    } catch (err) {
+      console.error("Error fetching survey results:", err);
+    } finally {
+      setSurveyLoading(false);
+    }
+  }, [surveyYear, surveyType]);
+
+  const fetchPeriods = useCallback(async () => {
+    try {
+      setPeriodsLoading(true);
+      const res = await fetch(`http://localhost:4000/api/surveys/periods?role_id=4`);
+      if (res.ok) {
+        const data = await res.json();
+        setPeriods(data.periods || []);
+      }
+    } catch (err) {
+      console.error("Error fetching survey periods:", err);
+    } finally {
+      setPeriodsLoading(false);
+    }
+  }, []);
+
+  const handleOpenAddPeriod = () => {
+    setEditingPeriod(null);
+    setPeriodForm({
+      year: new Date().getFullYear(),
+      survey_type: "pes_nwi",
+      opens_at: "",
+      closes_at: "",
+      is_active: true
+    });
+    setPeriodError("");
+    setShowPeriodModal(true);
+  };
+
+  const handleOpenEditPeriod = (p) => {
+    setEditingPeriod(p);
+    const formatDate = (isoString) => {
+      if (!isoString) return "";
+      return new Date(isoString).toISOString().split('T')[0];
+    };
+    setPeriodForm({
+      year: p.year,
+      survey_type: p.survey_type,
+      opens_at: formatDate(p.opens_at),
+      closes_at: formatDate(p.closes_at),
+      is_active: !!p.is_active
+    });
+    setPeriodError("");
+    setShowPeriodModal(true);
+  };
+
+  const handleSavePeriod = async () => {
+    if (!periodForm.opens_at || !periodForm.closes_at) {
+      setPeriodError("Start and end dates are required.");
+      return;
+    }
+    try {
+      setPeriodSaving(true);
+      setPeriodError("");
+      const isEdit = !!editingPeriod;
+      const url = isEdit
+        ? `http://localhost:4000/api/surveys/periods/${editingPeriod.period_id}`
+        : "http://localhost:4000/api/surveys/periods";
+      
+      const method = isEdit ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role_id: 4,
+          year: periodForm.year,
+          survey_type: periodForm.survey_type,
+          opens_at: periodForm.opens_at,
+          closes_at: periodForm.closes_at,
+          is_active: periodForm.is_active
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPeriodError(data.message || "Failed to save period.");
+        return;
+      }
+      setShowPeriodModal(false);
+      fetchPeriods();
+      fetchSurveyResults();
+    } catch (err) {
+      setPeriodError("Server error.");
+    } finally {
+      setPeriodSaving(false);
+    }
+  };
+
+  const handleDeletePeriod = async (periodId) => {
+    if (!window.confirm("Are you sure you want to delete this survey period?")) return;
+    try {
+      const res = await fetch(`http://localhost:4000/api/surveys/periods/${periodId}?role_id=4`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        fetchPeriods();
+        fetchSurveyResults();
+      }
+    } catch (err) {
+      console.error("Failed to delete period:", err);
+    }
+  };
+
+  const handleTogglePeriodActive = async (p) => {
+    try {
+      const formatDate = (isoString) => {
+        if (!isoString) return "";
+        return new Date(isoString).toISOString().split('T')[0];
+      };
+      const res = await fetch(`http://localhost:4000/api/surveys/periods/${p.period_id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role_id: 4,
+          year: p.year,
+          survey_type: p.survey_type,
+          opens_at: formatDate(p.opens_at),
+          closes_at: formatDate(p.closes_at),
+          is_active: !p.is_active
+        })
+      });
+      if (res.ok) {
+        fetchPeriods();
+      }
+    } catch (err) {
+      console.error("Failed to toggle active state:", err);
+    }
+  };
+
+  const formatLocalDate = (dateStr) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString("en-GB");
+  };
+
+  const groupedSurveyData = useMemo(() => {
+    const map = {};
+    surveyResults.forEach(item => {
+      if (!map[item.subscale]) {
+        map[item.subscale] = { subscale: item.subscale, sum: 0, count: 0 };
+      }
+      map[item.subscale].sum += Number(item.avg_score);
+      map[item.subscale].count += 1;
+    });
+    return Object.values(map).map(g => ({
+      subscale: g.subscale,
+      avg_score: Number((g.sum / g.count).toFixed(2))
+    }));
+  }, [surveyResults]);
+
+  const overallSurveyAvg = useMemo(() => {
+    if (groupedSurveyData.length === 0) return 0;
+    const sum = groupedSurveyData.reduce((acc, curr) => acc + curr.avg_score, 0);
+    return (sum / groupedSurveyData.length).toFixed(2);
+  }, [groupedSurveyData]);
+
+  const completionPct = surveyStats?.total_staff > 0 
+    ? Math.round((surveyStats.completed_count / surveyStats.total_staff) * 100) 
+    : 0;
+
+  const surveyYearsList = useMemo(() => {
+    const years = [...new Set(periods.map(p => p.year))];
+    if (years.length === 0) {
+      years.push(new Date().getFullYear());
+    }
+    return years.sort((a, b) => b - a);
+  }, [periods]);
+
   const [incidents, setIncidents] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -408,6 +612,8 @@ export default function DirectorDashboard() {
     fetchAmbulatoryStaffing();
     fetchResearchData();
     fetchRatioLogs();
+    fetchSurveyResults();
+    fetchPeriods();
 
     const fetchTrainingData = async () => {
       try {
@@ -444,6 +650,11 @@ export default function DirectorDashboard() {
       fetchAmbulatoryStaffing();
     }, 5000);
 
+    const surveyInterval = setInterval(() => {
+      fetchSurveyResults();
+      fetchPeriods();
+    }, 5000);
+
     fetchFalls();
     fetchHapi();
     fetchMeds();
@@ -469,9 +680,15 @@ export default function DirectorDashboard() {
       clearInterval(trainingInterval);
       clearInterval(researchInterval);
       clearInterval(staffInterval);
+      clearInterval(surveyInterval);
       clearInterval(qualityInterval);
     };
   }, []);
+
+  // Re-fetch survey results when the selected filters change
+  useEffect(() => {
+    fetchSurveyResults();
+  }, [surveyYear, surveyType, fetchSurveyResults]);
 
   // Re-fetch ratio logs when the filter changes
   useEffect(() => {
@@ -780,6 +997,32 @@ export default function DirectorDashboard() {
     });
 
     doc.save(`hospital_${title.toLowerCase().replace(/ /g, '_')}_report.pdf`);
+  };
+
+  const generateSurveyPDFReport = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text(`Annual Survey Report: ${surveyType === "pes_nwi" ? "PES-NWI" : "RN Satisfaction"} (${surveyYear})`, 14, 22);
+    doc.setFontSize(12);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+    
+    const statsText = surveyStats 
+      ? `Completion rate: ${surveyStats.completed_count} / ${surveyStats.total_staff} (${completionPct}%) | Overall Avg: ${overallSurveyAvg} / 5.0`
+      : "";
+    doc.text(statsText, 14, 38);
+
+    const tableData = groupedSurveyData.map((item, idx) => [idx + 1, item.subscale, `${item.avg_score} / 5.0`]);
+    const tableHeader = [["#", "Subscale Name", "Average Score"]];
+
+    autoTable(doc, {
+      startY: 46,
+      head: tableHeader,
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [74, 106, 133] }
+    });
+
+    doc.save(`survey_${surveyType}_${surveyYear}_report.pdf`);
   };
 
   return (
@@ -1433,28 +1676,76 @@ export default function DirectorDashboard() {
 
             {/* Satisfaction Component */}
             <div className="table-box content-box" style={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column' }}>
-              <div className="box-header">
+              <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                 <h2 className="content-box-title">Nurse Satisfaction</h2>
-                <button
-                  className="icon-btn-small"
-                  title="Download PDF"
-                  onClick={() => generatePDFReport("Nurse Satisfaction", satisfactionData, "line")}
-                >
-                  <Download size={16} />
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <select
+                    value={surveyType}
+                    onChange={(e) => setSurveyType(e.target.value)}
+                    style={{ fontSize: '11px', padding: '2px 6px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '4px', background: '#fff', cursor: 'pointer' }}
+                  >
+                    <option value="pes_nwi">PES-NWI</option>
+                    <option value="rn_satisfaction">RN Satisfaction</option>
+                  </select>
+                  <select
+                    value={surveyYear}
+                    onChange={(e) => setSurveyYear(parseInt(e.target.value))}
+                    style={{ fontSize: '11px', padding: '2px 6px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '4px', background: '#fff', cursor: 'pointer' }}
+                  >
+                    {surveyYearsList.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                  <button
+                    className="icon-btn-small"
+                    title="Download Survey Report PDF"
+                    onClick={generateSurveyPDFReport}
+                    disabled={groupedSurveyData.length === 0}
+                    style={{ opacity: groupedSurveyData.length === 0 ? 0.5 : 1, cursor: groupedSurveyData.length === 0 ? 'not-allowed' : 'pointer' }}
+                  >
+                    <Download size={16} />
+                  </button>
+                </div>
               </div>
-              <div className="chart-container-inner" style={{ flex: 1, minHeight: '240px', marginTop: '15px' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={satisfactionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.4)" />
-                    <XAxis dataKey="name" hide={true} />
-                    <YAxis hide={true} domain={[0, 100]} />
-                    <LineTooltip />
-                    <LineLegend iconType="circle" wrapperStyle={{ fontSize: '0.9rem', bottom: -5 }} />
-                    <Line type="monotone" dataKey="Last Month" stroke="#4caf50" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line type="monotone" dataKey="This Month" stroke="#e53935" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+
+              <div style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                  <span>Completion Rate: {surveyStats?.completed_count || 0} / {surveyStats?.total_staff || 0} ({completionPct}%)</span>
+                  <span style={{ color: 'var(--accent-blue)' }}>Overall Score: {overallSurveyAvg} / 5.0</span>
+                </div>
+                <div style={{ height: '6px', background: '#cbd5e1', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', background: 'var(--accent-blue)', width: `${completionPct}%`, transition: 'width 0.3s ease' }} />
+                </div>
+              </div>
+
+              <div className="chart-container-inner" style={{ flex: 1, minHeight: '240px', marginTop: '15px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                {surveyLoading ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+                    <span style={{ fontSize: '13px' }}>Loading survey results...</span>
+                  </div>
+                ) : groupedSurveyData.length === 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', color: '#94a3b8', fontSize: '13px', padding: '20px' }}>
+                    <span>No completed survey responses available for {surveyType === "pes_nwi" ? "PES-NWI" : "RN Satisfaction"} in {surveyYear} yet.</span>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={groupedSurveyData} margin={{ top: 10, right: 10, left: -20, bottom: 35 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                      <XAxis 
+                        dataKey="subscale" 
+                        tick={{ fontSize: 8, fill: "var(--text-secondary)" }} 
+                        axisLine={false}
+                        tickLine={false}
+                        interval={0}
+                        angle={-30}
+                        textAnchor="end"
+                      />
+                      <YAxis domain={[0, 5]} tick={{ fontSize: 9, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} allowDecimals={true} />
+                      <BarTooltip formatter={(value) => [`${value} / 5.0`, "Average Score"]} />
+                      <Bar dataKey="avg_score" fill="var(--accent-blue)" radius={[4, 4, 0, 0]} barSize={25} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
@@ -1550,6 +1841,144 @@ export default function DirectorDashboard() {
             </div>
           </div>
 
+          {/* ── Annual Survey Period Management ── */}
+          <div className="table-box content-box" style={{ marginTop: '20px', padding: '20px' }}>
+            <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ClipboardList size={18} color="var(--accent-blue)" />
+                <h2 className="content-box-title">Annual Survey Period Management</h2>
+              </div>
+              <button 
+                onClick={handleOpenAddPeriod}
+                className="add-nurse-btn" 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  fontSize: '13px', 
+                  padding: '6px 16px', 
+                  background: '#2f3e55',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#1e293b'}
+                onMouseLeave={e => e.currentTarget.style.background = '#2f3e55'}
+              >
+                <Plus size={14} /> Add Survey Period
+              </button>
+            </div>
+
+            <div className="rd-table-scroll" style={{ overflowX: 'auto', marginTop: '10px' }}>
+              <table className="rd-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr className="rd-thead-row" style={{ borderBottom: '2px solid rgba(0,0,0,0.06)' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 10px', color: 'var(--text-secondary)' }}>Year</th>
+                    <th style={{ textAlign: 'left', padding: '12px 10px', color: 'var(--text-secondary)' }}>Survey Type</th>
+                    <th style={{ textAlign: 'left', padding: '12px 10px', color: 'var(--text-secondary)' }}>Opens At</th>
+                    <th style={{ textAlign: 'left', padding: '12px 10px', color: 'var(--text-secondary)' }}>Closes At</th>
+                    <th style={{ textAlign: 'center', padding: '12px 10px', color: 'var(--text-secondary)' }}>Active (User-Facing)</th>
+                    <th style={{ textAlign: 'right', padding: '12px 10px', color: 'var(--text-secondary)' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {periodsLoading ? (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
+                        Loading survey periods...
+                      </td>
+                    </tr>
+                  ) : periods.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                        No survey periods scheduled yet. Click "Add Survey Period" to get started.
+                      </td>
+                    </tr>
+                  ) : (
+                    periods.map((p) => {
+                      const isActiveRange = new Date() >= new Date(p.opens_at) && new Date() <= new Date(p.closes_at);
+                      const isShowingToUsers = !!p.is_active && isActiveRange;
+                      return (
+                        <tr key={p.period_id} className="rd-tr" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                          <td className="rd-td" style={{ padding: '12px 10px', fontWeight: 600 }}>{p.year}</td>
+                          <td className="rd-td" style={{ padding: '12px 10px' }}>
+                            <span className="rd-badge rd-badge-blue" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
+                              {p.survey_type === "pes_nwi" ? "PES-NWI" : "RN Job Satisfaction"}
+                            </span>
+                          </td>
+                          <td className="rd-td" style={{ padding: '12px 10px' }}>{formatLocalDate(p.opens_at)}</td>
+                          <td className="rd-td" style={{ padding: '12px 10px' }}>{formatLocalDate(p.closes_at)}</td>
+                          <td className="rd-td" style={{ padding: '12px 10px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                              <input 
+                                type="checkbox" 
+                                checked={!!p.is_active} 
+                                onChange={() => handleTogglePeriodActive(p)}
+                                style={{ width: '16px', height: '16px', accentColor: 'var(--accent-blue)', cursor: 'pointer' }}
+                              />
+                              <span style={{ 
+                                fontSize: '11px', 
+                                fontWeight: 700, 
+                                color: isShowingToUsers ? '#16a34a' : '#ef4444' 
+                              }}>
+                                {isShowingToUsers ? "● Active & Showing" : (p.is_active ? "● Scheduled (Inactive Date)" : "● Inactive (Hidden)")}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="rd-td" style={{ padding: '12px 10px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button 
+                                onClick={() => handleOpenEditPeriod(p)}
+                                className="rd-icon-btn" 
+                                style={{ 
+                                  border: 'none', 
+                                  background: 'rgba(59, 130, 246, 0.1)', 
+                                  color: '#2563eb', 
+                                  padding: '4px 8px', 
+                                  borderRadius: '4px', 
+                                  cursor: 'pointer',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button 
+                                onClick={() => handleDeletePeriod(p.period_id)}
+                                className="rd-icon-btn" 
+                                style={{ 
+                                  border: 'none', 
+                                  background: 'rgba(239, 68, 68, 0.1)', 
+                                  color: '#ef4444', 
+                                  padding: '4px 8px', 
+                                  borderRadius: '4px', 
+                                  cursor: 'pointer',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -1582,6 +2011,89 @@ export default function DirectorDashboard() {
                 <button onClick={generateResearchReport} className="rd-save-btn">
                   <FileDown size={14} style={{ marginRight: 6, verticalAlign: "middle" }} />
                   Download PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== SURVEY PERIOD MODAL ===================== */}
+      {showPeriodModal && (
+        <div onClick={() => setShowPeriodModal(false)} className="rd-overlay">
+          <div onClick={(e) => e.stopPropagation()} className="rd-modal-box">
+            <div className="rd-modal-header">
+              <h2 className="rd-modal-title">{editingPeriod ? "Edit Survey Period" : "Add Survey Period"}</h2>
+              <button onClick={() => setShowPeriodModal(false)} className="rd-close-btn"><X size={22} /></button>
+            </div>
+
+            <div className="rd-fields-col">
+              <div>
+                <label className="rd-label">Year <span className="rd-req">*</span></label>
+                <input 
+                  type="number" 
+                  value={periodForm.year} 
+                  onChange={(e) => setPeriodForm(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))} 
+                  className="rd-input" 
+                  min="2020" 
+                  max="2100" 
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="rd-label">Survey Type <span className="rd-req">*</span></label>
+                <select 
+                  value={periodForm.survey_type} 
+                  onChange={(e) => setPeriodForm(prev => ({ ...prev, survey_type: e.target.value }))} 
+                  className="rd-input"
+                >
+                  <option value="pes_nwi">PES-NWI (Practice Environment Scale)</option>
+                  <option value="rn_satisfaction">RN Job Satisfaction Survey</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="rd-label">Opens At (Start Date) <span className="rd-req">*</span></label>
+                <input 
+                  type="date" 
+                  value={periodForm.opens_at} 
+                  onChange={(e) => setPeriodForm(prev => ({ ...prev, opens_at: e.target.value }))} 
+                  className="rd-input" 
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="rd-label">Closes At (End Date) <span className="rd-req">*</span></label>
+                <input 
+                  type="date" 
+                  value={periodForm.closes_at} 
+                  onChange={(e) => setPeriodForm(prev => ({ ...prev, closes_at: e.target.value }))} 
+                  className="rd-input" 
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 0' }}>
+                <input 
+                  type="checkbox" 
+                  id="period-active-checkbox"
+                  checked={periodForm.is_active} 
+                  onChange={(e) => setPeriodForm(prev => ({ ...prev, is_active: e.target.checked }))} 
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--accent-blue)', cursor: 'pointer' }}
+                />
+                <label htmlFor="period-active-checkbox" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer' }}>
+                  Is Active (User-Facing)
+                </label>
+              </div>
+
+              {periodError && <p className="rd-error">{periodError}</p>}
+
+              <div className="rd-actions-row">
+                <button onClick={() => setShowPeriodModal(false)} className="rd-cancel-btn" disabled={periodSaving}>Cancel</button>
+                <button onClick={handleSavePeriod} className="rd-save-btn" disabled={periodSaving}>
+                  {periodSaving ? "Saving..." : "Save Period"}
                 </button>
               </div>
             </div>
