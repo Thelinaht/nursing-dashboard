@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import RequestsTable from "../components/RequestsTable";
+import SurveyBanner from "../components/SurveyBanner";
 import "../styles/design-system.css";
 import "../styles/PatientServicesDashboard.css";
 import { Users, Building2, ClipboardList } from "lucide-react";
@@ -62,10 +63,10 @@ export default function PatientServicesDashboard() {
     return (
         <Layout role="assistantDirector" username={user?.full_name || "User"}>
             <div className="psd-container">
-
                 <div className="psd-header">
                     <h1>Assistant Director Dashboard</h1>
                 </div>
+                <SurveyBanner />
 
                 {/* KPI Cards */}
                 <div className="psd-summary-grid">

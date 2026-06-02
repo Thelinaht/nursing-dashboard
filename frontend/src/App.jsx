@@ -52,6 +52,9 @@ import StaffParticipationDetails from "./pages/StaffParticipationDetails";
 import TrainingNeedsAnalysisDetails from "./pages/TrainingNeedsAnalysisDetails";
 import LearningOutcomesDetails from "./pages/LearningOutcomesDetails";
 
+// Surveys
+import SurveyPage from "./pages/SurveyPage";
+
 // Role IDs for readability
 const NURSE = [1];
 const SECRETARY = [2];
@@ -67,6 +70,9 @@ const STAFF_VIEWERS = [2, 3, 4, 6]; // secretary, supervisor, director, training
 
 // All authenticated users
 const ALL = [1, 2, 3, 4, 5, 6, 7, 8];
+
+// All roles except Director
+const ALL_EXCEPT_DIRECTOR = [1, 2, 3, 5, 6, 7, 8];
 
 function App() {
         return (
@@ -286,6 +292,14 @@ function App() {
                                                 <NotificationsPage />
                                         </ProtectedRoute>
                                 } />
+
+                                {/* ── Annual Surveys (all roles except Director) ─────── */}
+                                <Route path="/surveys" element={
+                                        <ProtectedRoute allowedRoles={ALL_EXCEPT_DIRECTOR}>
+                                                <SurveyPage />
+                                        </ProtectedRoute>
+                                } />
+
                         </Routes>
                 </Router>
         );

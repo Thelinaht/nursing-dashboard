@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
+import SurveyBanner from "../components/SurveyBanner";
 import "../styles/SupervisorDashboard.css";
 import { io } from "socket.io-client";
 import { Users, LayoutGrid, ClipboardCheck, ChevronRight, Download } from "lucide-react";
@@ -202,6 +203,8 @@ export default function SupervisorDashboard() {
             <div className="main">
 
                 <div className="supervisor-container">
+
+                    <SurveyBanner />
 
                     {/* Top Stats Cards */}
                     <div className="cards-row">

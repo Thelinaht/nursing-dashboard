@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import Layout from "../components/Layout";
+import SurveyBanner from "../components/SurveyBanner";
 import "../styles/QualityManagerDashboard.css";
 import {
     AlertTriangle, Activity, Pill, TrendingUp,
@@ -389,6 +390,9 @@ export default function QualityManagerDashboard() {
                     <h1>Quality Manager Dashboard</h1>
                     {error && <p style={{ color: COLORS.red, fontSize: 13, marginTop: 6 }}>⚠ {error}</p>}
                 </div>
+
+                <SurveyBanner />
+
 
                 {/* ── Period Filter Bar ── */}
                 <div className="qd-period-bar">

@@ -23,6 +23,8 @@ const notificationsRoutes = require("./routes/notificationsRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const qualityRoutes = require("./routes/qualityRoutes");
 const certificateRoutes = require("./routes/certificateRoutes");
+const surveyRoutes = require("./routes/surveyRoutes");
+
 
 
 
@@ -115,6 +117,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/quality", qualityRoutes);
 
 app.use("/api/certificates", certificateRoutes);
+app.use("/api/surveys", surveyRoutes);
 
 
 const PORT = 4000;

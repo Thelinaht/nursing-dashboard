@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
+import SurveyBanner from "../components/SurveyBanner";
 import "../styles/SecretaryDashboard.css";
 import { Users, AlertCircle, Flag, Globe, Filter, ChevronDown } from "lucide-react";
 import logo from "../assets/logo.png";
@@ -147,10 +148,13 @@ export default function SecretaryDashboard() {
             logoSrc="/logo.png"
             username={JSON.parse(sessionStorage.getItem("user"))?.full_name || "Secretary"}
         >
+            <SurveyBanner />
+
             <div className="main">
 
                 <div className="page-header">
                     <h1>Staff Directory</h1>
+
                     <button
                         className="add-nurse-btn"
                         onClick={() => navigate("/add-nurse")}

@@ -1,10 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
+import SurveyBanner from "../components/SurveyBanner";
 import { ClipboardList, GraduationCap, CheckCircle, Clock, Activity, Award, ChevronRight } from "lucide-react";
 import "../styles/NurseDashboard.css";
-import "../styles/SupervisorDashboard.css"; // Reuse supervisor card styles
+import "../styles/SupervisorDashboard.css";
 
 export default function NurseDashboard() {
     const navigate = useNavigate();
@@ -15,12 +15,10 @@ export default function NurseDashboard() {
         const user = JSON.parse(sessionStorage.getItem("user"));
         if (!user?.user_id) return;
 
-        // Fetch Nurse Details
         fetch(`http://localhost:4000/api/nurses/user/${user.user_id}`)
             .then(res => res.json())
             .then(async (nurseData) => {
                 try {
-                    // Fetch Trainings
                     const trainingRes = await fetch(`http://localhost:4000/api/training/${user.user_id}`);
                     const trainingData = await trainingRes.json();
 
@@ -29,7 +27,6 @@ export default function NurseDashboard() {
                         trainings: trainingData?.rows || []
                     });
 
-                    // Fetch Requests
                     const requestsRes = await fetch(`http://localhost:4000/api/requests`);
                     const requestsData = await requestsRes.json();
                     if (Array.isArray(requestsData)) {
@@ -64,6 +61,9 @@ export default function NurseDashboard() {
 
             <div className="main">
 
+                {/* ── Survey Banner ── */}
+                <SurveyBanner />
+
                 {/* KPI Cards Row */}
                 <div className="cards-row" style={{ marginBottom: '32px' }}>
                     <div className="glass-card blue">
@@ -74,7 +74,6 @@ export default function NurseDashboard() {
                         <p><Clock size={22} /> Pending Requests</p>
                         <h1>{pendingRequests}</h1>
                     </div>
-                    {/* Dynamic License Status Card */}
                     <div className={`glass-card ${nurse.license_status?.toLowerCase().includes('expired') ? 'red' : 'green'}`}>
                         <p><Activity size={22} /> License Status</p>
                         <h1>{nurse.license_status || 'Active'}</h1>
@@ -148,8 +147,6 @@ export default function NurseDashboard() {
 
                     {/* Left: Training History */}
                     <div className="bottom-col" style={{ position: 'relative' }}>
-
-                        {/* Training History */}
                         <div className="info-card content-box" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, display: 'flex', flexDirection: 'column', margin: 0 }}>
                             <h3 style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", paddingBottom: "10px", marginBottom: "15px", flexShrink: 0 }}>Training History</h3>
                             <div className="nurse-table-header" style={{ flexShrink: 0, padding: '16px 20px', backgroundColor: '#f1f5f9' }}>
@@ -179,7 +176,6 @@ export default function NurseDashboard() {
                                 )}
                             </div>
                         </div>
-
                     </div>
 
                     {/* Right: Employment, Personal, License */}
@@ -255,4 +251,3 @@ export default function NurseDashboard() {
         </Layout>
     );
 }
-
