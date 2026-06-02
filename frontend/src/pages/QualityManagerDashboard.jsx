@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import {
     BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
-    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList
 } from "recharts";
 
 const API = "http://localhost:4000/api";
@@ -75,6 +75,7 @@ export default function QualityManagerDashboard() {
     const [meds, setMeds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [units, setUnits] = useState([]);
 
     // Period filter
     const [period, setPeriod] = useState("annual");
@@ -126,6 +127,11 @@ export default function QualityManagerDashboard() {
 
     useEffect(() => {
         setLoading(true);
+        fetch(`${API}/training/units`)
+            .then(res => res.json())
+            .then(data => setUnits(Array.isArray(data) ? data : []))
+            .catch(err => console.error("Failed to load units:", err));
+            
         Promise.all([fetchFalls(), fetchHapi(), fetchMeds()]).finally(() => setLoading(false));
     }, [fetchFalls, fetchHapi, fetchMeds]);
 
@@ -536,7 +542,9 @@ export default function QualityManagerDashboard() {
                                         <XAxis dataKey="unit" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
                                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
                                         <Tooltip />
-                                        <Bar dataKey="count" fill={COLORS.dark} radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="count" fill={COLORS.dark} radius={[4, 4, 0, 0]}>
+                                            <LabelList dataKey="count" position="top" fill="#64748b" fontSize={11} />
+                                        </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             )}
@@ -550,7 +558,9 @@ export default function QualityManagerDashboard() {
                                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
                                     <Tooltip />
-                                    <Line type="monotone" dataKey="count" stroke={COLORS.dark} strokeWidth={2.5} dot={{ r: 4 }} />
+                                    <Line type="monotone" dataKey="count" stroke={COLORS.dark} strokeWidth={2.5} dot={{ r: 4 }}>
+                                        <LabelList dataKey="count" position="top" fill="#64748b" fontSize={11} />
+                                    </Line>
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
@@ -565,8 +575,12 @@ export default function QualityManagerDashboard() {
                                         <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
                                         <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
                                         <Tooltip />
-                                        <Bar yAxisId="left" dataKey="count" fill={COLORS.dark} radius={[4, 4, 0, 0]} />
-                                        <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke={COLORS.mid} strokeWidth={2} dot={{ r: 3 }} />
+                                        <Bar yAxisId="left" dataKey="count" fill={COLORS.dark} radius={[4, 4, 0, 0]}>
+                                            <LabelList dataKey="count" position="top" fill="#64748b" fontSize={11} />
+                                        </Bar>
+                                        <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke={COLORS.mid} strokeWidth={2} dot={{ r: 3 }}>
+                                            <LabelList dataKey="cumulative" position="top" fill="#64748b" fontSize={11} formatter={(v) => v+"%"} />
+                                        </Line>
                                     </BarChart>
                                 </ResponsiveContainer>
                             )}
@@ -656,7 +670,9 @@ export default function QualityManagerDashboard() {
                                         <XAxis dataKey="site" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
                                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
                                         <Tooltip />
-                                        <Bar dataKey="count" fill={COLORS.mid} radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="count" fill={COLORS.mid} radius={[4, 4, 0, 0]}>
+                                            <LabelList dataKey="count" position="top" fill="#64748b" fontSize={11} />
+                                        </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             )}
@@ -709,12 +725,14 @@ export default function QualityManagerDashboard() {
                             <h3>Medication Incidents by Type</h3>
                             {medsByType.length === 0 ? <div className="qd-chart-empty">No data</div> : (
                                 <ResponsiveContainer width="100%" height={260}>
-                                    <BarChart data={medsByType} layout="vertical" margin={{ top: 10, right: 20, left: 70, bottom: 0 }}>
+                                    <BarChart data={medsByType} layout="vertical" margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(90,111,135,0.1)" />
                                         <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
-                                        <YAxis type="category" dataKey="type" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} width={140} />
+                                        <YAxis type="category" dataKey="type" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} width={220} />
                                         <Tooltip />
-                                        <Bar dataKey="count" fill={COLORS.dark} radius={[0, 4, 4, 0]} />
+                                        <Bar dataKey="count" fill={COLORS.dark} radius={[0, 4, 4, 0]}>
+                                            <LabelList dataKey="count" position="right" fill="#64748b" fontSize={11} />
+                                        </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             )}
@@ -729,7 +747,9 @@ export default function QualityManagerDashboard() {
                                         <XAxis dataKey="unit" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
                                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
                                         <Tooltip />
-                                        <Bar dataKey="count" fill={COLORS.mid} radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="count" fill={COLORS.mid} radius={[4, 4, 0, 0]}>
+                                            <LabelList dataKey="count" position="top" fill="#64748b" fontSize={11} />
+                                        </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             )}
@@ -744,6 +764,7 @@ export default function QualityManagerDashboard() {
                         onSave={saveFall}
                         onClose={closeModal}
                         editing={!!editingItem}
+                        units={units}
                     />
                 )}
                 {activeModal === "hapi" && (
@@ -752,6 +773,7 @@ export default function QualityManagerDashboard() {
                         onSave={saveHapi}
                         onClose={closeModal}
                         editing={!!editingItem}
+                        units={units}
                     />
                 )}
                 {activeModal === "med" && (
@@ -760,6 +782,7 @@ export default function QualityManagerDashboard() {
                         onSave={saveMed}
                         onClose={closeModal}
                         editing={!!editingItem}
+                        units={units}
                     />
                 )}
                 {viewingItem && (
@@ -777,7 +800,7 @@ export default function QualityManagerDashboard() {
 // ============================================================
 // Fall Modal — all fields free-text, only date is a picker
 // ============================================================
-function FallModal({ initial, onSave, onClose, editing }) {
+function FallModal({ initial, onSave, onClose, editing, units = [] }) {
     const [form, setForm] = useState({ ...EMPTY_FALL, ...initial });
     const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
     const canSave = form.ReferenceID && form.IncidentDate;
@@ -868,13 +891,16 @@ function FallModal({ initial, onSave, onClose, editing }) {
                     {/* Location (unit/ward) */}
                     <div className="qd-field">
                         <label>Location (Unit/Ward)</label>
-                        <input
+                        <select
                             className="qd-input"
-                            type="text"
-                            placeholder="e.g. ER, 3C, MICU"
                             value={form.Location}
                             onChange={e => set("Location", e.target.value)}
-                        />
+                        >
+                            <option value="">— Select Unit —</option>
+                            {units.map(u => (
+                                <option key={u.unit_id} value={u.unit_name}>{u.unit_name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* IncidentSubLocation */}
@@ -958,7 +984,7 @@ function FallModal({ initial, onSave, onClose, editing }) {
 // ============================================================
 // HAPI Modal — uses DB column names
 // ============================================================
-function HapiModal({ initial, onSave, onClose, editing }) {
+function HapiModal({ initial, onSave, onClose, editing, units = [] }) {
     const [form, setForm] = useState({ ...EMPTY_HAPI, ...initial });
     const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
@@ -1023,12 +1049,17 @@ function HapiModal({ initial, onSave, onClose, editing }) {
                             onChange={e => set("URN", e.target.value)} placeholder="Patient URN" />
                     </div>
 
-                    {/* Unit — free text */}
+                    {/* Unit */}
                     <div className="qd-field">
                         <label>Unit</label>
-                        <input className="qd-input" type="text" placeholder="e.g. ER, MICU, 3C"
+                        <select className="qd-input"
                             value={form.IncidentSubLocation}
-                            onChange={e => set("IncidentSubLocation", e.target.value)} />
+                            onChange={e => set("IncidentSubLocation", e.target.value)}>
+                            <option value="">— Select Unit —</option>
+                            {units.map(u => (
+                                <option key={u.unit_id} value={u.unit_name}>{u.unit_name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Date & Time */}
@@ -1110,7 +1141,7 @@ function HapiModal({ initial, onSave, onClose, editing }) {
 // ============================================================
 // Medication Modal — mock only (no DB table yet)
 // ============================================================
-function MedModal({ initial, onSave, onClose, editing }) {
+function MedModal({ initial, onSave, onClose, editing, units = [] }) {
     const [form, setForm] = useState(initial);
     const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
     const canSave = form.URN && form.Date && form.Type;
@@ -1131,8 +1162,13 @@ function MedModal({ initial, onSave, onClose, editing }) {
                     </div>
                     <div className="qd-field">
                         <label>Unit</label>
-                        <input className="qd-input" type="text" placeholder="e.g. ER, MICU, 3C"
-                            value={form.Unit} onChange={e => set("Unit", e.target.value)} />
+                        <select className="qd-input"
+                            value={form.Unit} onChange={e => set("Unit", e.target.value)}>
+                            <option value="">— Select Unit —</option>
+                            {units.map(u => (
+                                <option key={u.unit_id} value={u.unit_name}>{u.unit_name}</option>
+                            ))}
+                        </select>
                     </div>
                     <div className="qd-field qd-full">
                         <label>Date & Time <span className="qd-req">*</span></label>

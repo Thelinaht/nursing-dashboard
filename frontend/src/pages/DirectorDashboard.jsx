@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, ClipboardList, Activity, Download, Calculator, FileText, TrendingUp, AlertTriangle, AlertCircle, CheckCircle, X, Info, ChevronRight, FileDown } from "lucide-react";
+import { Users, ClipboardList, Activity, Download, Calculator, FileText, TrendingUp, AlertTriangle, AlertCircle, CheckCircle, X, Info, ChevronRight, FileDown, Filter } from "lucide-react";
 import RequestsTable from "../components/RequestsTable";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
   PieChart, Pie, Cell, Tooltip as PieTooltip, Legend as PieLegend, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as LineTooltip, Legend as LineLegend,
-  BarChart, Bar, Tooltip as BarTooltip, Legend
+  BarChart, Bar, Tooltip as BarTooltip, Legend, Tooltip as RechartsTooltip, LabelList
 } from "recharts";
 import Layout from "../components/Layout";
 // Import supervisor core styles to guarantee layout works!
@@ -95,6 +95,14 @@ export default function DirectorDashboard() {
   const [showDirUnitDrop, setShowDirUnitDrop] = useState(false);
   const [showDirStaffDrop, setShowDirStaffDrop] = useState(false);
 
+  const [inpatientStaffing, setInpatientStaffing] = useState([]);
+  const [staffingFilter, setStaffingFilter] = useState('All');
+  const [staffingPage, setStaffingPage] = useState(1);
+  
+  const [ambulatoryStaffing, setAmbulatoryStaffing] = useState([]);
+  const [ambulatoryFilter, setAmbulatoryFilter] = useState('All');
+  const [ambulatoryPage, setAmbulatoryPage] = useState(1);
+
   // Derived from staffList
   const dirUnits = [...new Set(staffList.map(n => n.unit).filter(Boolean))];
   const dirAssignedStaff = staffList
@@ -106,8 +114,10 @@ export default function DirectorDashboard() {
     });
   const dirDailyStaffing = dirUnits.map(unit => {
     const available = staffList.filter(n => n.unit === unit).length;
-    const required = Math.max(available + 3, 10);
-    const pct = Math.round((available / required) * 100);
+    const inpatientUnit = inpatientStaffing.find(u => u.unit_name === unit) || ambulatoryStaffing.find(u => u.unit_name === unit);
+    // Use real required value if available from DB, otherwise a more logical ratio-based fallback instead of just +3
+    const required = inpatientUnit?.total_needed || (available > 0 ? Math.ceil(available * 1.5) : 5);
+    const pct = required > 0 ? Math.round((available / required) * 100) : 100;
     let status = pct < 25 ? "critical" : pct <= 50 ? "high-risk" : pct <= 75 ? "low-risk" : pct < 100 ? "safe" : "overstaffed";
     return { unit, required, available, coverage: `${pct}%`, status };
   });
@@ -116,9 +126,7 @@ export default function DirectorDashboard() {
     const matchSearch = r.unit.toLowerCase().includes(dirStaffingSearch.toLowerCase());
     return matchUnit && matchSearch;
   });
-  const [inpatientStaffing, setInpatientStaffing] = useState([]);
-  const [staffingFilter, setStaffingFilter] = useState('All');
-  const [staffingPage, setStaffingPage] = useState(1);
+
 
   // Research Chart states
   const [projects, setProjects] = useState([]);
@@ -126,6 +134,15 @@ export default function DirectorDashboard() {
   const [researchLoading, setResearchLoading] = useState(true);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportYear, setReportYear] = useState("all");
+
+  // Quality Indicators states
+  const [falls, setFalls] = useState([]);
+  const [hapis, setHapis] = useState([]);
+  const [meds, setMeds] = useState([]);
+  const [qualityPeriod, setQualityPeriod] = useState("annual");
+  const [qualityYear, setQualityYear] = useState(null);
+  const [qualityMonth, setQualityMonth] = useState(new Date().getMonth() + 1);
+  const [qualityQuarter, setQualityQuarter] = useState(Math.ceil((new Date().getMonth() + 1) / 3));
 
   const [trainingData, setTrainingData] = useState(null);
   const [gapFilter, setGapFilter] = useState("All");
@@ -212,9 +229,7 @@ export default function DirectorDashboard() {
     document.body.removeChild(a);
   };
 
-  const [ambulatoryStaffing, setAmbulatoryStaffing] = useState([]);
-  const [ambulatoryFilter, setAmbulatoryFilter] = useState('All');
-  const [ambulatoryPage, setAmbulatoryPage] = useState(1);
+
 
   // Ratio Log state (shared with Supervisor — Director sees live updates)
   const [ratioLogs, setRatioLogs] = useState([]);
@@ -315,6 +330,75 @@ export default function DirectorDashboard() {
     ...projects.filter(p => p.start_date).map(p => new Date(p.start_date).getFullYear()),
     ...publications.filter(p => p.date).map(p => new Date(p.date).getFullYear())
   ])].sort((a, b) => b - a);
+  // ─── Quality Data Fetching & Processing ───
+  const fetchFalls = useCallback(async () => {
+    try {
+      const res = await fetch("http://localhost:4000/api/quality/falls");
+      if (res.ok) setFalls(await res.json());
+    } catch (err) {}
+  }, []);
+
+  const fetchHapi = useCallback(async () => {
+    try {
+      const res = await fetch("http://localhost:4000/api/quality/hapi");
+      if (res.ok) setHapis(await res.json());
+    } catch (err) {}
+  }, []);
+
+  const fetchMeds = useCallback(async () => {
+    try {
+      const res = await fetch("http://localhost:4000/api/quality/meds");
+      if (res.ok) setMeds(await res.json());
+    } catch (err) {}
+  }, []);
+
+  const parseLocalDate = useCallback((dateStr) => {
+    if (!dateStr) return null;
+    const str = dateStr instanceof Date ? dateStr.toISOString() : String(dateStr);
+    const [y, m] = str.split("T")[0].split("-").map(Number);
+    if (!y || !m) return null;
+    return { y, m };
+  }, []);
+
+  const matchesQualityPeriod = useCallback((dateStr) => {
+    const parsed = parseLocalDate(dateStr);
+    if (!parsed) return false;
+    if (qualityYear !== null && parsed.y !== qualityYear) return false;
+    if (qualityYear === null) return true;
+    if (qualityPeriod === "monthly") return parsed.m === qualityMonth;
+    if (qualityPeriod === "quarterly") return Math.ceil(parsed.m / 3) === qualityQuarter;
+    return true;
+  }, [qualityPeriod, qualityYear, qualityMonth, qualityQuarter, parseLocalDate]);
+
+  const visibleFalls = useMemo(() => falls.filter(f => matchesQualityPeriod(f.IncidentDate)), [falls, matchesQualityPeriod]);
+  const visibleHapis = useMemo(() => hapis.filter(h => matchesQualityPeriod(h.IncidentDate)), [hapis, matchesQualityPeriod]);
+  const visibleMeds = useMemo(() => meds.filter(m => matchesQualityPeriod(m.Date)), [meds, matchesQualityPeriod]);
+
+  const fallsByInjury = useMemo(() => {
+    const counts = { None: 0, Minor: 0, Major: 0 };
+    visibleFalls.forEach(f => { if (f.InjurySustained) counts[f.InjurySustained] = (counts[f.InjurySustained] || 0) + 1; });
+    return Object.entries(counts).map(([name, value]) => ({ name, value })).filter(d => d.value > 0);
+  }, [visibleFalls]);
+
+  const hapiByStage = useMemo(() => {
+    const counts = {};
+    visibleHapis.forEach(h => { if (h.Stage) counts[h.Stage] = (counts[h.Stage] || 0) + 1; });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [visibleHapis]);
+
+  const medsByType = useMemo(() => {
+    const counts = {};
+    visibleMeds.forEach(m => counts[m.Type] = (counts[m.Type] || 0) + 1);
+    return Object.entries(counts).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count);
+  }, [visibleMeds]);
+
+  const availableQualityYears = useMemo(() => {
+      const yearSet = new Set();
+      falls.forEach(f => { const p = parseLocalDate(f.IncidentDate); if (p) yearSet.add(p.y); });
+      hapis.forEach(h => { const p = parseLocalDate(h.IncidentDate); if (p) yearSet.add(p.y); });
+      meds.forEach(m => { const p = parseLocalDate(m.Date); if (p) yearSet.add(p.y); });
+      return [...yearSet].sort((a, b) => b - a);
+  }, [falls, hapis, meds, parseLocalDate]);
 
   useEffect(() => {
     fetchRequests();
@@ -353,6 +437,24 @@ export default function DirectorDashboard() {
     };
     const researchInterval = setInterval(backgroundFetchResearchData, 5000);
 
+    // Background poll for staff list and staffing to keep Assigned Staff / Daily Staffing tables real-time
+    const staffInterval = setInterval(() => {
+      fetchStaffList();
+      fetchInpatientStaffing();
+      fetchAmbulatoryStaffing();
+    }, 5000);
+
+    fetchFalls();
+    fetchHapi();
+    fetchMeds();
+    
+    // Background poll for quality indicators
+    const qualityInterval = setInterval(() => {
+      fetchFalls();
+      fetchHapi();
+      fetchMeds();
+    }, 5000);
+
     // Keep your hospital's real-time interaction active!
     socket.on("new_incident", (newIncident) => {
       setIncidents((prev) => [newIncident, ...prev].slice(0, 5)); // Keep latest 5
@@ -366,6 +468,8 @@ export default function DirectorDashboard() {
       socket.off("ratio_log_updated");
       clearInterval(trainingInterval);
       clearInterval(researchInterval);
+      clearInterval(staffInterval);
+      clearInterval(qualityInterval);
     };
   }, []);
 
@@ -778,9 +882,9 @@ export default function DirectorDashboard() {
           <div className="table-box content-box" style={{ padding: "25px", marginBottom: "25px", width: "100%" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "15px" }}>
                   <div>
-                      <h2 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
-                          Competency Gaps by Unit (All Units Heatmap)
-                      </h2>
+                      <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "var(--text-primary)" }}>
+                          Training Competency Gaps by Unit
+                      </h3>
                       <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
                           Shows the percentage of incomplete or pending competencies per hospital unit.
                       </p>
@@ -924,11 +1028,17 @@ export default function DirectorDashboard() {
                     />
                     {chartMetric === "scores" ? (
                         <>
-                            <Bar dataKey="preTest" name="Pre-Test" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30} />
-                            <Bar dataKey="postTest" name="Post-Test" fill="#9fb3cc" radius={[4, 4, 0, 0]} barSize={30} />
+                            <Bar dataKey="preTest" name="Pre-Test" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30}>
+                                <LabelList dataKey="preTest" position="top" fill="#64748b" fontSize={11} />
+                            </Bar>
+                            <Bar dataKey="postTest" name="Post-Test" fill="#9fb3cc" radius={[4, 4, 0, 0]} barSize={30}>
+                                <LabelList dataKey="postTest" position="top" fill="#64748b" fontSize={11} />
+                            </Bar>
                         </>
                     ) : (
-                        <Bar dataKey="staffCount" name="Staff Count" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30} />
+                        <Bar dataKey="staffCount" name="Staff Count" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30}>
+                            <LabelList dataKey="staffCount" position="top" fill="#64748b" fontSize={11} />
+                        </Bar>
                     )}
                   </BarChart>
                 </ResponsiveContainer>
@@ -985,9 +1095,15 @@ export default function DirectorDashboard() {
                       labelStyle={{ color: 'white' }}
                       itemStyle={{ color: 'rgba(255,255,255,0.85)' }}
                     />
-                    <Bar dataKey="projects" fill="#5a6f87" barSize={26} name="Research Projects" shape={renderCompactBar("#5a6f87", "projects")} />
-                    <Bar dataKey="publications" fill="#9fb3cc" barSize={26} name="Publications" shape={renderCompactBar("#9fb3cc", "publications")} />
-                    <Bar dataKey="conferences" fill="#ffffffff" barSize={26} name="Conference" shape={renderCompactBar("#ffffffff", "conferences")} />
+                    <Bar dataKey="projects" fill="#5a6f87" barSize={26} name="Research Projects" shape={renderCompactBar("#5a6f87", "projects")}>
+                        <LabelList dataKey="projects" position="top" fill="#64748b" fontSize={11} />
+                    </Bar>
+                    <Bar dataKey="publications" fill="#9fb3cc" barSize={26} name="Publications" shape={renderCompactBar("#9fb3cc", "publications")}>
+                        <LabelList dataKey="publications" position="top" fill="#64748b" fontSize={11} />
+                    </Bar>
+                    <Bar dataKey="conferences" fill="#ffffffff" barSize={26} name="Conference" shape={renderCompactBar("#ffffffff", "conferences")}>
+                        <LabelList dataKey="conferences" position="top" fill="#64748b" fontSize={11} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -1342,6 +1458,96 @@ export default function DirectorDashboard() {
               </div>
             </div>
 
+          </div>
+          {/* ── Quality Indicators ── */}
+          <div className="table-box content-box" style={{ marginTop: '20px', padding: '20px' }}>
+            <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Activity size={18} color="var(--accent-blue)" />
+                <h2 className="content-box-title">Quality Indicators</h2>
+              </div>
+              
+              {/* Period Filter Bar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: '#f8fafc', padding: '8px 15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Filter size={14} color="#64748b" />
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>Period:</span>
+                      <div style={{ display: 'flex', background: '#fff', borderRadius: '6px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+                          {["monthly", "quarterly", "annual"].map(p => (
+                              <button key={p} style={{ padding: '4px 10px', fontSize: '12px', border: 'none', background: qualityPeriod === p ? '#2f3e55' : 'transparent', color: qualityPeriod === p ? '#fff' : '#64748b', cursor: 'pointer', fontWeight: qualityPeriod === p ? 600 : 500 }}
+                                  onClick={() => setQualityPeriod(p)}>
+                                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                              </button>
+                          ))}
+                      </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                      <select style={{ padding: '4px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', color: '#334155' }} value={qualityYear ?? "all"} onChange={e => setQualityYear(e.target.value === "all" ? null : Number(e.target.value))}>
+                          <option value="all">All Years</option>
+                          {availableQualityYears.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                      {qualityPeriod === "monthly" && (
+                          <select style={{ padding: '4px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', color: '#334155' }} value={qualityMonth} onChange={e => setQualityMonth(Number(e.target.value))}>
+                              {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                          </select>
+                      )}
+                      {qualityPeriod === "quarterly" && (
+                          <select style={{ padding: '4px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', color: '#334155' }} value={qualityQuarter} onChange={e => setQualityQuarter(Number(e.target.value))}>
+                              {[1, 2, 3, 4].map(q => <option key={q} value={q}>Q{q}</option>)}
+                          </select>
+                      )}
+                  </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                  <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '15px', border: '1px solid #e2e8f0' }}>
+                      <h3 style={{ fontSize: '14px', color: '#1e293b', marginBottom: '15px', fontWeight: 600 }}>Falls by Injury Severity</h3>
+                      {fallsByInjury.length === 0 ? <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '13px' }}>No data</div> : (
+                          <ResponsiveContainer width="100%" height={220}>
+                              <PieChart>
+                                  <Pie data={fallsByInjury} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={50}
+                                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                      {fallsByInjury.map((_, i) => <Cell key={i} fill={["#2f3e55", "#4a6a87", "#6b8fa8", "#8fb3c8", "#b3ceda", "#0d9488", "#4f46e5"][i % 7]} />)}
+                                  </Pie>
+                                  <RechartsTooltip />
+                              </PieChart>
+                          </ResponsiveContainer>
+                      )}
+                  </div>
+
+                  <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '15px', border: '1px solid #e2e8f0' }}>
+                      <h3 style={{ fontSize: '14px', color: '#1e293b', marginBottom: '15px', fontWeight: 600 }}>HAPI by Stage</h3>
+                      {hapiByStage.length === 0 ? <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '13px' }}>No data</div> : (
+                          <ResponsiveContainer width="100%" height={220}>
+                              <PieChart>
+                                  <Pie data={hapiByStage} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={50}
+                                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                      {hapiByStage.map((_, i) => <Cell key={i} fill={["#2f3e55", "#4a6a87", "#6b8fa8", "#8fb3c8", "#b3ceda", "#0d9488", "#4f46e5"][i % 7]} />)}
+                                  </Pie>
+                                  <RechartsTooltip />
+                              </PieChart>
+                          </ResponsiveContainer>
+                      )}
+                  </div>
+
+                  <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '15px', border: '1px solid #e2e8f0' }}>
+                      <h3 style={{ fontSize: '14px', color: '#1e293b', marginBottom: '15px', fontWeight: 600 }}>Medication Incidents by Type</h3>
+                      {medsByType.length === 0 ? <div style={{ height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '13px' }}>No data</div> : (
+                          <ResponsiveContainer width="100%" height={260}>
+                              <BarChart data={medsByType} layout="vertical" margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+                                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(90,111,135,0.1)" />
+                                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
+                                  <YAxis type="category" dataKey="type" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} width={220} />
+                                  <RechartsTooltip />
+                                  <Bar dataKey="count" fill="#2f3e55" radius={[0, 4, 4, 0]}>
+                                      <LabelList dataKey="count" position="right" fill="#64748b" fontSize={11} />
+                                  </Bar>
+                              </BarChart>
+                          </ResponsiveContainer>
+                      )}
+                  </div>
+            </div>
           </div>
 
         </div>
