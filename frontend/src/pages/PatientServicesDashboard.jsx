@@ -64,9 +64,10 @@ export default function PatientServicesDashboard() {
         <Layout role="assistantDirector" username={user?.full_name || "User"}>
             <div className="psd-container">
                 <div className="psd-header">
+                    <SurveyBanner />
+
                     <h1>Assistant Director Dashboard</h1>
                 </div>
-                <SurveyBanner />
 
                 {/* KPI Cards */}
                 <div className="psd-summary-grid">

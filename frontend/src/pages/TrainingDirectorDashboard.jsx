@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import Layout from "../components/Layout";
 import "../styles/SupervisorDashboard.css";
+import SurveyBanner from "../components/SurveyBanner";
 import "../styles/DirectorDashboard.css";
 import "../styles/SecretaryDashboard.css";
 import "../styles/TrainingDirectorDashboard.css";
@@ -52,7 +53,7 @@ export default function TrainingDirectorDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalData, setModalData] = useState(null);
-  
+
   // Editing states
   const [editModalData, setEditModalData] = useState(null);
   const [editFields, setEditFields] = useState({});
@@ -167,7 +168,7 @@ export default function TrainingDirectorDashboard() {
     if (!traineeObj) return;
 
     const record = allStaffTrainings.find(r => String(r.trainee_id) === String(selectedTraineeId) && String(r.training_id) === String(comp.id));
-    
+
     handleEditClick("competency", traineeObj.id, {
       nurse: traineeObj.name,
       competency: comp.name,
@@ -181,7 +182,7 @@ export default function TrainingDirectorDashboard() {
   };
 
   const getEditModalTitle = (type, data) => {
-    switch(type) {
+    switch (type) {
       case "mandatory": return `Edit Mandatory Trainings: ${data.name}`;
       case "competency": return `Edit Competency: ${data.nurse} - ${data.competency}`;
       case "add_competency": return "Add Competency";
@@ -201,7 +202,7 @@ export default function TrainingDirectorDashboard() {
     try {
       const type = editModalData.type;
       const id = editModalData.id;
-      
+
       let bodyData = {};
       if (type === "mandatory") {
         bodyData = {
@@ -381,13 +382,13 @@ export default function TrainingDirectorDashboard() {
             <h2 style={{ fontSize: '18px', color: '#2c3e50', margin: 0 }}>{title}</h2>
             <button className="icon-btn-small" onClick={() => setEditModalData(null)}><X size={20} /></button>
           </div>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', overflowY: 'auto', maxHeight: '60vh', padding: '5px' }}>
-            
+
             {type === "mandatory" && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <p style={{ margin: 0, fontSize: '12px', color: '#7f8c8d' }}>Update mandatory training status and expiry dates for <b>{editFields.name}</b>:</p>
-                
+
                 <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Saudi Council License</label>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
@@ -530,28 +531,28 @@ export default function TrainingDirectorDashboard() {
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Pre-Test Score (%)</label>
-                    <input 
-                      type="number" 
-                      min="0" 
-                      max="100" 
-                      className="input-pill" 
-                      style={{ width: '100%', marginTop: '5px', background: editModalData.allowScoreEdit ? 'white' : '#f5f7fa' }} 
-                      value={editFields.pre_test_score ?? ''} 
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      className="input-pill"
+                      style={{ width: '100%', marginTop: '5px', background: editModalData.allowScoreEdit ? 'white' : '#f5f7fa' }}
+                      value={editFields.pre_test_score ?? ''}
                       onChange={editModalData.allowScoreEdit ? (e) => setEditFields(prev => ({ ...prev, pre_test_score: e.target.value })) : undefined}
-                      disabled={!editModalData.allowScoreEdit} 
+                      disabled={!editModalData.allowScoreEdit}
                     />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Post-Test Score (%)</label>
-                    <input 
-                      type="number" 
-                      min="0" 
-                      max="100" 
-                      className="input-pill" 
-                      style={{ width: '100%', marginTop: '5px', background: editModalData.allowScoreEdit ? 'white' : '#f5f7fa' }} 
-                      value={editFields.post_test_score ?? ''} 
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      className="input-pill"
+                      style={{ width: '100%', marginTop: '5px', background: editModalData.allowScoreEdit ? 'white' : '#f5f7fa' }}
+                      value={editFields.post_test_score ?? ''}
                       onChange={editModalData.allowScoreEdit ? (e) => setEditFields(prev => ({ ...prev, post_test_score: e.target.value })) : undefined}
-                      disabled={!editModalData.allowScoreEdit} 
+                      disabled={!editModalData.allowScoreEdit}
                     />
                   </div>
                 </div>
@@ -569,7 +570,7 @@ export default function TrainingDirectorDashboard() {
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Select Trainee Name</label>
                     <input type="text" className="input-pill" style={{ width: '100%', marginTop: '5px' }} value={editFields.traineeName || ''} onChange={e => setEditFields(prev => ({ ...prev, traineeName: e.target.value }))} placeholder="Enter trainee full name" />
-                    
+
                     <div style={{ marginTop: '5px', display: 'flex', gap: '5px', alignItems: 'center' }}>
                       <span style={{ fontSize: '11px', color: '#7f8c8d' }}>Link to Trainee:</span>
                       <select className="input-pill" style={{ fontSize: '11px', padding: '2px 8px', height: '24px' }} value={editFields.trainee_id || ''} onChange={e => {
@@ -743,10 +744,10 @@ export default function TrainingDirectorDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Category</label>
-                  <select 
-                    className="input-pill" 
-                    style={{ width: '100%', marginTop: '5px' }} 
-                    value={editFields.category || 'outside'} 
+                  <select
+                    className="input-pill"
+                    style={{ width: '100%', marginTop: '5px' }}
+                    value={editFields.category || 'outside'}
                     onChange={e => setEditFields(prev => ({ ...prev, category: e.target.value }))}
                   >
                     <option value="outside">Outside Hospital</option>
@@ -758,17 +759,17 @@ export default function TrainingDirectorDashboard() {
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>
                     {editFields.category === "outside" ? "Program / Course Title" :
-                     editFields.category === "inside" ? "Workshop / Course Title" : "Staff Name"}
+                      editFields.category === "inside" ? "Workshop / Course Title" : "Staff Name"}
                   </label>
-                  <input 
-                    type="text" 
-                    className="input-pill" 
-                    style={{ width: '100%', marginTop: '5px' }} 
-                    value={editFields.title || ''} 
-                    onChange={e => setEditFields(prev => ({ ...prev, title: e.target.value }))} 
+                  <input
+                    type="text"
+                    className="input-pill"
+                    style={{ width: '100%', marginTop: '5px' }}
+                    value={editFields.title || ''}
+                    onChange={e => setEditFields(prev => ({ ...prev, title: e.target.value }))}
                     placeholder={
                       editFields.category === "outside" ? "e.g. Advanced Trauma Life Support" :
-                      editFields.category === "inside" ? "e.g. IV Therapy Recertification" : "e.g. M. Ali"
+                        editFields.category === "inside" ? "e.g. IV Therapy Recertification" : "e.g. M. Ali"
                     }
                     required
                   />
@@ -777,17 +778,17 @@ export default function TrainingDirectorDashboard() {
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>
                     {editFields.category === "outside" ? "Location / Provider" :
-                     editFields.category === "inside" ? "Internal Location" : "Deployment Route"}
+                      editFields.category === "inside" ? "Internal Location" : "Deployment Route"}
                   </label>
-                  <input 
-                    type="text" 
-                    className="input-pill" 
-                    style={{ width: '100%', marginTop: '5px' }} 
-                    value={editFields.locationProvider || ''} 
-                    onChange={e => setEditFields(prev => ({ ...prev, locationProvider: e.target.value }))} 
+                  <input
+                    type="text"
+                    className="input-pill"
+                    style={{ width: '100%', marginTop: '5px' }}
+                    value={editFields.locationProvider || ''}
+                    onChange={e => setEditFields(prev => ({ ...prev, locationProvider: e.target.value }))}
                     placeholder={
                       editFields.category === "outside" ? "e.g. King Fahad Hospital" :
-                      editFields.category === "inside" ? "e.g. Main Hall A" : "e.g. NICU ➔ Pediatric Ward"
+                        editFields.category === "inside" ? "e.g. Main Hall A" : "e.g. NICU ➔ Pediatric Ward"
                     }
                   />
                 </div>
@@ -796,34 +797,34 @@ export default function TrainingDirectorDashboard() {
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>
                       {editFields.category === "outside" ? "Duration" :
-                       editFields.category === "inside" ? "Duration" : "Timeline"}
+                        editFields.category === "inside" ? "Duration" : "Timeline"}
                     </label>
-                    <input 
-                      type="text" 
-                      className="input-pill" 
-                      style={{ width: '100%', marginTop: '5px' }} 
-                      value={editFields.duration || ''} 
-                      onChange={e => setEditFields(prev => ({ ...prev, duration: e.target.value }))} 
+                    <input
+                      type="text"
+                      className="input-pill"
+                      style={{ width: '100%', marginTop: '5px' }}
+                      value={editFields.duration || ''}
+                      onChange={e => setEditFields(prev => ({ ...prev, duration: e.target.value }))}
                       placeholder={
                         editFields.category === "outside" ? "e.g. 3 Days" :
-                        editFields.category === "inside" ? "e.g. 4 Hours" : "e.g. Starts: 2026-06-01"
+                          editFields.category === "inside" ? "e.g. 4 Hours" : "e.g. Starts: 2026-06-01"
                       }
                     />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>
                       {editFields.category === "outside" ? "Cost / Fees" :
-                       editFields.category === "inside" ? "Notes / Status" : "Current Status"}
+                        editFields.category === "inside" ? "Notes / Status" : "Current Status"}
                     </label>
-                    <input 
-                      type="text" 
-                      className="input-pill" 
-                      style={{ width: '100%', marginTop: '5px' }} 
-                      value={editFields.costOrStatus || ''} 
-                      onChange={e => setEditFields(prev => ({ ...prev, costOrStatus: e.target.value }))} 
+                    <input
+                      type="text"
+                      className="input-pill"
+                      style={{ width: '100%', marginTop: '5px' }}
+                      value={editFields.costOrStatus || ''}
+                      onChange={e => setEditFields(prev => ({ ...prev, costOrStatus: e.target.value }))}
                       placeholder={
                         editFields.category === "outside" ? "e.g. $450" :
-                        editFields.category === "inside" ? "e.g. Active" : "e.g. Active"
+                          editFields.category === "inside" ? "e.g. Active" : "e.g. Active"
                       }
                     />
                   </div>
@@ -849,7 +850,7 @@ export default function TrainingDirectorDashboard() {
       <div className="main training-dashboard-container" style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
 
 
-{/* Loading State */}
+        {/* Loading State */}
         {loading && !dashboardData ? (
           <div style={{ textAlign: 'center', padding: '100px 0' }}>
             <Loader className="spin" size={40} color="var(--accent-blue)" />
@@ -887,10 +888,9 @@ export default function TrainingDirectorDashboard() {
                 <h1>{dashboardData?.stats?.totalTrained || 0}</h1>
               </div>
 
-              <div className={`glass-card ${
-                Number(dashboardData?.stats?.compliance) >= 80 ? 'green' :
+              <div className={`glass-card ${Number(dashboardData?.stats?.compliance) >= 80 ? 'green' :
                 Number(dashboardData?.stats?.compliance) >= 50 ? 'yellow' : 'red'
-              }`}>
+                }`}>
                 <p><CheckCircle size={22} /> Compliance</p>
                 <h1>{dashboardData?.stats?.compliance || 0}%</h1>
               </div>
@@ -1013,7 +1013,7 @@ export default function TrainingDirectorDashboard() {
               <div className="table-box content-box" style={{ flex: 1 }}>
                 <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h2 className="content-box-title">Training Needs Analysis</h2>
-                  <button 
+                  <button
                     onClick={() => navigate('/training/needs-analysis')}
                     style={{
                       fontSize: "11px",
@@ -1074,9 +1074,9 @@ export default function TrainingDirectorDashboard() {
               <div className="box-header">
                 <h2 className="content-box-title">Competency Assessment</h2>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <select 
-                    className="input-pill" 
-                    value={ccaUnitFilter} 
+                  <select
+                    className="input-pill"
+                    value={ccaUnitFilter}
                     onChange={(e) => setCcaUnitFilter(e.target.value)}
                     style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
                   >
@@ -1086,9 +1086,9 @@ export default function TrainingDirectorDashboard() {
                     ))}
                   </select>
 
-                  <select 
-                    className="input-pill" 
-                    value={ccaStatusFilter} 
+                  <select
+                    className="input-pill"
+                    value={ccaStatusFilter}
                     onChange={(e) => setCcaStatusFilter(e.target.value)}
                     style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
                   >
@@ -1137,14 +1137,14 @@ export default function TrainingDirectorDashboard() {
                         <div style={{ textAlign: 'center' }}>{c.specialty}</div>
                         <div style={{ textAlign: 'center' }}>{c.competency}</div>
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
-                          <span 
-                            className={`status ${getStatusClass(c.status)}`} 
-                            style={{ 
-                              fontSize: '11px', 
-                              padding: '4px 12px', 
-                              textAlign: 'center', 
+                          <span
+                            className={`status ${getStatusClass(c.status)}`}
+                            style={{
+                              fontSize: '11px',
+                              padding: '4px 12px',
+                              textAlign: 'center',
                               display: 'inline-block',
-                              width: 'fit-content' 
+                              width: 'fit-content'
                             }}
                           >
                             {c.status}
@@ -1159,10 +1159,10 @@ export default function TrainingDirectorDashboard() {
                     const matchesStatus = ccaStatusFilter === "All" || (c.status && c.status.toLowerCase().trim() === ccaStatusFilter.toLowerCase().trim());
                     return matchesUnit && matchesStatus;
                   })).length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
-                      No matching assessments found.
-                    </div>
-                  )}
+                      <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
+                        No matching assessments found.
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
@@ -1261,9 +1261,9 @@ export default function TrainingDirectorDashboard() {
               <div className="box-header">
                 <h2 className="content-box-title">Onboarding & Orientation Tracker</h2>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <select 
-                    className="input-pill" 
-                    value={obRoleFilter} 
+                  <select
+                    className="input-pill"
+                    value={obRoleFilter}
                     onChange={(e) => setObRoleFilter(e.target.value)}
                     style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
                   >
@@ -1273,9 +1273,9 @@ export default function TrainingDirectorDashboard() {
                     ))}
                   </select>
 
-                  <select 
-                    className="input-pill" 
-                    value={obPreceptorFilter} 
+                  <select
+                    className="input-pill"
+                    value={obPreceptorFilter}
                     onChange={(e) => setObPreceptorFilter(e.target.value)}
                     style={{ height: '32px', fontSize: '12px', padding: '0 12px', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer' }}
                   >
@@ -1322,14 +1322,14 @@ export default function TrainingDirectorDashboard() {
                           <div style={{ width: '100%' }}>{renderProgressBar(o.progress)}</div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
-                          <span 
-                            className={`status ${o.evalScore === 'Pending' ? 'pending' : 'approved'}`} 
-                            style={{ 
-                              fontSize: '11px', 
-                              padding: '4px 12px', 
-                              textAlign: 'center', 
+                          <span
+                            className={`status ${o.evalScore === 'Pending' ? 'pending' : 'approved'}`}
+                            style={{
+                              fontSize: '11px',
+                              padding: '4px 12px',
+                              textAlign: 'center',
                               display: 'inline-block',
-                              width: 'fit-content' 
+                              width: 'fit-content'
                             }}
                           >
                             {o.evalScore}
@@ -1342,10 +1342,10 @@ export default function TrainingDirectorDashboard() {
                     const matchesPreceptor = obPreceptorFilter === "All" || (o.preceptor && o.preceptor.toLowerCase().trim() === obPreceptorFilter.toLowerCase().trim());
                     return matchesRole && matchesPreceptor;
                   })).length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
-                      No onboarding records found.
-                    </div>
-                  )}
+                      <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
+                        No onboarding records found.
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
@@ -1356,7 +1356,7 @@ export default function TrainingDirectorDashboard() {
               <div className="table-box content-box" style={{ flex: 1 }}>
                 <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h2 className="content-box-title">Learning Outcomes</h2>
-                  <button 
+                  <button
                     onClick={() => navigate('/training/learning-outcomes')}
                     style={{
                       fontSize: "11px",
@@ -1376,17 +1376,17 @@ export default function TrainingDirectorDashboard() {
                 <p style={{ fontSize: "11px", color: "#8ea2b5", marginTop: "8px", marginBottom: "10px" }}>Pre vs. Post Test Scores (%)</p>
                 <div style={{ flex: 1, minHeight: '180px' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={dashboardData?.learningOutcomes && dashboardData.learningOutcomes.length > 0 
-                        ? dashboardData.learningOutcomes.map(item => ({ ...item, course: getShortName(item.course) })) 
-                        : defaultEffectivenessFallback} 
+                    <BarChart
+                      data={dashboardData?.learningOutcomes && dashboardData.learningOutcomes.length > 0
+                        ? dashboardData.learningOutcomes.map(item => ({ ...item, course: getShortName(item.course) }))
+                        : defaultEffectivenessFallback}
                       margin={{ top: 5, right: 5, left: -25, bottom: 35 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                      <XAxis 
-                        dataKey="course" 
-                        tick={{ fontSize: 8, fill: "var(--text-secondary)" }} 
-                        axisLine={false} 
+                      <XAxis
+                        dataKey="course"
+                        tick={{ fontSize: 8, fill: "var(--text-secondary)" }}
+                        axisLine={false}
                         tickLine={false}
                         interval={0}
                         angle={-35}
@@ -1407,7 +1407,7 @@ export default function TrainingDirectorDashboard() {
               <div className="table-box content-box" style={{ flex: 1 }}>
                 <div className="box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                   <h2 className="content-box-title" style={{ fontSize: '15px', marginBottom: 0 }}>Staff Participation & Attendance</h2>
-                  <button 
+                  <button
                     onClick={() => navigate('/training/participation')}
                     style={{
                       fontSize: "10px",
@@ -1431,7 +1431,7 @@ export default function TrainingDirectorDashboard() {
                   const programs = dashboardData?.programs || [];
                   const courseNames = [...new Set(programs.map(p => p.training_name))].filter(Boolean).sort();
                   const activeCourse = selectedCourse || courseNames[0] || 'BLS';
-                  
+
                   const stats = dashboardData?.participationStats?.[activeCourse] || {
                     overallNoShowRate: 4.2,
                     avgHrsPerStaff: 8.5,
@@ -1481,19 +1481,19 @@ export default function TrainingDirectorDashboard() {
                         <div style={{ height: "110px" }}>
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={displayedUnitData} margin={{ top: 5, right: 0, left: -30, bottom: 0 }}>
-                              <XAxis 
-                                dataKey="unit" 
-                                interval={0} 
-                                tick={{ fontSize: 9 }} 
+                              <XAxis
+                                dataKey="unit"
+                                interval={0}
+                                tick={{ fontSize: 9 }}
                                 height={30}
                                 angle={0}
                                 textAnchor="middle"
-                                axisLine={false} 
-                                tickLine={false} 
+                                axisLine={false}
+                                tickLine={false}
                               />
                               <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                               <Tooltip cursor={{ fill: "rgba(0,0,0,0.05)" }} formatter={(val) => [val + "%", "No-Show Rate"]} />
-                              <Bar dataKey="rate" fill="#f29d91" radius={[4,4,0,0]} barSize={28} />
+                              <Bar dataKey="rate" fill="#f29d91" radius={[4, 4, 0, 0]} barSize={28} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
@@ -1507,9 +1507,9 @@ export default function TrainingDirectorDashboard() {
               <div className="table-box content-box" style={{ flex: 1 }}>
                 <div className="box-header" style={{ marginBottom: "10px" }}>
                   <h2 className="content-box-title">Training Programs</h2>
-                  <button 
-                    className="icon-btn-small" 
-                    title="Add Program Item" 
+                  <button
+                    className="icon-btn-small"
+                    title="Add Program Item"
                     onClick={() => handleEditClick("add_program_item", "new", { category: activeProgramTab })}
                   >
                     <Plus size={16} />
@@ -1524,7 +1524,7 @@ export default function TrainingDirectorDashboard() {
                 <div style={{ background: "rgba(0,0,0,0.02)", borderRadius: "8px", padding: "10px 12px", flex: 1, maxHeight: '220px', overflowY: 'auto' }}>
                   <h4 style={{ fontSize: "14px", color: "#243647", marginBottom: "10px", textTransform: "capitalize" }}>
                     {activeProgramTab === "outside" ? "Recent Outside Programs" :
-                     activeProgramTab === "inside" ? "Internal Workshops" : "Cross-Training Deployments"}
+                      activeProgramTab === "inside" ? "Internal Workshops" : "Cross-Training Deployments"}
                   </h4>
                   {((dashboardData?.programItems || []).filter(item => item.category === activeProgramTab)).length === 0 ? (
                     <p style={{ fontSize: "13px", color: "#8ea2b5", fontStyle: "italic", textAlign: "center", marginTop: "30px" }}>
@@ -1533,16 +1533,16 @@ export default function TrainingDirectorDashboard() {
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {((dashboardData?.programItems || []).filter(item => item.category === activeProgramTab)).map(item => (
-                        <div 
-                          key={item.id} 
-                          style={{ 
-                            display: "flex", 
-                            justifyContent: "space-between", 
-                            alignItems: "center", 
-                            background: "#fff", 
-                            padding: "10px 12px", 
-                            borderRadius: "6px", 
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.05)" 
+                        <div
+                          key={item.id}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            background: "#fff",
+                            padding: "10px 12px",
+                            borderRadius: "6px",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
                           }}
                         >
                           <div style={{ fontSize: "12px", color: "#5a738e", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -1556,8 +1556,8 @@ export default function TrainingDirectorDashboard() {
                               <span style={{ color: "#8ea2b5", marginLeft: "5px" }}>({item.duration})</span>
                             )}
                             {item.costOrStatus && (
-                              <span style={{ 
-                                marginLeft: "8px", 
+                              <span style={{
+                                marginLeft: "8px",
                                 background: activeProgramTab === "outside" ? "rgba(46, 204, 113, 0.1)" : "rgba(52, 152, 219, 0.1)",
                                 color: activeProgramTab === "outside" ? "#2ecc71" : "#3498db",
                                 padding: "2px 6px",
@@ -1570,10 +1570,10 @@ export default function TrainingDirectorDashboard() {
                             )}
                           </div>
                           <div style={{ display: "flex", gap: "5px" }}>
-                            <button 
-                              className="icon-btn-small" 
-                              style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} 
-                              title="Edit Program" 
+                            <button
+                              className="icon-btn-small"
+                              style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                              title="Edit Program"
                               onClick={() => handleEditClick("program_item", item.id, {
                                 category: item.category,
                                 title: item.title,
@@ -1584,10 +1584,10 @@ export default function TrainingDirectorDashboard() {
                             >
                               <Edit size={13} color="var(--accent-blue)" />
                             </button>
-                            <button 
-                              className="icon-btn-small" 
-                              style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }} 
-                              title="Delete Program" 
+                            <button
+                              className="icon-btn-small"
+                              style={{ padding: '2px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                              title="Delete Program"
                               onClick={() => handleDeleteProgram(item.id)}
                             >
                               <Trash2 size={13} color="#e74c3c" />
@@ -1608,13 +1608,13 @@ export default function TrainingDirectorDashboard() {
                   <BookOpen size={18} color="var(--accent-blue)" />
                   <h2 className="content-box-title">Nursing Intern Management</h2>
                   {selectedInternType !== "All" && (
-                    <span 
-                      style={{ 
-                        fontSize: '11px', 
-                        background: 'rgba(59, 130, 246, 0.1)', 
-                        color: 'var(--accent-blue)', 
-                        padding: '4px 10px', 
-                        borderRadius: '12px', 
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        color: 'var(--accent-blue)',
+                        padding: '4px 10px',
+                        borderRadius: '12px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -1636,14 +1636,14 @@ export default function TrainingDirectorDashboard() {
 
                 {/* Intern Stats (Filter triggers) */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <div 
+                  <div
                     className="intern-filter-card"
-                    style={{ 
-                      background: "rgba(96, 130, 230, 0.1)", 
-                      padding: "15px", 
-                      borderRadius: "8px", 
-                      display: "flex", 
-                      justifyContent: "space-between", 
+                    style={{
+                      background: "rgba(96, 130, 230, 0.1)",
+                      padding: "15px",
+                      borderRadius: "8px",
+                      display: "flex",
+                      justifyContent: "space-between",
                       alignItems: "center",
                       border: selectedInternType === "IAU" ? "2px solid #6082e6" : "2px solid transparent",
                       opacity: selectedInternType !== "All" && selectedInternType !== "IAU" ? 0.5 : 1,
@@ -1653,14 +1653,14 @@ export default function TrainingDirectorDashboard() {
                     <span style={{ fontWeight: 500, color: "#4a6a85" }}>IAU Interns</span>
                     <span style={{ fontSize: "20px", fontWeight: "bold", color: "#6082e6" }}>{iauCount}</span>
                   </div>
-                  <div 
+                  <div
                     className="intern-filter-card"
-                    style={{ 
-                      background: "rgba(156, 181, 241, 0.1)", 
-                      padding: "15px", 
-                      borderRadius: "8px", 
-                      display: "flex", 
-                      justifyContent: "space-between", 
+                    style={{
+                      background: "rgba(156, 181, 241, 0.1)",
+                      padding: "15px",
+                      borderRadius: "8px",
+                      display: "flex",
+                      justifyContent: "space-between",
                       alignItems: "center",
                       border: selectedInternType === "Non-IAU" ? "2px solid #9cb5f1" : "2px solid transparent",
                       opacity: selectedInternType !== "All" && selectedInternType !== "Non-IAU" ? 0.5 : 1,
@@ -1670,14 +1670,14 @@ export default function TrainingDirectorDashboard() {
                     <span style={{ fontWeight: 500, color: "#4a6a85" }}>Non-IAU Interns</span>
                     <span style={{ fontSize: "20px", fontWeight: "bold", color: "#9cb5f1" }}>{nonIauCount}</span>
                   </div>
-                  <div 
+                  <div
                     className="intern-filter-card"
-                    style={{ 
-                      background: "rgba(242, 157, 145, 0.1)", 
-                      padding: "15px", 
-                      borderRadius: "8px", 
-                      display: "flex", 
-                      justifyContent: "space-between", 
+                    style={{
+                      background: "rgba(242, 157, 145, 0.1)",
+                      padding: "15px",
+                      borderRadius: "8px",
+                      display: "flex",
+                      justifyContent: "space-between",
                       alignItems: "center",
                       border: selectedInternType === "Summer" ? "2px solid #f29d91" : "2px solid transparent",
                       opacity: selectedInternType !== "All" && selectedInternType !== "Summer" ? 0.5 : 1,
@@ -1724,8 +1724,8 @@ export default function TrainingDirectorDashboard() {
                           <div style={{ textAlign: 'center' }}>{req.university}</div>
                           <div style={{ color: "var(--text-secondary)", textAlign: 'center' }}>{req.program}</div>
                           <div style={{ color: "var(--text-secondary)", fontSize: "11px", textAlign: 'center' }}>
-                            {req.startDate && req.endDate 
-                              ? `${req.startDate} to ${req.endDate}` 
+                            {req.startDate && req.endDate
+                              ? `${req.startDate} to ${req.endDate}`
                               : req.startDate || req.endDate || "—"}
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -1855,12 +1855,12 @@ export default function TrainingDirectorDashboard() {
                   </>
                 )}
               </div>
-              
+
               <div className="nurses-list" style={{ maxHeight: '350px', overflowY: 'auto' }}>
                 {filteredRegistry.map((comp) => {
                   let statusCol;
                   let actionCol = null;
-                  
+
                   if (selectedTraineeId === "All") {
                     statusCol = (
                       <span style={{ fontWeight: 'bold', color: comp.completedCount > 0 ? 'var(--accent-blue)' : '#7f8c8d' }}>
@@ -1876,8 +1876,8 @@ export default function TrainingDirectorDashboard() {
                     );
                     actionCol = (
                       <div style={{ display: "flex", justifyContent: "flex-end", paddingRight: "10px" }}>
-                        <button 
-                          className="icon-btn-small" 
+                        <button
+                          className="icon-btn-small"
                           title="Edit Competency Status"
                           style={{ padding: "4px", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center" }}
                           onClick={() => handleEditCompetencyRow(comp)}
@@ -1889,9 +1889,9 @@ export default function TrainingDirectorDashboard() {
                   }
 
                   return (
-                    <div 
-                      className="nurse-card premium-row" 
-                      key={comp.id} 
+                    <div
+                      className="nurse-card premium-row"
+                      key={comp.id}
                       style={{ gridTemplateColumns: selectedTraineeId === "All" ? '2.5fr 1.2fr 1.2fr 1.5fr' : '2.5fr 1.2fr 1.2fr 1.2fr 0.5fr' }}
                     >
                       <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{comp.name}</div>

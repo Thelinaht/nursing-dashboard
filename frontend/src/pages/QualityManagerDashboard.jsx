@@ -384,6 +384,7 @@ export default function QualityManagerDashboard() {
     return (
         <Layout role="qualityManager" username={JSON.parse(sessionStorage.getItem("user") || "{}")?.full_name || "Quality Manager"}>
             <div className="qd-main">
+                <SurveyBanner />
 
                 {/* ── Header ── */}
                 <div className="qd-page-header">
@@ -391,7 +392,6 @@ export default function QualityManagerDashboard() {
                     {error && <p style={{ color: COLORS.red, fontSize: 13, marginTop: 6 }}>⚠ {error}</p>}
                 </div>
 
-                <SurveyBanner />
 
 
                 {/* ── Period Filter Bar ── */}
