@@ -175,40 +175,38 @@ export default function StaffDirectory() {
 
                 {/* Staff List Table */}
                 <div className="table-box content-box">
-                    <div className="box-header" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '15px' }}>
-                        <h2 className="content-box-title">Nursing Staff Detailed Information</h2>
+                    <div className="table-header-row" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '15px', marginBottom: '16px' }}>
+                        <h2 className="table-title">Nursing Staff Detailed Information</h2>
                     </div>
 
-                    <div className="custom-table" style={{ marginTop: '20px' }}>
-                        <div className="table-header" style={{ gridTemplateColumns: '1.5fr 1fr 1.2fr 1fr 1fr' }}>
-                            <span>Name</span>
-                            <span>Iqama / ID</span>
-                            <span>Job Title</span>
-                            <span>Unit</span>
-                            <span>Status</span>
-                        </div>
-                        <div className="table-body">
-                            {loading ? (
-                                <div style={{ textAlign: 'center', padding: '50px', color: '#8ea2b5' }}>Loading staff data...</div>
-                            ) : filteredNurses.length > 0 ? filteredNurses.map((nurse) => (
-                                <div
-                                    key={nurse.user_id}
-                                    className="table-row premium-row"
-                                    style={{ gridTemplateColumns: '1.5fr 1fr 1.2fr 1fr 1fr', cursor: 'pointer', marginBottom: '8px' }}
-                                    onClick={() => navigate(`/nurse/${nurse.user_id}`)}
-                                >
-                                    <span style={{ fontWeight: 800, color: '#2c3e50' }}>{nurse.full_name}</span>
-                                    <span style={{ color: '#5a738e' }}>{nurse.national_id_iqama}</span>
-                                    <span>{nurse.job_title}</span>
-                                    <span>{nurse.unit}</span>
-                                    <span className={`status ${nurse.status?.toLowerCase().replace(" ", "-")}`} style={{ width: 'fit-content' }}>
-                                        {nurse.status}
-                                    </span>
-                                </div>
-                            )) : (
-                                <div style={{ textAlign: 'center', padding: '50px', color: '#8ea2b5' }}>No staff members found matching your criteria.</div>
-                            )}
-                        </div>
+                    <div className="list-header" style={{ gridTemplateColumns: '1.5fr 1fr 1.2fr 1fr 1fr' }}>
+                        <span>Name</span>
+                        <span>Iqama / ID</span>
+                        <span>Job Title</span>
+                        <span>Unit</span>
+                        <span>Status</span>
+                    </div>
+                    <div className="nurses-list">
+                        {loading ? (
+                            <div style={{ textAlign: 'center', padding: '50px', color: '#8ea2b5' }}>Loading staff data...</div>
+                        ) : filteredNurses.length > 0 ? filteredNurses.map((nurse) => (
+                            <div
+                                key={nurse.user_id}
+                                className="nurse-card premium-row"
+                                style={{ gridTemplateColumns: '1.5fr 1fr 1.2fr 1fr 1fr', cursor: 'pointer' }}
+                                onClick={() => navigate(`/nurse/${nurse.user_id}`)}
+                            >
+                                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{nurse.full_name}</div>
+                                <div style={{ color: '#5a738e' }}>{nurse.national_id_iqama}</div>
+                                <div>{nurse.job_title}</div>
+                                <div>{nurse.unit}</div>
+                                <span className={`status ${nurse.status?.toLowerCase().replace(" ", "-")}`}>
+                                    {nurse.status}
+                                </span>
+                            </div>
+                        )) : (
+                            <div style={{ textAlign: 'center', padding: '50px', color: '#8ea2b5' }}>No staff members found matching your criteria.</div>
+                        )}
                     </div>
                 </div>
             </div>

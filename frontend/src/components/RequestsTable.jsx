@@ -38,6 +38,8 @@ export default function RequestsTable({
     onRefresh,
     showHistory,
     onToggleHistory,
+    className = "",
+    style = {},
 }) {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
@@ -71,11 +73,11 @@ export default function RequestsTable({
     return (
         <>
             {/* Card wrapper */}
-            <div className="content-box" style={{ padding: "24px" }}>
+            <div className={`content-box ${className}`} style={{ padding: "24px", ...style }}>
 
                 {/* Top bar */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                    <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "var(--text-primary)" }}>
+                    <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "var(--text-primary)" }}>
                         {showHistory ? "All Requests" : "Pending Requests Management"}
                     </h3>
                     <button className="rd-primary-btn" onClick={onToggleHistory}>
@@ -89,34 +91,34 @@ export default function RequestsTable({
                     <table className="rd-table">
                         <thead>
                             <tr className="rd-thead-row">
-                                <th className="rd-th-sticky">Staff Name</th>
-                                <th className="rd-th-sticky">Request Type</th>
-                                <th className="rd-th-sticky">Submitted On</th>
-                                <th className="rd-th-sticky">Status</th>
-                                <th className="rd-th-sticky">Actions</th>
+                                <th className="rd-th-sticky" style={{ textAlign: "center" }}>Staff Name</th>
+                                <th className="rd-th-sticky" style={{ textAlign: "center" }}>Request Type</th>
+                                <th className="rd-th-sticky" style={{ textAlign: "center" }}>Submitted On</th>
+                                <th className="rd-th-sticky" style={{ textAlign: "center" }}>Status</th>
+                                <th className="rd-th-sticky" style={{ textAlign: "center" }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="rd-empty-td">No requests found.</td>
+                                    <td colSpan={5} className="rd-empty-td" style={{ textAlign: "center" }}>No requests found.</td>
                                 </tr>
                             ) : filtered.map(req => (
                                 <tr className="rd-tr" key={req.request_id}>
-                                    <td className="rd-td rd-td--title">{req.full_name || `Nurse #${req.nurse_id}`}</td>
-                                    <td className="rd-td">{req.request_type}</td>
-                                    <td className="rd-td">
+                                    <td className="rd-td rd-td--title" style={{ textAlign: "center" }}>{req.full_name || `Nurse #${req.nurse_id}`}</td>
+                                    <td className="rd-td" style={{ textAlign: "center" }}>{req.request_type}</td>
+                                    <td className="rd-td" style={{ textAlign: "center" }}>
                                         {req.submission_date
                                             ? new Date(req.submission_date).toLocaleDateString("en-GB")
                                             : "–"}
                                     </td>
-                                    <td className="rd-td">
+                                    <td className="rd-td" style={{ textAlign: "center" }}>
                                         <span className={STATUS_BADGE[req.current_status] || "rd-badge rd-badge-amber"}>
                                             {STATUS_LABELS[req.current_status] || req.current_status}
                                         </span>
                                     </td>
-                                    <td className="rd-td">
-                                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                    <td className="rd-td" style={{ textAlign: "center" }}>
+                                        <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center" }}>
                                             <button className="rd-edit-btn" onClick={() => viewTrail(req)}>
                                                 View
                                             </button>

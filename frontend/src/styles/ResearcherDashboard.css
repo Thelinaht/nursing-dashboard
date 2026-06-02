@@ -88,6 +88,8 @@
     padding: 3px 10px;
     border-radius: 20px;
     flex-shrink: 0;
+    white-space: nowrap;
+    display: inline-block;
 }
 
 .rd-badge-green {

@@ -13,6 +13,7 @@ import autoTable from "jspdf-autotable";
 import Layout from "../components/Layout";
 import "../styles/DirectorDashboard.css";
 import "../styles/TrainingDirectorDashboard.css";
+import "../styles/ResearcherDashboard.css";
 
 // Helper to shorten course names for chart display
 const getShortName = (name) => {
@@ -325,21 +326,14 @@ export default function LearningOutcomesDetails() {
                 </div>
 
                 {/* Score Chart Card */}
-                <div className="table-box content-box" style={{ padding: "25px", marginBottom: "25px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
-                        <div>
-                            <h2 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
-                                {chartMetric === "scores" 
-                                    ? (isSingleCourse ? `Score Averages by Unit — ${selectedCourse}` : "Average Test Scores by Training Program")
-                                    : (isSingleCourse ? `Staff Count by Unit — ${selectedCourse}` : "Staff Count by Training Program")}
-                            </h2>
-                            <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
-                                {chartMetric === "scores" 
-                                    ? "Displays dynamic pre-test vs. post-test comparisons based on filter criteria."
-                                    : "Displays the number of graded staff members based on filter criteria."}
-                            </p>
-                        </div>
-                        <div className="no-print" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <div className="rd-card" style={{ marginBottom: '25px', width: '100%' }}>
+                    <div className="rd-card-header">
+                        <p className="rd-card-title">
+                            {chartMetric === "scores" 
+                                ? (isSingleCourse ? `Score Averages by Unit — ${selectedCourse}` : "Average Test Scores by Training Program")
+                                : (isSingleCourse ? `Staff Count by Unit — ${selectedCourse}` : "Staff Count by Training Program")}
+                        </p>
+                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                             {/* Metric Toggle */}
                             <div style={{ display: 'flex', background: 'rgba(0,0,0,0.06)', borderRadius: '8px', padding: '3px', gap: '2px' }}>
                                 <button
@@ -347,8 +341,8 @@ export default function LearningOutcomesDetails() {
                                     style={{
                                         padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
                                         cursor: 'pointer', transition: 'all 0.2s',
-                                        background: chartMetric === 'scores' ? 'var(--accent-blue)' : 'transparent',
-                                        color: chartMetric === 'scores' ? 'white' : 'var(--text-secondary)'
+                                        background: chartMetric === 'scores' ? '#2f3e55' : 'transparent',
+                                        color: chartMetric === 'scores' ? 'white' : '#5a6f87'
                                     }}
                                 >Scores</button>
                                 <button
@@ -356,29 +350,55 @@ export default function LearningOutcomesDetails() {
                                     style={{
                                         padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
                                         cursor: 'pointer', transition: 'all 0.2s',
-                                        background: chartMetric === 'staffCount' ? 'var(--accent-blue)' : 'transparent',
-                                        color: chartMetric === 'staffCount' ? 'white' : 'var(--text-secondary)'
+                                        background: chartMetric === 'staffCount' ? '#2f3e55' : 'transparent',
+                                        color: chartMetric === 'staffCount' ? 'white' : '#5a6f87'
                                     }}
                                 >Staff Count</button>
                             </div>
                             <button 
                                 onClick={generatePDF} 
-                                className="icon-btn-small" 
-                                style={{ padding: "8px 15px", border: "1px solid #dde3ea", display: "flex", alignItems: "center", gap: "6px", background: "var(--accent-blue)", color: "white", fontWeight: 600 }}
+                                className="rd-primary-btn" 
+                                style={{ display: "flex", alignItems: "center", gap: "6px" }}
                             >
                                 <Download size={14} /> Generate Report
                             </button>
                         </div>
                     </div>
+                    <p className="rd-chart-subtitle">
+                        {chartMetric === "scores" 
+                            ? "Displays dynamic pre-test vs. post-test comparisons based on filter criteria."
+                            : "Displays the number of graded staff members based on filter criteria."}
+                    </p>
+                    
+                    {chartMetric === "scores" && (
+                        <div className="rd-legend-row">
+                            <span className="rd-legend-item">
+                                <span className="rd-legend-dot" style={{ background: "#5a6f87" }} />
+                                Pre-Test
+                            </span>
+                            <span className="rd-legend-item">
+                                <span className="rd-legend-dot" style={{ background: "#9fb3cc" }} />
+                                Post-Test
+                            </span>
+                        </div>
+                    )}
+                    {chartMetric === "staffCount" && (
+                        <div className="rd-legend-row">
+                            <span className="rd-legend-item">
+                                <span className="rd-legend-dot" style={{ background: "#5a6f87" }} />
+                                Staff Count
+                            </span>
+                        </div>
+                    )}
 
-                    <div style={{ height: "350px", width: "100%" }}>
+                    <div className="rd-chart-box">
                         {chartData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 40 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(90,111,135,0.1)" />
                                     <XAxis 
                                         dataKey="label" 
-                                        tick={{ fontSize: 10, fill: "var(--text-secondary)" }}
+                                        tick={{ fontSize: 11, fill: "#5a6f87" }}
                                         interval={0}
                                         angle={-20}
                                         textAnchor="end"
@@ -391,27 +411,27 @@ export default function LearningOutcomesDetails() {
                                         tickFormatter={(val) => chartMetric === "scores" ? `${val}%` : val}
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 11, fill: "var(--text-secondary)" }}
+                                        tick={{ fontSize: 11, fill: "#5a6f87" }}
                                     />
                                     <Tooltip 
+                                        cursor={{ fill: 'rgba(90,111,135,0.05)' }}
                                         formatter={(val) => chartMetric === "scores" ? [`${val}%`] : [`${val}`, "Staff Count"]}
-                                        contentStyle={{ borderRadius: "8px", border: "1px solid #dde3ea" }}
+                                        contentStyle={{ borderRadius: '8px', border: 'none', background: '#2f3e55', color: 'white', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                                        labelStyle={{ color: 'white' }}
+                                        itemStyle={{ color: 'rgba(255,255,255,0.85)' }}
                                     />
-                                    <Legend />
                                     {chartMetric === "scores" ? (
                                         <>
-                                            <Bar dataKey="preTest" name="Pre-Test" fill="#9cb5f1" radius={[4, 4, 0, 0]} />
-                                            <Bar dataKey="postTest" name="Post-Test" fill="#6082e6" radius={[4, 4, 0, 0]} />
+                                            <Bar dataKey="preTest" name="Pre-Test" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30} />
+                                            <Bar dataKey="postTest" name="Post-Test" fill="#9fb3cc" radius={[4, 4, 0, 0]} barSize={30} />
                                         </>
                                     ) : (
-                                        <Bar dataKey="staffCount" name="Staff Count" fill="#6082e6" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="staffCount" name="Staff Count" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30} />
                                     )}
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", color: "var(--text-secondary)" }}>
-                                No score data to plot.
-                            </div>
+                            <div className="rd-chart-empty">No score data to plot.</div>
                         )}
                     </div>
                 </div>

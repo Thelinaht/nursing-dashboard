@@ -7,7 +7,7 @@ import autoTable from "jspdf-autotable";
 import {
   PieChart, Pie, Cell, Tooltip as PieTooltip, Legend as PieLegend, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as LineTooltip, Legend as LineLegend,
-  BarChart, Bar, Tooltip as BarTooltip
+  BarChart, Bar, Tooltip as BarTooltip, Legend
 } from "recharts";
 import Layout from "../components/Layout";
 // Import supervisor core styles to guarantee layout works!
@@ -45,6 +45,39 @@ const requestStatusData = [
   { status: "Under Review", count: 8, color: "#2196f3" },
   { status: "Declined", count: 5, color: "#e53935" }
 ];
+
+// Helper to shorten course names for chart display
+const getShortName = (name) => {
+    if (!name) return "";
+    const mappings = {
+        "Advanced Ventilator Operations": "Adv. Ventilator",
+        "Aseptic Technique & Sterilization": "Aseptic Tech",
+        "Medication Safety Program": "Med. Safety",
+        "Triage Protocols & Rapid Assessment": "Triage Protocols",
+        "Ventilator Management": "Vent. Mgmt",
+        "Fire and Safety": "Fire & Safety",
+        "Infection Control": "Infection Ctrl"
+    };
+    return mappings[name] || name;
+};
+
+const ALL_BARS = ["projects", "publications", "conferences"];
+
+const renderCompactBar = (color, key) => (props) => {
+    const { x, y, width: W, height: H, payload } = props;
+    if (!payload || !payload[key] || payload[key] === 0 || H <= 0) return null;
+    const slot = ALL_BARS.indexOf(key);
+    const naturalCenter = x + W / 2;
+    const groupCenter = naturalCenter - (slot - 1) * W;
+    const visible = ALL_BARS.filter(k => payload[k] && payload[k] > 0);
+    const myVisibleIndex = visible.indexOf(key);
+    const visibleCount = visible.length;
+    const newCenter = groupCenter + (myVisibleIndex - (visibleCount - 1) / 2) * W;
+    const newX = newCenter - W / 2;
+    const r = Math.min(4, H, W / 2);
+    const d = `M ${newX},${y + H} L ${newX},${y + r} Q ${newX},${y} ${newX + r},${y} L ${newX + W - r},${y} Q ${newX + W},${y} ${newX + W},${y + r} L ${newX + W},${y + H} Z`;
+    return <path d={d} fill={color} />;
+};
 
 export default function DirectorDashboard() {
   const navigate = useNavigate();
@@ -93,6 +126,48 @@ export default function DirectorDashboard() {
   const [researchLoading, setResearchLoading] = useState(true);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportYear, setReportYear] = useState("all");
+
+  const [trainingData, setTrainingData] = useState(null);
+  const [gapFilter, setGapFilter] = useState("All");
+
+  const needs = trainingData?.needsAnalysis || { competencyGaps: [] };
+  const competencyGaps = needs.competencyGaps || [];
+  const filteredGaps = competencyGaps.filter(d => {
+      let matchesFilter = true;
+      if (gapFilter === "High") matchesFilter = d.gapLevel === "High Gap";
+      else if (gapFilter === "Med") matchesFilter = d.gapLevel === "Med Gap";
+      else if (gapFilter === "Low") matchesFilter = d.gapLevel === "Low Gap";
+      return matchesFilter;
+  });
+
+  const [chartMetric, setChartMetric] = useState("scores"); // "scores" | "staffCount"
+  const allScores = trainingData?.allTestScores || [];
+  const grouped = {};
+  allScores.forEach(score => {
+      const key = score.course;
+      if (!grouped[key]) {
+          grouped[key] = { label: key, preSum: 0, preCount: 0, postSum: 0, postCount: 0, staffCount: 0 };
+      }
+      const pre = Number(score.preTest);
+      const post = Number(score.postTest);
+      if (!isNaN(pre)) {
+          grouped[key].preSum += pre;
+          grouped[key].preCount += 1;
+      }
+      if (!isNaN(post)) {
+          grouped[key].postSum += post;
+          grouped[key].postCount += 1;
+      }
+      grouped[key].staffCount += 1;
+  });
+
+  const trainingChartData = Object.values(grouped).map(g => ({
+      label: getShortName(g.label),
+      fullName: g.label,
+      preTest: g.preCount > 0 ? Math.round(g.preSum / g.preCount) : 0,
+      postTest: g.postCount > 0 ? Math.round(g.postSum / g.postCount) : 0,
+      staffCount: g.staffCount
+  })).sort((a, b) => chartMetric === "scores" ? b.postTest - a.postTest : b.staffCount - a.staffCount);
 
   const filteredStaffing = inpatientStaffing.filter(row => {
     if (staffingFilter === 'All') return true;
@@ -223,15 +298,15 @@ export default function DirectorDashboard() {
     projects.forEach(p => {
       if (!p.start_date) return;
       const year = new Date(p.start_date).getFullYear();
-      if (!yearMap[year]) yearMap[year] = { year: String(year), projects: 0, publications: 0 };
+      if (!yearMap[year]) yearMap[year] = { year: String(year), projects: 0, publications: 0, conferences: 0 };
       yearMap[year].projects += 1;
     });
     publications.forEach(p => {
       if (!p.date) return;
-      if (p.type !== "Published") return;
       const year = new Date(p.date).getFullYear();
-      if (!yearMap[year]) yearMap[year] = { year: String(year), projects: 0, publications: 0 };
-      yearMap[year].publications += 1;
+      if (!yearMap[year]) yearMap[year] = { year: String(year), projects: 0, publications: 0, conferences: 0 };
+      if (p.type === "Published") yearMap[year].publications += 1;
+      if (p.type === "Presented") yearMap[year].conferences += 1;
     });
     return Object.values(yearMap).sort((a, b) => a.year.localeCompare(b.year));
   })();
@@ -249,6 +324,35 @@ export default function DirectorDashboard() {
     fetchAmbulatoryStaffing();
     fetchResearchData();
     fetchRatioLogs();
+
+    const fetchTrainingData = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/api/training/dashboard/data");
+        const data = await res.json();
+        setTrainingData(data);
+      } catch (err) {
+        console.error("Failed to load needs analysis data", err);
+      }
+    };
+    fetchTrainingData();
+    const trainingInterval = setInterval(fetchTrainingData, 5000);
+
+    const backgroundFetchResearchData = async () => {
+      try {
+        const [projectsRes, pubsRes] = await Promise.all([
+          fetch("http://localhost:4000/api/research/projects"),
+          fetch("http://localhost:4000/api/research/publications")
+        ]);
+        if (projectsRes.ok && pubsRes.ok) {
+          setProjects(await projectsRes.json());
+          setPublications(await pubsRes.json());
+        }
+      } catch (err) {
+        // silent
+      }
+    };
+    const researchInterval = setInterval(backgroundFetchResearchData, 5000);
+
     // Keep your hospital's real-time interaction active!
     socket.on("new_incident", (newIncident) => {
       setIncidents((prev) => [newIncident, ...prev].slice(0, 5)); // Keep latest 5
@@ -260,6 +364,8 @@ export default function DirectorDashboard() {
       socket.off("new_incident");
       socket.off("request_updated");
       socket.off("ratio_log_updated");
+      clearInterval(trainingInterval);
+      clearInterval(researchInterval);
     };
   }, []);
 
@@ -319,7 +425,7 @@ export default function DirectorDashboard() {
     try {
       const res = await fetch("http://localhost:4000/api/nurses");
       const data = await res.json();
-      setStaffList(data.slice(0, 5)); // Show partial list of 5 rows
+      setStaffList(data); // Show all employees in scrollable list
     } catch (err) {
       console.error("Error fetching staff:", err);
     }
@@ -668,7 +774,167 @@ export default function DirectorDashboard() {
             </div>
           </div>
 
+          {/* Heatmap Grid (Competency Gaps by Unit) */}
+          <div className="table-box content-box" style={{ padding: "25px", marginBottom: "25px", width: "100%" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "15px" }}>
+                  <div>
+                      <h2 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
+                          Competency Gaps by Unit (All Units Heatmap)
+                      </h2>
+                      <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
+                          Shows the percentage of incomplete or pending competencies per hospital unit.
+                      </p>
+                  </div>
+                  <div className="no-print" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                      <select 
+                          value={gapFilter}
+                          onChange={e => setGapFilter(e.target.value)}
+                          style={{
+                              fontSize: "13px", 
+                              padding: "8px 12px", 
+                              borderRadius: "8px", 
+                              border: "1px solid #dde3ea", 
+                              background: "rgba(255,255,255,0.75)",
+                              fontWeight: 600
+                          }}
+                      >
+                          <option value="All">All Gaps</option>
+                          <option value="High">High Gaps (≥50%)</option>
+                          <option value="Med">Medium Gaps (15% - 49%)</option>
+                          <option value="Low">Low Gaps (&lt;15%)</option>
+                      </select>
+                  </div>
+              </div>
 
+              <div className="heatmap-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "15px", maxHeight: "400px", overflowY: "auto", paddingRight: "5px" }}>
+                  {filteredGaps.length > 0 ? (
+                      filteredGaps.map((item, index) => (
+                          <div 
+                              key={index} 
+                              className="heatmap-cell" 
+                              style={{ 
+                                  background: item.color, 
+                                  padding: "20px 10px", 
+                                  borderRadius: "12px", 
+                                  textAlign: "center", 
+                                  color: "white", 
+                                  fontWeight: 800, 
+                                  fontSize: "14px",
+                                  boxShadow: "0 4px 6px rgba(0,0,0,0.06)",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "4px"
+                              }}
+                          >
+                              <span style={{ fontSize: "15px" }}>{item.unit}</span>
+                              <span className="heatmap-label" style={{ fontSize: "11px", opacity: 0.9 }}>
+                                  {item.gapLevel} ({item.gapPercent}%)
+                              </span>
+                          </div>
+                      ))
+                  ) : (
+                      <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)", gridColumn: "1 / -1" }}>
+                          No hospital units match the filter criteria.
+                      </div>
+                  )}
+              </div>
+          </div>
+
+          {/* Average Test Scores by Training Program Chart */}
+          <div className="rd-card" style={{ marginBottom: '20px', width: '100%' }}>
+            <div className="rd-card-header">
+              <p className="rd-card-title">Average Test Scores by Training Program</p>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.06)', borderRadius: '8px', padding: '3px', gap: '2px' }}>
+                    <button
+                        onClick={() => setChartMetric("scores")}
+                        style={{
+                            padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
+                            cursor: 'pointer', transition: 'all 0.2s',
+                            background: chartMetric === 'scores' ? '#2f3e55' : 'transparent',
+                            color: chartMetric === 'scores' ? 'white' : '#5a6f87'
+                        }}
+                    >Scores</button>
+                    <button
+                        onClick={() => setChartMetric("staffCount")}
+                        style={{
+                            padding: '5px 14px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 600,
+                            cursor: 'pointer', transition: 'all 0.2s',
+                            background: chartMetric === 'staffCount' ? '#2f3e55' : 'transparent',
+                            color: chartMetric === 'staffCount' ? 'white' : '#5a6f87'
+                        }}
+                    >Staff Count</button>
+                </div>
+              </div>
+            </div>
+            <p className="rd-chart-subtitle">
+              Displays dynamic pre-test vs. post-test comparisons based on filter criteria.
+            </p>
+            {chartMetric === "scores" && (
+                <div className="rd-legend-row">
+                  <span className="rd-legend-item">
+                    <span className="rd-legend-dot" style={{ background: "#5a6f87" }} />
+                    Pre-Test
+                  </span>
+                  <span className="rd-legend-item">
+                    <span className="rd-legend-dot" style={{ background: "#9fb3cc" }} />
+                    Post-Test
+                  </span>
+                </div>
+            )}
+            {chartMetric === "staffCount" && (
+                <div className="rd-legend-row">
+                  <span className="rd-legend-item">
+                    <span className="rd-legend-dot" style={{ background: "#5a6f87" }} />
+                    Staff Count
+                  </span>
+                </div>
+            )}
+            
+            <div className="rd-chart-box">
+              {trainingChartData.length === 0 ? (
+                <div className="rd-chart-empty">No score data to plot.</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={trainingChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(90,111,135,0.1)" />
+                    <XAxis 
+                        dataKey="label" 
+                        tick={{ fontSize: 11, fill: "#5a6f87" }}
+                        interval={0}
+                        angle={-20}
+                        textAnchor="end"
+                        height={60}
+                        axisLine={false}
+                        tickLine={false}
+                    />
+                    <YAxis 
+                        domain={chartMetric === "scores" ? [0, 100] : [0, 'auto']}
+                        tickFormatter={(val) => chartMetric === "scores" ? `${val}%` : val}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#5a6f87" }}
+                    />
+                    <BarTooltip
+                        cursor={{ fill: 'rgba(90,111,135,0.05)' }}
+                        formatter={(val) => chartMetric === "scores" ? [`${val}%`] : [`${val}`, "Staff Count"]}
+                        contentStyle={{ borderRadius: '8px', border: 'none', background: '#2f3e55', color: 'white', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                        labelStyle={{ color: 'white' }}
+                        itemStyle={{ color: 'rgba(255,255,255,0.85)' }}
+                    />
+                    {chartMetric === "scores" ? (
+                        <>
+                            <Bar dataKey="preTest" name="Pre-Test" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30} />
+                            <Bar dataKey="postTest" name="Post-Test" fill="#9fb3cc" radius={[4, 4, 0, 0]} barSize={30} />
+                        </>
+                    ) : (
+                        <Bar dataKey="staffCount" name="Staff Count" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30} />
+                    )}
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
 
           {/* Duplicated Research Card */}
           <div className="rd-card" style={{ marginBottom: '20px', width: '100%' }}>
@@ -679,7 +945,7 @@ export default function DirectorDashboard() {
               </button>
             </div>
             <p className="rd-chart-subtitle">
-              Comparing the total number of research projects started (Active + Completed) against the publications produced each year.
+              Comparing the total number of research projects started (Active + Completed), publications produced, and conference presentations each year.
             </p>
             <div className="rd-legend-row">
               <span className="rd-legend-item">
@@ -690,9 +956,13 @@ export default function DirectorDashboard() {
                 <span className="rd-legend-dot" style={{ background: "#9fb3cc" }} />
                 Publications
               </span>
+              <span className="rd-legend-item">
+                <span className="rd-legend-dot" style={{ background: "#ffffffff" }} />
+                Conference
+              </span>
             </div>
             <div className="rd-chart-box">
-              {researchLoading ? (
+              {researchLoading && utilizationData.length === 0 ? (
                 <div className="rd-chart-empty">Loading research data...</div>
               ) : utilizationData.length === 0 ? (
                 <div className="rd-chart-empty">
@@ -700,7 +970,12 @@ export default function DirectorDashboard() {
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={utilizationData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart
+                      data={utilizationData}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                      barGap={0}
+                      barCategoryGap="25%"
+                  >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(90,111,135,0.1)" />
                     <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#5a6f87" }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#5a6f87" }} allowDecimals={false} />
@@ -710,8 +985,9 @@ export default function DirectorDashboard() {
                       labelStyle={{ color: 'white' }}
                       itemStyle={{ color: 'rgba(255,255,255,0.85)' }}
                     />
-                    <Bar dataKey="projects" fill="#5a6f87" radius={[4, 4, 0, 0]} barSize={30} name="Research Projects" />
-                    <Bar dataKey="publications" fill="#9fb3cc" radius={[4, 4, 0, 0]} barSize={30} name="Publications" />
+                    <Bar dataKey="projects" fill="#5a6f87" barSize={26} name="Research Projects" shape={renderCompactBar("#5a6f87", "projects")} />
+                    <Bar dataKey="publications" fill="#9fb3cc" barSize={26} name="Publications" shape={renderCompactBar("#9fb3cc", "publications")} />
+                    <Bar dataKey="conferences" fill="#ffffffff" barSize={26} name="Conference" shape={renderCompactBar("#ffffffff", "conferences")} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -932,52 +1208,61 @@ export default function DirectorDashboard() {
           {/* Bottom Grid: Manage Requests and Staff Directory */}
           <div className="middle-section" style={{ marginTop: '20px' }}>
             {/* Manage Requests */}
-            <div className="table-box content-box" style={{ flex: 1 }}>
-              <RequestsTable
-                requests={requests}
-                pendingStatus="Pending_Director"
-                apiEndpoint="/api/approvals/director"
-                modalTitle="Director Final Decision"
-                onRefresh={fetchRequests}
-                showHistory={showAllHistory}
-                onToggleHistory={() => setShowAllHistory(h => !h)}
-              />
-            </div>
+            <RequestsTable
+              className="table-box"
+              style={{ flex: 1 }}
+              requests={requests}
+              pendingStatus="Pending_Director"
+              apiEndpoint="/api/approvals/director"
+              modalTitle="Director Final Decision"
+              onRefresh={fetchRequests}
+              showHistory={showAllHistory}
+              onToggleHistory={() => setShowAllHistory(h => !h)}
+            />
 
             {/* Staff Directory Preview */}
-            <div className="table-box content-box" style={{ flex: 1 }}>
-              <div className="box-header">
-                <h2 className="content-box-title">Staff Directory Overview</h2>
+            <div className="table-box content-box" style={{ flex: 1, padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Staff Directory Overview
+                </h3>
                 <button
-                  className="btn-pill"
-                  style={{ background: 'var(--accent-blue)', color: 'white', gap: '5px' }}
+                  className="rd-primary-btn"
                   onClick={() => navigate('/staff')}
                 >
                   <Users size={14} />
                   View Full Directory
                 </button>
               </div>
-              <div className="custom-table" style={{ marginTop: '10px' }}>
-                <div className="table-header" style={{ gridTemplateColumns: '1.5fr 1fr 1fr' }}>
-                  <span>Name</span>
-                  <span>Unit</span>
-                  <span>Role</span>
-                </div>
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                  {staffList.length > 0 ? staffList.map((staff) => (
-                    <div className="table-row premium-row" key={staff.nurse_id} style={{ gridTemplateColumns: '1.5fr 1fr 1fr', padding: '12px 15px', marginBottom: '8px' }}>
-                      <span style={{ fontWeight: 500 }}>{staff.full_name}</span>
-                      <span style={{ color: 'var(--text-secondary)' }}>{staff.unit}</span>
-                      <span className="badge" style={{ backgroundColor: '#eef2ff', color: '#4f46e5', margin: 0, padding: '4px 10px', fontSize: '11px', width: 'max-content' }}>
-                        {staff.job_title}
-                      </span>
-                    </div>
-                  )) : (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#8ea2b5' }}>
-                      Loading staff...
-                    </div>
-                  )}
-                </div>
+              <div className="rd-table-scroll" style={{ marginTop: '10px' }}>
+                <table className="rd-table">
+                  <thead>
+                    <tr className="rd-thead-row">
+                      <th className="rd-th-sticky" style={{ textAlign: "center" }}>Name</th>
+                      <th className="rd-th-sticky" style={{ textAlign: "center" }}>Unit</th>
+                      <th className="rd-th-sticky" style={{ textAlign: "center" }}>Role</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {staffList.length > 0 ? staffList.map((staff) => (
+                      <tr className="rd-tr" key={staff.nurse_id}>
+                        <td className="rd-td rd-td--title" style={{ textAlign: "center" }}>{staff.full_name}</td>
+                        <td className="rd-td" style={{ textAlign: "center" }}>{staff.unit}</td>
+                        <td className="rd-td" style={{ textAlign: "center" }}>
+                          <span className="rd-badge rd-badge-blue">
+                            {staff.job_title}
+                          </span>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={3} className="rd-empty-td" style={{ textAlign: 'center' }}>
+                          Loading staff...
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

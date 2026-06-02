@@ -243,6 +243,7 @@ body {
     border: none;
     line-height: 1.2;
     letter-spacing: 0.01em;
+    white-space: nowrap;
 }
 
 /* Green (Active, Completed, Approved) */
