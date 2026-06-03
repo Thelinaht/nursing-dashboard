@@ -394,7 +394,6 @@ export default function QualityManagerDashboard() {
 
                 {/* ── Header ── */}
                 <div className="qd-page-header">
-                    <h1>Quality Manager Dashboard</h1>
                     {error && <p style={{ color: COLORS.red, fontSize: 13, marginTop: 6 }}>⚠ {error}</p>}
                 </div>
 

@@ -421,7 +421,7 @@ exports.getDashboardData = async () => {
             WHERE st.pre_test_score IS NOT NULL OR st.post_test_score IS NOT NULL
             ORDER BY COALESCE(t.full_name, ns.full_name), tp.training_name
         `),
-        pool.query("SELECT id, category, title, location_provider AS locationProvider, duration, cost_or_status AS costOrStatus FROM Training_Program_Item ORDER BY id DESC"),
+        pool.query("SELECT id, category, title, location_provider AS locationProvider, duration, cost_or_status AS costOrStatus, DATE_FORMAT(program_date, '%Y-%m-%d') AS programDate FROM Training_Program_Item ORDER BY id DESC"),
         pool.query(`
             SELECT 
                 tp.training_id AS id,
@@ -962,19 +962,19 @@ exports.updateDashboardRow = async (type, id, fields) => {
         }
         return { success: true };
     } else if (type === "program_item") {
-        const { category, title, locationProvider, duration, costOrStatus } = fields;
+        const { category, title, locationProvider, duration, costOrStatus, programDate } = fields;
         if (id === "new") {
             await pool.query(
-                `INSERT INTO Training_Program_Item (category, title, location_provider, duration, cost_or_status)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [category, title, locationProvider || null, duration || null, costOrStatus || null]
+                `INSERT INTO Training_Program_Item (category, title, location_provider, duration, cost_or_status, program_date)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [category, title, locationProvider || null, duration || null, costOrStatus || null, programDate || null]
             );
         } else {
             await pool.query(
                 `UPDATE Training_Program_Item 
-                 SET category = ?, title = ?, location_provider = ?, duration = ?, cost_or_status = ? 
+                 SET category = ?, title = ?, location_provider = ?, duration = ?, cost_or_status = ?, program_date = ? 
                  WHERE id = ?`,
-                [category, title, locationProvider || null, duration || null, costOrStatus || null, id]
+                [category, title, locationProvider || null, duration || null, costOrStatus || null, programDate || null, id]
             );
         }
         return { success: true };

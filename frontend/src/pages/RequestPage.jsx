@@ -76,10 +76,6 @@ export default function RequestPage() {
                     <ArrowLeft size={14} /> Back
                 </button>
 
-                <h1 style={{ marginTop: '10px', marginBottom: '40px' }}>Requests</h1>
-
-                <p className="section-header">New Request</p>
-
                 <div className="request-grid">
                     {requests.map((req) => (
                         <div

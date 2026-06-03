@@ -84,157 +84,117 @@ export default function NurseDashboard() {
                     </div>
                 </div>
 
-                <h2>Nurse Profile</h2>
-
-                {/* Profile Top Card */}
-                <div className="profile-top glass-card blue" style={{ padding: '32px', marginBottom: '40px' }}>
-                    <div className="profile-col" style={{ gap: '16px' }}>
-                        <div className="profile-row">
-                            <span className="profile-label" style={{ fontWeight: '500' }}>Name</span>
-                            <span className="profile-val" style={{ fontSize: '16px' }}>{nurse.full_name}</span>
-                        </div>
-                        <div className="profile-row">
-                            <span className="profile-label" style={{ fontWeight: '500' }}>Job Title</span>
-                            <span className="profile-val" style={{ fontSize: '16px' }}>{nurse.job_title}</span>
-                        </div>
-                        <div className="profile-row">
-                            <span className="profile-label" style={{ fontWeight: '500' }}>ID/Iqama</span>
-                            <span className="profile-val" style={{ fontSize: '16px' }}>{nurse.national_id_iqama}</span>
-                        </div>
-                    </div>
-                    <div className="profile-col" style={{ gap: '16px' }}>
-                        <div className="profile-row">
-                            <span className="profile-label" style={{ fontWeight: '500' }}>Unit</span>
-                            <span className="profile-val" style={{ fontSize: '16px' }}>{nurse.unit}</span>
-                        </div>
-                        <div className="profile-row">
-                            <span className="profile-label" style={{ fontWeight: '500' }}>Position</span>
-                            <span className="profile-val" style={{ fontSize: '16px' }}>{nurse.position_title}</span>
-                        </div>
-                        <div className="profile-row">
-                            <span className="profile-label" style={{ fontWeight: '500' }}>Status</span>
-                            <span className="profile-val">
-                                <span className={`status ${nurse.status?.toLowerCase()}`}>
-                                    {nurse.status}
+                {/* Unified Profile Card */}
+                <div className="glass-card blue" style={{ padding: '32px', marginBottom: '40px' }}>
+                    <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#1e293b', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        Nurse Profile
+                    </h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '40px', width: '100%' }}>
+                        
+                        {/* Basic Info */}
+                        <div className="profile-col" style={{ gap: '16px' }}>
+                            <h3 style={{ borderBottom: '1px solid rgba(15,23,42,0.1)', paddingBottom: '12px', marginBottom: '20px', color: '#0f172a', fontSize: '18px', fontWeight: 700 }}>Basic Info</h3>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Name</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.full_name}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Job Title</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.job_title}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>ID/Iqama</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.national_id_iqama}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Unit</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.unit}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Status</span>
+                                <span className="val">
+                                    <span className={`status ${nurse.status?.toLowerCase()}`}>
+                                        {nurse.status}
+                                    </span>
                                 </span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Quick Actions */}
-                <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)', fontWeight: '700' }}>Quick Actions</h3>
-                <div className="cards-row" style={{ marginBottom: '40px' }}>
-                    <div className="glass-card blue clickable-card"
-                        style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative' }}
-                        onClick={() => navigate('/request')}>
-                        <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>My Requests</h2>
-                        <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '280px', position: 'relative', zIndex: 2 }}>Submit and track your leaves, resignations, and other requests.</p>
-                        <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
-                    </div>
-
-                    <div className="glass-card blue clickable-card"
-                        style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px', textAlign: 'center', height: '180px', position: 'relative' }}
-                        onClick={() => navigate('/training')}>
-                        <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0', fontSize: '22px', position: 'relative', zIndex: 2 }}>My Training</h2>
-                        <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px', maxWidth: '280px', position: 'relative', zIndex: 2 }}>Access your mandatory and recommended training programs.</p>
-                        <ChevronRight style={{ position: 'absolute', right: '20px', color: 'var(--text-muted)', zIndex: 2 }} size={24} />
-                    </div>
-                </div>
-
-                {/* Bottom Cards */}
-                <div className="bottom-cards">
-
-                    {/* Left: Training History */}
-                    <div className="bottom-col" style={{ position: 'relative' }}>
-                        <div className="info-card content-box" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, display: 'flex', flexDirection: 'column', margin: 0 }}>
-                            <h3 style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", paddingBottom: "10px", marginBottom: "15px", flexShrink: 0 }}>Training History</h3>
-                            <div className="nurse-table-header" style={{ flexShrink: 0, padding: '16px 20px', backgroundColor: '#f1f5f9' }}>
-                                <span>Course Name</span>
-                                <span>Status</span>
-                                <span>Date</span>
-                            </div>
-                            <div style={{ marginTop: '10px', overflowY: 'auto', flex: 1, paddingRight: '5px' }}>
-                                {nurse.trainings?.length > 0 ? (
-                                    nurse.trainings.map((t, i) => (
-                                        <div className="nurse-table-row" key={i} style={{ padding: '16px 20px', transition: 'var(--transition-fast)' }}>
-                                            <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{t.training_name}</span>
-                                            <span>
-                                                <span className={`tbadge ${t.status?.toLowerCase().replace(' ', '')}`}>
-                                                    {t.status}
-                                                </span>
-                                            </span>
-                                            <span style={{ color: 'var(--text-secondary)' }}>
-                                                {t.due_date ? new Date(t.due_date).toLocaleDateString("en-GB") : "–"}
-                                            </span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p style={{ fontSize: 15, color: "var(--text-muted)", padding: "20px" }}>
-                                        No training records found.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right: Employment, Personal, License */}
-                    <div className="bottom-col" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div className="info-card content-box">
-                            <h3>Employment Information</h3>
-                            <div className="info-row">
-                                <span className="lbl">Start Date</span>
-                                <span className="val">{formatDate(nurse.start_date)}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="lbl">Years of Experience</span>
-                                <span className="val">{nurse.years_of_experience}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="lbl">Shift Type</span>
-                                <span className="val">{nurse.shift_type}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="lbl">Department</span>
-                                <span className="val">{nurse.department}</span>
-                            </div>
-
-                            <h3 className="second">Personal Information</h3>
-                            <div className="info-row">
-                                <span className="lbl">Email</span>
-                                <span className="val">{nurse.email}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="lbl">Phone</span>
-                                <span className="val">{nurse.phone}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="lbl">Nationality</span>
-                                <span className="val">{nurse.nationality}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="lbl">Gender</span>
-                                <span className="val">{nurse.gender}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="lbl">Date of birth</span>
-                                <span className="val">{formatDate(nurse.date_of_birth)}</span>
                             </div>
                         </div>
 
-                        {/* License Information */}
-                        <div className="info-card content-box">
-                            <h3>License Information</h3>
+                        {/* Employment */}
+                        <div className="profile-col" style={{ gap: '16px' }}>
+                            <h3 style={{ borderBottom: '1px solid rgba(15,23,42,0.1)', paddingBottom: '12px', marginBottom: '20px', color: '#0f172a', fontSize: '18px', fontWeight: 700 }}>Employment</h3>
                             <div className="info-row">
-                                <span className="lbl">License Number</span>
-                                <span className="val">{nurse.license_number}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Start Date</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{formatDate(nurse.start_date)}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl">Expiry Date</span>
-                                <span className="val">{formatDate(nurse.license_expiry)}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Experience</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.years_of_experience} Years</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl">Status</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Shift Type</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.shift_type}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Department</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.department}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Position</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.position_title}</span>
+                            </div>
+                        </div>
+
+                        {/* Personal */}
+                        <div className="profile-col" style={{ gap: '16px' }}>
+                            <h3 style={{ borderBottom: '1px solid rgba(15,23,42,0.1)', paddingBottom: '12px', marginBottom: '20px', color: '#0f172a', fontSize: '18px', fontWeight: 700 }}>Personal</h3>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Email</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600', wordBreak: 'break-all' }}>{nurse.email}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Phone</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.phone}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Nationality</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.nationality}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Gender</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.gender}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Date of Birth</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{formatDate(nurse.date_of_birth)}</span>
+                            </div>
+                        </div>
+
+                        {/* License */}
+                        <div className="profile-col" style={{ gap: '16px' }}>
+                            <h3 style={{ borderBottom: '1px solid rgba(15,23,42,0.1)', paddingBottom: '12px', marginBottom: '20px', color: '#0f172a', fontSize: '18px', fontWeight: 700 }}>License</h3>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>License No.</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.license_number}</span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Expiry Date</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>
+                                    {(!nurse.license_expiry || formatDate(nurse.license_expiry) === '—') ? (
+                                        <span 
+                                            style={{ color: '#ef4444', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline' }}
+                                            onClick={() => navigate('/request')}
+                                            title="Submit a document update request"
+                                        >
+                                            Not Set - Update
+                                        </span>
+                                    ) : (
+                                        formatDate(nurse.license_expiry)
+                                    )}
+                                </span>
+                            </div>
+                            <div className="info-row">
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Status</span>
                                 <span className="val">
                                     <span className={`tbadge ${nurse.license_status?.toLowerCase()}`}>
                                         {nurse.license_status}
@@ -242,9 +202,29 @@ export default function NurseDashboard() {
                                 </span>
                             </div>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
+
+                {/* Quick Actions Action Banner */}
+                <div 
+                    className="glass-card blue clickable-card"
+                    style={{ cursor: 'pointer', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: '24px 32px', marginBottom: '40px', position: 'relative' }}
+                    onClick={() => navigate('/request')}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px', zIndex: 2 }}>
+                        <div style={{ padding: '16px', background: 'rgba(30,58,95,0.1)', borderRadius: '16px' }}>
+                            <ClipboardList size={32} color="var(--accent-blue)" />
+                        </div>
+                        <div>
+                            <h2 style={{ color: 'var(--text-primary)', margin: '0 0 4px 0', fontSize: '20px', fontWeight: '700' }}>My Requests</h2>
+                            <p style={{ color: 'var(--text-secondary)', margin: 0, opacity: 0.9, fontSize: '15px' }}>Submit and track your leaves, resignations, and other requests.</p>
+                        </div>
+                    </div>
+                    <ChevronRight style={{ color: 'var(--text-muted)', zIndex: 2 }} size={28} />
+                </div>
+
+
 
             </div>
 

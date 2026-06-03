@@ -286,7 +286,8 @@ export default function TrainingDirectorDashboard() {
             title: editFields.title,
             locationProvider: editFields.locationProvider,
             duration: editFields.duration,
-            costOrStatus: editFields.costOrStatus
+            costOrStatus: editFields.costOrStatus,
+            programDate: editFields.programDate
           }
         };
       }
@@ -828,6 +829,17 @@ export default function TrainingDirectorDashboard() {
                       }
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e' }}>Date</label>
+                  <input
+                    type="date"
+                    className="input-pill"
+                    style={{ width: '100%', marginTop: '5px' }}
+                    value={editFields.programDate || ''}
+                    onChange={e => setEditFields(prev => ({ ...prev, programDate: e.target.value }))}
+                  />
                 </div>
               </div>
             )}
@@ -1569,6 +1581,11 @@ export default function TrainingDirectorDashboard() {
                                 {item.costOrStatus}
                               </span>
                             )}
+                            {item.programDate && (
+                              <span style={{ color: "#8ea2b5", marginLeft: "8px", fontSize: "11px", fontWeight: "bold" }}>
+                                📅 {item.programDate}
+                              </span>
+                            )}
                           </div>
                           <div style={{ display: "flex", gap: "5px" }}>
                             <button
@@ -1580,7 +1597,8 @@ export default function TrainingDirectorDashboard() {
                                 title: item.title,
                                 locationProvider: item.locationProvider || '',
                                 duration: item.duration || '',
-                                costOrStatus: item.costOrStatus || ''
+                                costOrStatus: item.costOrStatus || '',
+                                programDate: item.programDate || ''
                               })}
                             >
                               <Edit size={13} color="var(--accent-blue)" />
