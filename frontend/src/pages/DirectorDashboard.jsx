@@ -625,9 +625,8 @@ export default function DirectorDashboard() {
       }
     };
     fetchTrainingData();
-    const trainingInterval = setInterval(fetchTrainingData, 5000);
 
-    const backgroundFetchResearchData = async () => {
+    const fetchResearchDataAsync = async () => {
       try {
         const [projectsRes, pubsRes] = await Promise.all([
           fetch("http://localhost:4000/api/research/projects"),
@@ -641,30 +640,18 @@ export default function DirectorDashboard() {
         // silent
       }
     };
-    const researchInterval = setInterval(backgroundFetchResearchData, 5000);
+    fetchResearchDataAsync();
 
-    // Background poll for staff list and staffing to keep Assigned Staff / Daily Staffing tables real-time
+    // Background poll for staff list and staffing to keep Assigned Staff / Daily Staffing tables updated
     const staffInterval = setInterval(() => {
       fetchStaffList();
       fetchInpatientStaffing();
       fetchAmbulatoryStaffing();
-    }, 5000);
-
-    const surveyInterval = setInterval(() => {
-      fetchSurveyResults();
-      fetchPeriods();
-    }, 5000);
+    }, 60000); // 60 seconds instead of 5 seconds to reduce lag
 
     fetchFalls();
     fetchHapi();
     fetchMeds();
-    
-    // Background poll for quality indicators
-    const qualityInterval = setInterval(() => {
-      fetchFalls();
-      fetchHapi();
-      fetchMeds();
-    }, 5000);
 
     // Keep your hospital's real-time interaction active!
     socket.on("new_incident", (newIncident) => {
@@ -677,11 +664,7 @@ export default function DirectorDashboard() {
       socket.off("new_incident");
       socket.off("request_updated");
       socket.off("ratio_log_updated");
-      clearInterval(trainingInterval);
-      clearInterval(researchInterval);
       clearInterval(staffInterval);
-      clearInterval(surveyInterval);
-      clearInterval(qualityInterval);
     };
   }, []);
 

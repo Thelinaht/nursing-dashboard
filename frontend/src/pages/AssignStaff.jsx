@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import Layout from "../components/Layout";
 import "../styles/SupervisorDashboard.css";
 
 export default function AssignStaff() {
+    const navigate = useNavigate();
     const supervisorUnit = JSON.parse(sessionStorage.getItem("user"))?.unit || null;
     const today = new Date().toISOString().split('T')[0];
     const [selectedDate, setSelectedDate] = useState(today);
@@ -195,8 +198,18 @@ export default function AssignStaff() {
                 <div className="supervisor-container">
 
                     {/* Header and Top Stats */}
-                    <div className="box-header" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <h2 className="table-title" style={{ margin: 0 }}>Daily Staff Assignment</h2>
+                    <div style={{ marginBottom: "20px", display: "flex", flexDirection: "column", gap: "15px" }}>
+                        <div style={{ display: "flex" }}>
+                            <button 
+                                className="back-btn" 
+                                onClick={() => navigate(-1)}
+                                style={{ display: "flex", alignItems: "center", gap: "6px", margin: 0, padding: "8px 16px", background: "transparent", border: "none", color: "#64748b", cursor: "pointer", fontWeight: "600", fontSize: "14px" }}
+                            >
+                                <ArrowLeft size={16} /> Back to Dashboard
+                            </button>
+                        </div>
+                        <div className="box-header" style={{ margin: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <h2 className="table-title" style={{ margin: 0 }}>Daily Staff Assignment</h2>
                         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                             <span style={{ fontSize: "14px", fontWeight: "bold", color: "#2f3e55" }}>📅 Select Date:</span>
                             <input
@@ -206,6 +219,7 @@ export default function AssignStaff() {
                                 className="search-input filter-select"
                                 style={{ padding: "8px 12px", background: "#fff", color: "#2f3e55", borderRadius: "8px", border: "1px solid #c7d5e5", outline: "none" }}
                             />
+                        </div>
                         </div>
                     </div>
 

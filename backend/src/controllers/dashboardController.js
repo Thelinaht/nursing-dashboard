@@ -212,15 +212,18 @@ exports.addRatioLog = async (req, res) => {
             [unit, required_ratio, actual_ratio, shift, notes || '', logged_by || 1, status, recordTimestamp]
         );
 
-        // Insert notification
+        // Role-based notification to Directors
         const notificationMessage = `A new ratio of ${actual_ratio} has been logged for unit ${unit} during the ${shift} shift. Status: ${status}.`;
-        await pool.query(
-            "INSERT INTO Notification (user_id, title, message, notification_type, priority, category) VALUES (?, ?, ?, ?, ?, ?)",
-            [logged_by || 1, 'Nurse-to-Patient Ratio Logged', notificationMessage, status === 'Compliant' ? 'success' : status === 'Borderline' ? 'warning' : 'error', 'medium', 'Ratio Log']
-        );
-
-        // Emit real-time event so Director Dashboard refreshes immediately
         const io = req.app.get("io");
+        
+        await notificationController.createNotificationForRoles({
+            title: 'Nurse-to-Patient Ratio Logged',
+            message: notificationMessage,
+            notification_type: status === 'Compliant' ? 'success' : status === 'Borderline' ? 'warning' : 'error',
+            priority: 'medium',
+            category: 'Ratio Log'
+        }, [4], io);
+        
         if (io) {
             io.emit("ratio_log_updated", { unit, status });
         }

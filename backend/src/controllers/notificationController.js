@@ -14,17 +14,38 @@ const createNotification = async (data, io = null) => {
       [user_id, title, message, notification_type, priority, category]
     );
 
-
     // Real-time push if io is provided
-    if (io) {
-      io.to(`user_${user_id}`).emit("new_notification", {
+    if (io && user_id) {
+      const payload = {
         ...data,
         is_read: 0,
         created_at: new Date()
-      });
+      };
+      io.to(`user_${user_id}`).emit("new_notification", payload);
     }
   } catch (error) {
     console.error("Failed to create notification:", error);
+  }
+};
+
+/**
+ * Send a notification to all users who have any of the specified roles
+ * @param {Object} data 
+ * @param {Array} roleIds 
+ * @param {Object} io 
+ */
+const createNotificationForRoles = async (data, roleIds, io = null) => {
+  if (!roleIds || roleIds.length === 0) return;
+  try {
+    const [users] = await pool.query(
+      "SELECT DISTINCT user_id FROM UserRole WHERE role_id IN (?)",
+      [roleIds]
+    );
+    for (const u of users) {
+      await createNotification({ ...data, user_id: u.user_id }, io);
+    }
+  } catch (error) {
+    console.error("Failed to create notification for roles:", error);
   }
 };
 
@@ -132,6 +153,7 @@ const markAllAsRead = async (req, res) => {
 
 module.exports = {
   createNotification,
+  createNotificationForRoles,
   getUserNotifications,
   markAsRead,
   markAllAsRead

@@ -4,6 +4,8 @@ import { Search, Download, ArrowLeft, ArrowRight, Users, AlertCircle, Activity, 
 import Layout from "../components/Layout";
 import "../styles/SecretaryDashboard.css"; // Include for filter-grid, glass-card, table-box
 import "../styles/DirectorDashboard.css";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function InpatientStaffingPage() {
     const navigate = useNavigate();
@@ -59,17 +61,32 @@ export default function InpatientStaffingPage() {
     // reset pagination on filter change
     useEffect(() => { setStaffingPage(1); }, [search, filters]);
 
-    const exportStaffingToExcel = () => {
-        const csvRows = [];
-        csvRows.push(['Unit Name', 'Bed Census', 'Required Ratio', 'Available Nurses', 'Total Needed', 'Gap', 'Status'].join(','));
-        filteredStaffing.forEach(row => {
-            csvRows.push([`"${row.unit_name}"`, row.bed_census, `"${row.required_ratio}"`, row.available_nurses, row.total_needed, row.gap, `"${row.status}"`].join(','));
+    const generatePDF = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text("Inpatient Staffing Report", 14, 22);
+        doc.setFontSize(11);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+
+        const tableData = filteredStaffing.map(row => [
+            row.unit_name || "N/A",
+            String(row.bed_census),
+            row.required_ratio || "N/A",
+            String(row.available_nurses),
+            String(row.total_needed),
+            String(row.gap),
+            row.status || "N/A"
+        ]);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [["Unit Name", "Bed Census", "Required Ratio", "Available Nurses", "Total Needed", "Gap", "Status"]],
+            body: tableData,
+            theme: 'grid',
+            headStyles: { fillColor: [74, 106, 133] }
         });
-        const blob = new Blob(['\uFEFF' + csvRows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement('a');
-        a.href = window.URL.createObjectURL(blob);
-        a.download = 'Inpatient_Staffing.csv';
-        a.click();
+
+        doc.save("Inpatient_Staffing.pdf");
     };
 
     const criticalUnitsCount = inpatientStaffing.filter(r => r.status === 'Critical').length;
@@ -78,17 +95,25 @@ export default function InpatientStaffingPage() {
     return (
         <Layout logoSrc="/logo.png" role={layoutRole} username={displayUsername}>
             <div className="main" style={{ padding: '0 20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="icon-btn-small" onClick={() => navigate(-1)} title="Back"><ArrowLeft size={18} /></button>
-                            <button className="icon-btn-small" onClick={() => navigate(1)} title="Forward"><ArrowRight size={18} /></button>
+                {/* Header Row */}
+                <div className="no-print" style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "25px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <button 
+                            className="back-btn" 
+                            onClick={() => navigate("/director-dashboard")}
+                            style={{ display: "flex", alignItems: "center", gap: "6px", margin: 0, padding: "8px 16px" }}
+                        >
+                            <ArrowLeft size={16} /> Back to Dashboard
+                        </button>
+                        <div style={{ display: "flex", gap: "10px" }}>
+                            <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white', padding: '10px 20px', gap: '8px' }} onClick={generatePDF}>
+                                <FileText size={18} /> Generate Report
+                            </button>
                         </div>
-                        <h2 style={{ fontSize: '28px', color: '#2c3e50', margin: 0 }}>Inpatient Staffing</h2>
                     </div>
-                    <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white', padding: '10px 20px', gap: '8px' }} onClick={exportStaffingToExcel}>
-                        <Download size={18} /> Export Excel
-                    </button>
+                    <div>
+                        <h2 style={{ fontSize: '28px', color: '#2c3e50', margin: 0, fontWeight: 800 }}>Inpatient Staffing</h2>
+                    </div>
                 </div>
 
                 <div className="cards-row" style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>

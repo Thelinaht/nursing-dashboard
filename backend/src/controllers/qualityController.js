@@ -1,4 +1,5 @@
 const model = require("../models/qualityModel");
+const notificationController = require("./notificationController");
 
 // ============================================================
 // FALLS
@@ -17,6 +18,17 @@ exports.getAllFalls = async (req, res) => {
 exports.createFall = async (req, res) => {
     try {
         const result = await model.createFall(req.body);
+        
+        // System-wide notification
+        const io = req.app.get("io");
+        await notificationController.createNotificationForRoles({
+            title: "New Fall Incident Reported",
+            message: `A new fall incident with injury severity '${req.body.Injury_Severity}' was reported in unit '${req.body.Unit}'.`,
+            notification_type: req.body.Injury_Severity === 'Major' ? 'error' : 'warning',
+            priority: req.body.Injury_Severity === 'Major' ? 'critical' : 'high',
+            category: "Quality Indicator"
+        }, [4, 5, 8], io);
+
         res.status(201).json({ success: true, insertId: result.insertId });
     } catch (err) {
         console.error("createFall error:", err);
@@ -67,6 +79,17 @@ exports.getAllHapi = async (req, res) => {
 exports.createHapi = async (req, res) => {
     try {
         const result = await model.createHapi(req.body);
+
+        // System-wide notification
+        const io = req.app.get("io");
+        await notificationController.createNotificationForRoles({
+            title: "New HAPI Incident Reported",
+            message: `A new Hospital-Acquired Pressure Injury (Stage ${req.body.Stage}) was reported in unit '${req.body.Unit}'.`,
+            notification_type: 'error',
+            priority: 'critical',
+            category: "Quality Indicator"
+        }, [4, 5, 8], io);
+
         res.status(201).json({ success: true, insertId: result.insertId });
     } catch (err) {
         console.error("createHapi error:", err);
@@ -117,6 +140,17 @@ exports.getAllMeds = async (req, res) => {
 exports.createMed = async (req, res) => {
     try {
         const result = await model.createMed(req.body);
+
+        // System-wide notification
+        const io = req.app.get("io");
+        await notificationController.createNotificationForRoles({
+            title: "New Medication Error Reported",
+            message: `A medication error of type '${req.body.Type}' was reported in unit '${req.body.Unit}'.`,
+            notification_type: 'error',
+            priority: 'critical',
+            category: "Quality Indicator"
+        }, [4, 5, 8], io);
+
         res.status(201).json({ success: true, insertId: result.insertId });
     } catch (err) {
         console.error("createMed error:", err);

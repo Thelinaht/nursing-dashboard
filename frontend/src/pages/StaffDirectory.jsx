@@ -95,22 +95,25 @@ export default function StaffDirectory() {
             username={user.full_name || "Director"}
         >
             <div className="main" style={{ padding: '0 20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="icon-btn-small" onClick={() => navigate(-1)} title="Back">
-                                <ArrowLeft size={18} />
-                            </button>
-                            <button className="icon-btn-small" onClick={() => navigate(1)} title="Forward">
-                                <ArrowRight size={18} />
+                {/* Header Row */}
+                <div className="no-print" style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "25px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <button 
+                            className="back-btn" 
+                            onClick={() => navigate("/director-dashboard")}
+                            style={{ display: "flex", alignItems: "center", gap: "6px", margin: 0, padding: "8px 16px" }}
+                        >
+                            <ArrowLeft size={16} /> Back to Dashboard
+                        </button>
+                        <div style={{ display: "flex", gap: "10px" }}>
+                            <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white', padding: '10px 20px', gap: '8px' }} onClick={generatePDF}>
+                                <FileText size={18} /> Export Directory PDF
                             </button>
                         </div>
-                        <h2 style={{ fontSize: '28px', color: '#2c3e50', margin: 0 }}>Staff Directory</h2>
                     </div>
-                    <button className="btn-pill" style={{ background: 'var(--accent-blue)', color: 'white', padding: '10px 20px', gap: '8px' }} onClick={generatePDF}>
-                        <FileText size={18} />
-                        Export Directory PDF
-                    </button>
+                    <div>
+                        <h2 style={{ fontSize: '28px', color: '#2c3e50', margin: 0, fontWeight: 800 }}>Staff Directory</h2>
+                    </div>
                 </div>
 
                 {/* Stats Summary Area */}

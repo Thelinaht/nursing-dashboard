@@ -66,10 +66,6 @@ export default function NurseDashboard() {
 
                 {/* KPI Cards Row */}
                 <div className="cards-row" style={{ marginBottom: '32px' }}>
-                    <div className="glass-card blue">
-                        <p><CheckCircle size={22} /> Completed Training</p>
-                        <h1>{completedTrainings}</h1>
-                    </div>
                     <div className="glass-card yellow">
                         <p><Clock size={22} /> Pending Requests</p>
                         <h1>{pendingRequests}</h1>
@@ -95,23 +91,23 @@ export default function NurseDashboard() {
                         <div className="profile-col" style={{ gap: '16px' }}>
                             <h3 style={{ borderBottom: '1px solid rgba(15,23,42,0.1)', paddingBottom: '12px', marginBottom: '20px', color: '#0f172a', fontSize: '18px', fontWeight: 700 }}>Basic Info</h3>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Name</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.full_name}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Name</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.full_name}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Job Title</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.job_title}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Job Title</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.job_title}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>ID/Iqama</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.national_id_iqama}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>ID/Iqama</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.national_id_iqama}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Unit</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.unit}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Unit</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.unit}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Status</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Status</span>
                                 <span className="val">
                                     <span className={`status ${nurse.status?.toLowerCase()}`}>
                                         {nurse.status}
@@ -124,24 +120,24 @@ export default function NurseDashboard() {
                         <div className="profile-col" style={{ gap: '16px' }}>
                             <h3 style={{ borderBottom: '1px solid rgba(15,23,42,0.1)', paddingBottom: '12px', marginBottom: '20px', color: '#0f172a', fontSize: '18px', fontWeight: 700 }}>Employment</h3>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Start Date</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{formatDate(nurse.start_date)}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Start Date</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{formatDate(nurse.start_date)}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Experience</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.years_of_experience} Years</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Experience</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.years_of_experience} Years</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Shift Type</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.shift_type}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Shift Type</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.shift_type}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Department</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.department}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Department</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.department}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Position</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.position_title}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Position</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.position_title}</span>
                             </div>
                         </div>
 
@@ -149,24 +145,24 @@ export default function NurseDashboard() {
                         <div className="profile-col" style={{ gap: '16px' }}>
                             <h3 style={{ borderBottom: '1px solid rgba(15,23,42,0.1)', paddingBottom: '12px', marginBottom: '20px', color: '#0f172a', fontSize: '18px', fontWeight: 700 }}>Personal</h3>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Email</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600', wordBreak: 'break-all' }}>{nurse.email}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Email</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal', wordBreak: 'break-all' }}>{nurse.email}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Phone</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.phone}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Phone</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.phone}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Nationality</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.nationality}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Nationality</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.nationality}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Gender</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.gender}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Gender</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.gender}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Date of Birth</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{formatDate(nurse.date_of_birth)}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Date of Birth</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{formatDate(nurse.date_of_birth)}</span>
                             </div>
                         </div>
 
@@ -174,15 +170,15 @@ export default function NurseDashboard() {
                         <div className="profile-col" style={{ gap: '16px' }}>
                             <h3 style={{ borderBottom: '1px solid rgba(15,23,42,0.1)', paddingBottom: '12px', marginBottom: '20px', color: '#0f172a', fontSize: '18px', fontWeight: 700 }}>License</h3>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>License No.</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>{nurse.license_number}</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>License No.</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>{nurse.license_number}</span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Expiry Date</span>
-                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: '600' }}>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Expiry Date</span>
+                                <span className="val" style={{ fontSize: '15px', color: '#0f172a', fontWeight: 'normal' }}>
                                     {(!nurse.license_expiry || formatDate(nurse.license_expiry) === '—') ? (
                                         <span 
-                                            style={{ color: '#ef4444', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline' }}
+                                            style={{ color: '#ef4444', fontWeight: 'normal', cursor: 'pointer', textDecoration: 'underline' }}
                                             onClick={() => navigate('/request')}
                                             title="Submit a document update request"
                                         >
@@ -194,7 +190,7 @@ export default function NurseDashboard() {
                                 </span>
                             </div>
                             <div className="info-row">
-                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>Status</span>
+                                <span className="lbl" style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold' }}>Status</span>
                                 <span className="val">
                                     <span className={`tbadge ${nurse.license_status?.toLowerCase()}`}>
                                         {nurse.license_status}

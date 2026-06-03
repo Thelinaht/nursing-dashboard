@@ -2,6 +2,7 @@ const model = require("../models/trainingModel");
 const multer = require("multer");
 const path = require("path");
 const pool = require("../db");
+const notificationController = require("./notificationController");
 
 // Storage for certificates
 const storage = multer.diskStorage({
@@ -100,6 +101,18 @@ exports.updateDashboardRow = async (req, res) => {
     try {
         const { type, id, fields } = req.body;
         const result = await model.updateDashboardRow(type, id, fields);
+
+        // Notify Director
+        const io = req.app.get("io");
+        const titleText = fields.title || "A program";
+        await notificationController.createNotificationForRoles({
+            title: "Training Dashboard Updated",
+            message: `The training program '${titleText}' has been updated.`,
+            notification_type: 'info',
+            priority: 'low',
+            category: "Training"
+        }, [4], io);
+
         res.json(result);
     } catch (err) {
         console.error(err);

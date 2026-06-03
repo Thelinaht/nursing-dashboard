@@ -618,15 +618,29 @@ exports.getDashboardData = async () => {
         unitGapsMap[unit] = { total: 0, nonCompleted: 0 };
     });
 
-    clinicalCompetencies.forEach(c => {
-        const unit = c.specialty || 'Unassigned';
+    const generalCompetencies = programs.filter(p => p.training_category === 'Competency' && (!p.unit_of_training || p.unit_of_training === 'General'));
+
+    allTrainees.forEach(t => {
+        const unit = t.unit || 'Unassigned';
         if (!unitGapsMap[unit]) {
             unitGapsMap[unit] = { total: 0, nonCompleted: 0 };
         }
-        unitGapsMap[unit].total += 1;
-        if (c.status !== 'Completed') {
-            unitGapsMap[unit].nonCompleted += 1;
-        }
+
+        const targetScope = getCompetencyUnitScope(t.unit);
+        const unitCompetencies = programs.filter(p => p.training_category === 'Competency' && p.unit_of_training && p.unit_of_training.toLowerCase().trim() === targetScope.toLowerCase().trim());
+
+        const totalRequired = generalCompetencies.length + unitCompetencies.length;
+        
+        const completedProgs = allStaffTrainings.filter(r => r.trainee_id === t.id && r.status === 'Completed');
+        const completedIds = new Set(completedProgs.map(r => r.training_id));
+        
+        const generalCompleted = generalCompetencies.filter(p => completedIds.has(p.training_id)).length;
+        const unitCompleted = unitCompetencies.filter(p => completedIds.has(p.training_id)).length;
+        
+        const totalCompleted = generalCompleted + unitCompleted;
+
+        unitGapsMap[unit].total += totalRequired;
+        unitGapsMap[unit].nonCompleted += (totalRequired - totalCompleted);
     });
 
     const competencyGaps = Object.entries(unitGapsMap).map(([unit, stats]) => {

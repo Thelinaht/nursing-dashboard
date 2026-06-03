@@ -1,4 +1,5 @@
 const surveyModel = require("../models/surveyModel");
+const notificationController = require("./notificationController");
 
 // GET /api/surveys/pending?user_id=37
 const getPending = async (req, res) => {
@@ -103,6 +104,19 @@ const createPeriod = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
         const periodId = await surveyModel.createPeriod(year, survey_type, opens_at, closes_at, is_active);
+        
+        // Role-based notification to Nurses and Supervisors if active
+        if (is_active) {
+            const io = req.app.get("io");
+            await notificationController.createNotificationForRoles({
+                title: "New Survey Period Open",
+                message: `The ${survey_type} survey for year ${year} is now open for responses.`,
+                notification_type: 'info',
+                priority: 'medium',
+                category: "Survey"
+            }, [1, 3], io);
+        }
+
         res.json({ message: "Period created successfully", periodId });
     } catch (err) {
         console.error("createPeriod error:", err);
@@ -123,6 +137,19 @@ const updatePeriod = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
         await surveyModel.updatePeriod(periodId, year, survey_type, opens_at, closes_at, is_active);
+
+        // Role-based notification to Nurses and Supervisors if active
+        if (is_active) {
+            const io = req.app.get("io");
+            await notificationController.createNotificationForRoles({
+                title: "Survey Period Updated",
+                message: `The ${survey_type} survey for year ${year} is currently open for responses.`,
+                notification_type: 'info',
+                priority: 'medium',
+                category: "Survey"
+            }, [1, 3], io);
+        }
+
         res.json({ message: "Period updated successfully" });
     } catch (err) {
         console.error("updatePeriod error:", err);

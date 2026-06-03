@@ -104,10 +104,10 @@ export default function TrainingDirectorDashboard() {
   const allStaffTrainings = dashboardData?.allStaffTrainings || [];
 
   // Extract unique competency units dynamically
-  const competencyUnits = ["All", ...new Set(registry.map(c => c.unit).filter(Boolean))];
+  const competencyUnits = ["All", ...[...new Set(dashboardData?.hospitalUnits || [])].sort()];
 
   // Extract unique CCA units dynamically
-  const ccaUnits = [...new Set((dashboardData?.clinicalCompetencies || []).map(c => c.specialty).filter(Boolean))].sort();
+  const ccaUnits = [...new Set(dashboardData?.hospitalUnits || [])].sort();
 
   // Extract unique onboarding roles and preceptors dynamically
   const onboardingRoles = [...new Set((dashboardData?.onboardingData || []).map(o => o.role).filter(Boolean))].sort();

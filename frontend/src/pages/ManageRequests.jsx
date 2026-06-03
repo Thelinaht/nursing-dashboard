@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import Layout from "../components/Layout";
 import RequestsTable from "../components/RequestsTable";
 import io from "socket.io-client";
 
 export default function ManageRequests() {
+    const navigate = useNavigate();
     const [requests, setRequests] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
     const user = JSON.parse(sessionStorage.getItem("user"));
@@ -31,13 +34,24 @@ export default function ManageRequests() {
     return (
         <Layout role="supervisor" username={user?.full_name || "Supervisor"}>
             <div style={{ padding: 24 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: 24 }}>
-                    <h2 style={{ margin: 0, color: "#1a2b3c" }}>Manage Requests</h2>
-                    {supervisorUnit && (
-                        <span style={{ background: "#dce6f2", color: "#3b4c6e", padding: "4px 14px", borderRadius: "20px", fontSize: "13px", fontWeight: 600 }}>
-                            {supervisorUnit}
-                        </span>
-                    )}
+                <div style={{ marginBottom: "24px", display: "flex", flexDirection: "column", gap: "15px" }}>
+                    <div style={{ display: "flex" }}>
+                        <button 
+                            className="back-btn" 
+                            onClick={() => navigate(-1)}
+                            style={{ display: "flex", alignItems: "center", gap: "6px", margin: 0, padding: "8px 16px", background: "transparent", border: "none", color: "#64748b", cursor: "pointer", fontWeight: "600", fontSize: "14px" }}
+                        >
+                            <ArrowLeft size={16} /> Back to Dashboard
+                        </button>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: 0 }}>
+                        <h2 style={{ margin: 0, color: "#1a2b3c" }}>Manage Requests</h2>
+                        {supervisorUnit && (
+                            <span style={{ background: "#dce6f2", color: "#3b4c6e", padding: "4px 14px", borderRadius: "20px", fontSize: "13px", fontWeight: 600 }}>
+                                {supervisorUnit}
+                            </span>
+                        )}
+                    </div>
                 </div>
                 <RequestsTable
                     requests={requests}

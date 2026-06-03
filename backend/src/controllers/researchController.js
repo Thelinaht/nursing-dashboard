@@ -2,6 +2,7 @@ const researchModel = require("../models/researchModel");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const notificationController = require("./notificationController");
 
 /* ========== Multer config for publication PDFs ========== */
 const storage = multer.diskStorage({
@@ -49,6 +50,17 @@ exports.createProject = async (req, res) => {
             start_date,
             investigator_name: investigator_name?.trim() || null
         });
+
+        // Notify Director
+        const io = req.app.get("io");
+        await notificationController.createNotificationForRoles({
+            title: "New Research Project",
+            message: `A new research project titled '${title.trim()}' has been created.`,
+            notification_type: 'info',
+            priority: 'low',
+            category: "Research"
+        }, [4], io);
+
         res.status(201).json({ success: true, project_id: insertId });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -69,6 +81,17 @@ exports.updateProject = async (req, res) => {
             investigator_name: investigator_name?.trim() || null
         });
         if (affected === 0) return res.status(404).json({ error: "Project not found." });
+
+        // Notify Director
+        const io = req.app.get("io");
+        await notificationController.createNotificationForRoles({
+            title: "Research Project Updated",
+            message: `The research project '${title.trim()}' has been updated to status: ${status}.`,
+            notification_type: 'info',
+            priority: 'low',
+            category: "Research"
+        }, [4], io);
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -103,6 +126,17 @@ exports.createPublication = async (req, res) => {
             journal_name: journal_name?.trim() || null,
             PublishedFile_path
         });
+
+        // Notify Director
+        const io = req.app.get("io");
+        await notificationController.createNotificationForRoles({
+            title: "New Research Publication",
+            message: `A new publication '${title.trim()}' has been added.`,
+            notification_type: 'info',
+            priority: 'low',
+            category: "Research"
+        }, [4], io);
+
         res.status(201).json({ success: true, publication_id: insertId });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -141,6 +175,17 @@ exports.updatePublication = async (req, res) => {
 
         const affected = await researchModel.updatePublication(id, payload);
         if (affected === 0) return res.status(404).json({ error: "Publication not found." });
+
+        // Notify Director
+        const io = req.app.get("io");
+        await notificationController.createNotificationForRoles({
+            title: "Research Publication Updated",
+            message: `The publication '${title.trim()}' has been updated.`,
+            notification_type: 'info',
+            priority: 'low',
+            category: "Research"
+        }, [4], io);
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
